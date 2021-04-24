@@ -1,13 +1,13 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class cellLUT;
-
 class nodeAST {
 public:
     nodeAST() {}
     ~nodeAST() {}
+    // _EXPR
     virtual int eval() { assert(false); }
+    // _STR
     virtual string getToken() { assert(false); }
 };
 
@@ -44,7 +44,9 @@ public:
             - _DEF_ARR: $token$ addr = magic
                 - _DEF_CONST_ARR: $token$ addr = magic
 
-    _MAGIC: rval of constant definition
+    _TREE: rval of constant definition
+        - _TREE_NODE: child, sibling
+        - _TREE_LEAF: expr
 
     _STRING:  $token$
 
@@ -268,10 +270,48 @@ public:
 };
 
 /* ==================================== */
-/*                 _MAGIC                */
+/*                 _TREE                */
 /* ==================================== */
-class _MAGIC: public nodeAST {
+class _TREE: public nodeAST {
 public:
-    nodeAST *head, *tail;
-    _MAGIC(nodeAST *_head, nodeAST *_tail): head(_head), tail(_tail) {}
+    _TREE() {}
+    virtual _TREE* normalize(_TREE *tree, vector<int> &dim) { assert(false); }
+    virtual _TREE* liftup(vector<int> &dim) { assert(false); }
+};
+class _TREE_NODE: public _TREE {
+public:
+    _TREE *child, *sibling;
+    _TREE_NODE(_TREE *_child): child(_child), sibling(NULL) {}
+    virtual _TREE* normalize(_TREE* tree, vector<int> &dim) {
+        _TREE* incr = child->normalize(NULL, dim);
+        if (!tree) tree = incr;
+        else {
+            while (tree->children->back() > incr->depth
+        }
+        return sibling ? sibling->normalize(tree) : tree;
+    }
+};
+class _TREE_LEAF: public _TREE {
+public:
+    nodeAST *expr;
+    _TREE_LEAF(nodeAST *_expr): expr(_expr) {}
+    virtual _TREE* normalize(_TREE* tree, vector<int> &dim) {
+        
+    }
+};
+class dataCell {
+    int depth;
+    _DATA_STRUCT
+};
+class _TREE_NORM: public _TREE {
+    int depth;
+    vector<_TREE*> children;
+    _TREE_NORM(int _depth): depth(_depth) { assert(children.empty()); }
+    virtual _TREE* liftup(vector<int> &dim)
+    {
+        assert(!children.empty());
+        int _depth = children.back()->depth;
+        _TREE_NORM* liftups = new _TREE_NORM(_depth);
+
+    }
 };

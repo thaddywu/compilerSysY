@@ -1,5 +1,5 @@
 %{
-#include "minic.tab.hpp"
+#include "sysy.tab.hpp"
 #include <bits/stdc++.h>
 using namespace std;
 int _minic_val;

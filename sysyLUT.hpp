@@ -1,15 +1,17 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class nodeAST;
-
 class cellLUT {
 public:
-    string token;
+    string token, etoken; /* etoken : token in eeyore */
     cellLUT(string _token): token(_token) {}
     virtual void instan() { assert(false); }
     virtual int eval() { assert(false); }
     virtual int eval( vector<int> &addr ) { assert(false); }
+    virtual void debug() { assert(false); }
+    virtual void parse() { assert(false); }
+    void setEToken(string _etoken) { etoken = _etoken; }
+    string getEToken() { return etoken; }
 };
 
 class cellVar: public cellLUT {
@@ -34,6 +36,9 @@ class cellConstArr: public cellArr {
 public:
     vector<int> inits_const;
     cellConstArr(string _token): cellArr(_token) {}
+    virtual void parse() {
+
+    }
     virtual void instan() {
         int n = inits.size();
         inits_const.resize(n);
@@ -47,3 +52,36 @@ public:
         return inits_const[index];
     }
 };
+
+class TokenManager {
+private:
+    map<string, cellLUT*> table;
+    typedef pair<cellLUT*, cellLUT*> cellPair;
+    typedef vector<cellPair> Record;
+    stack< Record > record;
+    int tempNum, globalNum, cpNum; /* #t, #T, #l*/
+    
+public:
+    TokenManager(): tempNum(0), globalNum(0) { assert(record.empty()); }
+    void descend() { record.push({});}
+    void insert(cellLUT* token) {
+        if (table.find(token->token) != table.end()) {
+            cellLUT* old = table[token->token];
+            record.top().push_back( cellPair(old, token));
+        }
+        else {
+            record.top().push_back( cellPair(NULL, token));
+        }
+        table[token->token] = token;
+    }
+    void ascend() {
+        for (auto item: record.top())
+            table[item.second->token] = item.first;
+        record.pop();
+    }
+    int newt() { return tempNum++; }
+    int newT() { return globalNum++; }
+    int newl() { return cpNum++; }
+    
+};
+TokenManager *tokenManager;

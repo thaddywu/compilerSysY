@@ -1,7 +1,7 @@
 %{
 #include <bits/stdc++.h>
-#include "minicAST.hpp"
-#include "minicLUT.hpp"
+#include "sysyAST.hpp"
+#include "sysyLUT.hpp"
 using namespace std;
 #define YYSTYPE nodeAST*
 #define maxSon 3
@@ -11,6 +11,8 @@ extern string _minic_str;
 extern int yylineno;
 extern int yylex();
 extern void yyerror(char *mss);
+
+extern TokenManager *tokenManager;
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -30,7 +32,8 @@ extern void yyerror(char *mss);
 
 %%
 
-All : Expr { printf("%d\n", $1->eval()); fflush(stdout); }
+All : Expr {printf("%d\n", $1->eval()); fflush(stdout);}
+    | CONST INT Str ASSIGN ConstInit ";" { fflush(stdout); }
     ;
     
 Str : KEY { $$ = new _STRING(_minic_str); }
@@ -112,29 +115,29 @@ Decl : INT DefList ';' { $$ = $2; }
     ;
 
 
-
-
-Def : 
-    | Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
+Def : Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
     | Str ASSIGN Expr { $$ = new _DEF_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN '{' Magic '}' { $$ = new _DEF_ARR($1->getToken(), $2, $5); }
+    | Str AddrList ASSIGN ConstInit { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
     ;
-ConstDef : 
-    | Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
+ConstDef : Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
     | Str ASSIGN ASSIGN Expr { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_CONST_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN '{' Magic '}' { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $5); }
+    | Str AddrList ASSIGN ConstInit { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
     ;
 
-Magic : '{' Magic '}' ',' Magic { $$ = new _MAGIC($2, $5); }
-    | Expr ',' Magic { $$ = new _MAGIC($1, $3); }
-    | { $$ = NULL; }
+ConstInitItem : '{' '}' { $$ = new _TREE_NODE( new _TREE_LEAF(NULL)); }
+    | '{' ConstInit '}' { $$ = new _TREE_NODE((_TREE*)$2); }
+    | Expr { $$ = new _TREE_LEAF($1); }
+    ;
+ConstInit : ConstInitItem { $$ = $1; }
+    | ConstInitItem ',' ConstInit { $$ = $1; ((_TREE_NODE*)$1)->sibling = (_TREE*)$2; }
     ;
 %%
 
 int main()
 {
+    tokenManager = new TokenManager();
     yyparse();
     return 0;
 }
