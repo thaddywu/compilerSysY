@@ -12,7 +12,7 @@ extern int yylineno;
 extern int yylex();
 extern void yyerror(char *mss);
 
-extern TokenManager *tokenManager;
+TokenManager *tokenManager;
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -32,11 +32,7 @@ extern TokenManager *tokenManager;
 
 %%
 
-All : Expr {printf("%d\n", $1->eval()); fflush(stdout);}
-    | CONST INT Str AddrList ASSIGN Init ';' { vector<int> v{}; $4->vectorize(v); ((_TREE*)$6)->debug(); auto ptr = new dataDescript($3->getToken(), v, (_TREE*)$6); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
-    | CONST INT Str AddrList ';' { vector<int> v{}; $4->vectorize(v); auto ptr = new dataDescript($3->getToken(), v, NULL); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
-    | CONST INT Str ASSIGN Init ';' { vector<int> v{}; ((_TREE*)$5)->debug(); auto ptr = new dataDescript($3->getToken(), v, (_TREE*)$5); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
-    | CONST INT Str ';' { vector<int> v{}; auto ptr = new dataDescript($3->getToken(), v, NULL); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
+Program : StmtSeq { $1->traverse(""); }
     ;
     
 Str : KEY { $$ = new _STRING(_sysy_str); }
@@ -59,15 +55,14 @@ Expr : Expr ADD Expr { $$ = new _ADD($1, $3); }
     | SUB Expr %prec UMINUS { $$ = new _NEG($2); }
     | NOT Expr { $$ = new _NOT($2); }
     | INTEGER { $$ = new _INTEGER(_sysy_val); }
-    ;
-
     | KEY { $$ = new _VAR(_sysy_str); }
-    | FuncCall { $$ = $1; }
+    | FuncRet { $$ = $1; }
     | ArrayItem { $$ = $1; }
     ;
 
 
-FuncCall : Str '(' CallList ')' { $$ = new _FUNC_CALL($1->getToken(), $3); }
+FuncRet : Str '(' CallList ')' { $$ = new _FUNC_CALL($1->getToken(), $3); }
+    | Str '(' ')' { $$ = new _FUNC_CALL($1->getToken(), NULL); }
     ;
 ArrayItem : Str AddrList { $$ = new _ARRAY_ITEM($1->getToken(), $2); }
     ;
@@ -80,12 +75,16 @@ AddrList : '[' Expr ']' AddrList { $$ = new _ADDR_LIST($2, $4); }
     ;
 CallList : Expr ',' CallList { $$ = new _CALL_LIST($1, $3); }
     | Expr { $$ = new _CALL_LIST($1, NULL); }
-    | { $$ = NULL; }
     ;
-ParamList : INT Expr ',' ParamList { $$ = new _PARAM_LIST($2, $4); }
-    | INT Expr { $$ = new _PARAM_LIST($2, NULL); }
-    | { $$ = NULL; }
+ParamList : INT Param ',' ParamList { $$ = new _PARAM_LIST($2, $4); }
+    | INT Param { $$ = new _PARAM_LIST($2, NULL); }
     ;
+Param : Str { $$ = new _PARAM_VAR($1->getToken(), NULL); }
+    | Str '[' ']' { $$ = new _PARAM_ARR($1->getToken(), NULL, NULL); }
+    | Str '[' ']' AddrList { $$ = new _PARAM_ARR($1->getToken(), $4, NULL); }
+    ;
+
+    
 ConstDefList : ConstDef ',' ConstDefList { $$ = new _STMT_SEQ($1, $3); }
     | ConstDef { $$ = $1; }
     ;
@@ -100,18 +99,23 @@ Stmt : IF '(' Expr ')' Stmt { $$ = new _IF($3, $5); }
     | RETURN ';' { $$ = new _RETURN_VOID(); }
     | RETURN Expr ';' { $$ = new _RETURN_EXPR($2); }
     | CONTINUE ';' { $$ = new _CONTINUE(); }
-    | '{' StmtSeq '}' { $$ = $2; }
+    | '{' StmtSeq '}' { $$ = new _BLOCK($2); }
     | Assign { $$ = $1; }
     | Func { $$ = $1; }
+    | FuncCall { $$ = $1; }
     | Decl { $$ = $1; }
     ;
 
 Assign : Expr ASSIGN Expr { $$ = new _ASSIGN($1, $3); }
     ;
 
-Func : INT Str '(' ParamList ')' '{' StmtSeq '}' { $$ = new _FUNC($2->getToken(), $4, $7); }
-    | VOID Str '(' ParamList ')' '{' StmtSeq '}' { $$ = new _FUNC($2->getToken(), $4, $7); }
+Func : INT Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6); }
+    | VOID Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6); }
+    | INT Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5); }
+    | VOID Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5); }
     ;
+
+FuncCall : FuncRet ';' { $$ = $1; }
 
 Decl : INT DefList ';' { $$ = $2; }
     | CONST INT ConstDefList ';' { $$ = $3; }
@@ -124,7 +128,7 @@ Def : Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
     | Str AddrList ASSIGN Init { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
     ;
 ConstDef : Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
-    | Str ASSIGN ASSIGN Expr { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
+    | Str ASSIGN Expr { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_CONST_ARR($1->getToken(), $2, NULL); }
     | Str AddrList ASSIGN Init { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
     ;
@@ -141,6 +145,7 @@ Init : InitItem { $$ = $1; }
 int main()
 {
     tokenManager = new TokenManager();
+    tokenManager->ascend();
     yyparse();
     return 0;
 }

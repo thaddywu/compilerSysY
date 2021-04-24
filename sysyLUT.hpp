@@ -11,7 +11,6 @@ class dataAggr: public dataCell{
 public:
     vector<dataCell*> aggr;
     dataAggr(int _depth): dataCell(_depth) {}
-
     void condense(vector<int> &dim) {
         /* merge cells in the end of the same depth. */
         assert(!aggr.empty());
@@ -74,6 +73,7 @@ public:
     dataLeaf(int _depth, nodeAST *_expr): dataCell(_depth), expr(_expr) {}
     virtual void debug() { if (expr) printf("%d", expr->eval() ); else printf("x"); }
 };
+
 class dataDescript {
 public:
     string token;
@@ -90,6 +90,18 @@ public:
             inits = anc;
         }
     }
+
+    int eval(vector<int> &addr) {
+        if (inits == NULL) return 0;
+        dataAggr *node = (dataAggr *)inits;
+        for (auto x: addr) {
+            if (node->aggr.size() < x) return 0;
+            if (!node->aggr[x]) return 0;
+            node = (dataAggr *)node->aggr[x];
+        }
+        return ((dataLeaf *)node)->expr->eval();
+    }
+    int eval() {return inits ? ((dataLeaf *)inits)->expr->eval() : 0;}
 private:
     dataCell* construct(dataAggr *tree, _TREE *node) {
         dataCell *incr = NULL;
@@ -110,12 +122,20 @@ private:
     typedef pair<dataDescript*, dataDescript*> ddPair;
     typedef vector<ddPair> Record;
     stack< Record > record;
-    int tempNum, globalNum, cpNum; /* #t, #T, #l*/
+    int tempNum, globalNum, paramNum, cpNum; /* #t, #T, #l*/
     
 public:
-    TokenManager(): tempNum(0), globalNum(0) { assert(record.empty()); }
-    void descend() { record.push({});}
-    void insert(dataDescript* dd) {
+    TokenManager(): tempNum(0), globalNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
+    string newt() { string t = "t" + to_string(tempNum); tempNum++; return t;}
+    string newT() { string T = "T" + to_string(globalNum); globalNum++; return T;}
+    string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
+    string newl() { string l = "l" + to_string(cpNum); cpNum++; return l;}
+    void ascend() { record.push({}); paramNum = 0; }
+    void insert(dataDescript* dd, bool param = false) {
+        if (param)
+            dd->eeyore = "p" + newp();
+        else
+            dd->eeyore = "T" + newT();
         if (table.find(dd->token) != table.end()) {
             dataDescript* old = table[dd->token];
             record.top().push_back( ddPair(old, dd));
@@ -125,14 +145,15 @@ public:
         }
         table[dd->token] = dd;
     }
-    void ascend() {
+    void descend() {
         for (auto item: record.top())
             table[item.second->token] = item.first;
         record.pop();
     }
-    int newt() { return tempNum++; }
-    int newT() { return globalNum++; }
-    int newl() { return cpNum++; }
+
+    int query(string token) { return table[token]->eval(); }
+    int query(string token, vector<int> &addr) { return table[token]->eval(addr); }
     
+    string getEeyore(string token) { return table[token]->eeyore; } /* return correspoding token in eeyore */
+    vector<int>& getDim(string token) { return table[token]->dim; } /* return dim vector of given token */
 };
-TokenManager *tokenManager;
