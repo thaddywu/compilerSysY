@@ -2,8 +2,8 @@
 #include "sysy.tab.hpp"
 #include <bits/stdc++.h>
 using namespace std;
-int _minic_val;
-string _minic_str;
+int _sysy_val;
+string _sysy_str;
 %}
 %option yylineno
 %x COMMENT
@@ -64,10 +64,10 @@ dec [1-9][0-9]*
 "{" { return yytext[0]; }
 "}" { return yytext[0]; }
 
-{hex} { _minic_val = strtol(yytext, NULL, 16); return INTEGER; }
-{oct} { _minic_val = strtol(yytext, NULL, 8); return INTEGER; }
-{dec} { _minic_val = strtol(yytext, NULL, 10); return INTEGER; }
-{letter}({digit}|{letter})* { _minic_str = yytext; return KEY; }
+{hex} { _sysy_val = strtol(yytext, NULL, 16); return INTEGER; }
+{oct} { _sysy_val = strtol(yytext, NULL, 8); return INTEGER; }
+{dec} { _sysy_val = strtol(yytext, NULL, 10); return INTEGER; }
+{letter}({digit}|{letter})* { _sysy_str = yytext; return KEY; }
 
 %%
 

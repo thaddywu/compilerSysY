@@ -6,8 +6,8 @@ using namespace std;
 #define YYSTYPE nodeAST*
 #define maxSon 3
 
-extern int _minic_val;
-extern string _minic_str;
+extern int _sysy_val;
+extern string _sysy_str;
 extern int yylineno;
 extern int yylex();
 extern void yyerror(char *mss);
@@ -33,10 +33,13 @@ extern TokenManager *tokenManager;
 %%
 
 All : Expr {printf("%d\n", $1->eval()); fflush(stdout);}
-    | CONST INT Str ASSIGN ConstInit ";" { fflush(stdout); }
+    | CONST INT Str AddrList ASSIGN Init ';' { vector<int> v{}; $4->vectorize(v); ((_TREE*)$6)->debug(); auto ptr = new dataDescript($3->getToken(), v, (_TREE*)$6); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
+    | CONST INT Str AddrList ';' { vector<int> v{}; $4->vectorize(v); auto ptr = new dataDescript($3->getToken(), v, NULL); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
+    | CONST INT Str ASSIGN Init ';' { vector<int> v{}; ((_TREE*)$5)->debug(); auto ptr = new dataDescript($3->getToken(), v, (_TREE*)$5); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
+    | CONST INT Str ';' { vector<int> v{}; auto ptr = new dataDescript($3->getToken(), v, NULL); if (ptr->inits) ptr->inits->debug(); else printf("empty"); printf("\n"); fflush(stdout); }
     ;
     
-Str : KEY { $$ = new _STRING(_minic_str); }
+Str : KEY { $$ = new _STRING(_sysy_str); }
     ;
 
 Expr : Expr ADD Expr { $$ = new _ADD($1, $3); }
@@ -55,10 +58,10 @@ Expr : Expr ADD Expr { $$ = new _ADD($1, $3); }
     | '(' Expr ')' { $$ = $2; }
     | SUB Expr %prec UMINUS { $$ = new _NEG($2); }
     | NOT Expr { $$ = new _NOT($2); }
-    | INTEGER { $$ = new _INTEGER(_minic_val); }
+    | INTEGER { $$ = new _INTEGER(_sysy_val); }
     ;
 
-    | KEY { $$ = new _VAR(_minic_str); }
+    | KEY { $$ = new _VAR(_sysy_str); }
     | FuncCall { $$ = $1; }
     | ArrayItem { $$ = $1; }
     ;
@@ -116,22 +119,22 @@ Decl : INT DefList ';' { $$ = $2; }
 
 
 Def : Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
-    | Str ASSIGN Expr { $$ = new _DEF_VAR($1->getToken(), $3); }
+    | Str ASSIGN Init { $$ = new _DEF_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN ConstInit { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
+    | Str AddrList ASSIGN Init { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
     ;
 ConstDef : Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
     | Str ASSIGN ASSIGN Expr { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_CONST_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN ConstInit { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
+    | Str AddrList ASSIGN Init { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
     ;
 
-ConstInitItem : '{' '}' { $$ = new _TREE_NODE( new _TREE_LEAF(NULL)); }
-    | '{' ConstInit '}' { $$ = new _TREE_NODE((_TREE*)$2); }
+InitItem : '{' '}' { $$ = new _TREE_NODE( new _TREE_LEAF(NULL)); }
+    | '{' Init '}' { $$ = new _TREE_NODE((_TREE*)$2); }
     | Expr { $$ = new _TREE_LEAF($1); }
     ;
-ConstInit : ConstInitItem { $$ = $1; }
-    | ConstInitItem ',' ConstInit { $$ = $1; ((_TREE_NODE*)$1)->sibling = (_TREE*)$2; }
+Init : InitItem { $$ = $1; }
+    | InitItem ',' Init { $$ = $1; ((_TREE*)$1)->sibling = (_TREE*)$3; }
     ;
 %%
 

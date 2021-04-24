@@ -5,10 +5,17 @@ class nodeAST {
 public:
     nodeAST() {}
     ~nodeAST() {}
-    // _EXPR
+    // _EXPR:: eval expression
     virtual int eval() { assert(false); }
-    // _STR
+    // _STR:: return string
     virtual string getToken() { assert(false); }
+    // _ADDR_LIST:: vectorize list & eval
+    virtual void vectorize(vector<int> &v) { assert(false); }
+    /* some virtual functions are embedded in _TREE,
+        so as to avoid enormous declaration in nodeAST,
+        but therefore explicit conversion is needed,
+        when using functions of _TREE
+    */
 };
 
 /*
@@ -189,6 +196,10 @@ public:
 class _ADDR_LIST: public _LIST {
 public:
     _ADDR_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
+    virtual void vectorize(vector<int> &v) {
+        if (head) v.push_back(head->eval());
+        if (tail) tail->vectorize(v);
+    }
 };
 class _STMT_SEQ: public _LIST {
 public:
@@ -274,44 +285,33 @@ public:
 /* ==================================== */
 class _TREE: public nodeAST {
 public:
-    _TREE() {}
-    virtual _TREE* normalize(_TREE *tree, vector<int> &dim) { assert(false); }
-    virtual _TREE* liftup(vector<int> &dim) { assert(false); }
+    _TREE *sibling;
+    _TREE(): sibling(NULL) {}
+    virtual bool leaf() { assert(false); }
+    virtual nodeAST* getExpr() { assert(false); }
+    virtual _TREE* getChild() { assert(false); }
+    virtual void debug(int ws = 0) {}
 };
 class _TREE_NODE: public _TREE {
 public:
-    _TREE *child, *sibling;
-    _TREE_NODE(_TREE *_child): child(_child), sibling(NULL) {}
-    virtual _TREE* normalize(_TREE* tree, vector<int> &dim) {
-        _TREE* incr = child->normalize(NULL, dim);
-        if (!tree) tree = incr;
-        else {
-            while (tree->children->back() > incr->depth
-        }
-        return sibling ? sibling->normalize(tree) : tree;
+    _TREE *child;
+    _TREE_NODE(_TREE *_child): _TREE(), child(_child) {}
+    virtual bool leaf() { return false; }
+    virtual _TREE* getChild() { return child; }
+    virtual void debug(int ws = 0) {
+        for (int i = 1; i <= ws; i++) printf(" "); printf("-\n");
+        child->debug(ws + 1);
+        if (sibling) sibling->debug(ws);
     }
 };
 class _TREE_LEAF: public _TREE {
 public:
     nodeAST *expr;
-    _TREE_LEAF(nodeAST *_expr): expr(_expr) {}
-    virtual _TREE* normalize(_TREE* tree, vector<int> &dim) {
-        
-    }
-};
-class dataCell {
-    int depth;
-    _DATA_STRUCT
-};
-class _TREE_NORM: public _TREE {
-    int depth;
-    vector<_TREE*> children;
-    _TREE_NORM(int _depth): depth(_depth) { assert(children.empty()); }
-    virtual _TREE* liftup(vector<int> &dim)
-    {
-        assert(!children.empty());
-        int _depth = children.back()->depth;
-        _TREE_NORM* liftups = new _TREE_NORM(_depth);
-
+    _TREE_LEAF(nodeAST *_expr): _TREE(), expr(_expr) {}
+    virtual bool leaf() { return true;}
+    virtual nodeAST* getExpr() { return expr; }
+    virtual void debug(int ws = 0) {
+        for (int i = 1; i <= ws; i++) printf(" "); printf("unit\n");
+        if (sibling) sibling->debug(ws);
     }
 };

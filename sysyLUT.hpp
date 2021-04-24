@@ -1,78 +1,129 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class cellLUT {
+class dataCell {
 public:
-    string token, etoken; /* etoken : token in eeyore */
-    cellLUT(string _token): token(_token) {}
-    virtual void instan() { assert(false); }
-    virtual int eval() { assert(false); }
-    virtual int eval( vector<int> &addr ) { assert(false); }
+    int depth;
+    dataCell(int _depth): depth(_depth) {}
     virtual void debug() { assert(false); }
-    virtual void parse() { assert(false); }
-    void setEToken(string _etoken) { etoken = _etoken; }
-    string getEToken() { return etoken; }
+};
+class dataAggr: public dataCell{
+public:
+    vector<dataCell*> aggr;
+    dataAggr(int _depth): dataCell(_depth) {}
+
+    void condense(vector<int> &dim) {
+        /* merge cells in the end of the same depth. */
+        assert(!aggr.empty());
+        int depth = aggr.back()->depth;
+        assert(depth > 0);
+        dataAggr *cds = new dataAggr(depth - 1);
+        for (int k = 0; k < dim[depth - 1]; k++)
+        {
+            if (aggr.empty()) continue;
+            dataCell* back = aggr.back();
+            if (back->depth != depth) continue;
+            cds->aggr.push_back(back);
+            aggr.pop_back();
+        }
+        reverse(cds->aggr.begin(), cds->aggr.end());
+        aggr.push_back(cds);
+    }
+    void merge(vector<int> &dim) {
+        /* merge only when #cells reaches the array's boundray. */
+        while (!aggr.empty()) {
+            int depth = aggr.back()->depth;
+            if (depth == 0) {
+                assert(aggr.size() == 1);
+                return ;
+            }
+            int sz = aggr.size(), n = dim[depth - 1];
+            if (sz < n || aggr[sz-n]->depth != depth) return ;
+            condense(dim);
+        }
+    }
+    void liftup(vector<int> &dim, int depth) {
+        /* lift node to given depth, every time condense the end,
+            but remember to merge the end immediately !! */
+        while (!aggr.empty() && aggr.back()->depth > depth)
+            { condense(dim); merge(dim); }
+    }
+    dataAggr* rework(vector<int> &dim) {
+        /* generate the final node after processing with all siblings, 
+            and return its pointer */
+        assert(!aggr.empty());
+        while (aggr[0]->depth != aggr.back()->depth)
+            condense(dim);
+        depth = aggr[0]->depth - 1;
+        return this;
+    }
+    virtual void debug() {
+        printf("{ ");
+        bool colon = false;
+        for (auto x: aggr) {
+            if (colon) printf(", ");
+            x->debug();
+            colon = true;
+        }
+        printf(" }");
+    }
+};
+class dataLeaf: public dataCell{
+public:
+    nodeAST *expr;
+    dataLeaf(int _depth, nodeAST *_expr): dataCell(_depth), expr(_expr) {}
+    virtual void debug() { if (expr) printf("%d", expr->eval() ); else printf("x"); }
+};
+class dataDescript {
+public:
+    string token;
+    string eeyore; /* converted token in eeyore */
+    vector<int> dim;
+    dataCell *inits;
+    dataDescript(string _token, vector<int> _dim, _TREE *_node):
+        token(_token), dim(_dim), inits(NULL) { 
+        if (!_node) return ;
+        inits = ((dataAggr *)construct(new dataAggr(-1), _node))->aggr[0];
+        while (inits->depth > 0) {
+            dataAggr *anc = new dataAggr(inits->depth - 1);
+            anc->aggr.push_back(inits);
+            inits = anc;
+        }
+    }
+private:
+    dataCell* construct(dataAggr *tree, _TREE *node) {
+        dataCell *incr = NULL;
+        if (node->leaf())
+            incr = (dataCell*) new dataLeaf(dim.size(), node->getExpr());
+        else
+            incr = construct(new dataAggr(-1), node->getChild());
+        tree->liftup(dim, incr->depth);
+        tree->aggr.push_back(incr);
+        return node->sibling ? construct(tree, node->sibling) : tree->rework(dim);
+    }
 };
 
-class cellVar: public cellLUT {
-public:
-    nodeAST *init;
-    cellVar(string _token): cellLUT(_token) {}
-};
-class cellConstVar: public cellVar {
-public:
-    int init_const;
-    cellConstVar(string _token): cellVar(_token) { init_const = 0; }
-    virtual void instan() { if (init) init_const = init->eval(); }
-    virtual int eval() { return init_const; }
-};
-class cellArr: public cellLUT {
-public:
-    vector<int> shape;
-    vector<nodeAST *> inits;
-    cellArr(string _token): cellLUT(_token) {}
-};
-class cellConstArr: public cellArr {
-public:
-    vector<int> inits_const;
-    cellConstArr(string _token): cellArr(_token) {}
-    virtual void parse() {
-
-    }
-    virtual void instan() {
-        int n = inits.size();
-        inits_const.resize(n);
-        for (int i = 0; i < n; i++)
-            inits_const[i] = (inits[i] ? inits[i]->eval() : 0);
-    }
-    virtual int eval( vector<int> &addr ) {
-        int dim = shape.size(), index = 0;
-        for (int i = 0; i < dim; i++)
-            index = index * shape[dim] + addr[dim];
-        return inits_const[index];
-    }
-};
 
 class TokenManager {
 private:
-    map<string, cellLUT*> table;
-    typedef pair<cellLUT*, cellLUT*> cellPair;
-    typedef vector<cellPair> Record;
+    map<string, dataDescript*> table;
+    typedef pair<dataDescript*, dataDescript*> ddPair;
+    typedef vector<ddPair> Record;
     stack< Record > record;
     int tempNum, globalNum, cpNum; /* #t, #T, #l*/
     
 public:
     TokenManager(): tempNum(0), globalNum(0) { assert(record.empty()); }
     void descend() { record.push({});}
-    void insert(cellLUT* token) {
-        if (table.find(token->token) != table.end()) {
-            cellLUT* old = table[token->token];
-            record.top().push_back( cellPair(old, token));
+    void insert(dataDescript* dd) {
+        if (table.find(dd->token) != table.end()) {
+            dataDescript* old = table[dd->token];
+            record.top().push_back( ddPair(old, dd));
         }
         else {
-            record.top().push_back( cellPair(NULL, token));
+            record.top().push_back( ddPair(NULL, dd));
         }
-        table[token->token] = token;
+        table[dd->token] = dd;
     }
     void ascend() {
         for (auto item: record.top())
