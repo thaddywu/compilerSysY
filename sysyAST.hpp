@@ -233,6 +233,7 @@ class _CALL_LIST: public _LIST {
 public:
     _CALL_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
     virtual void pass() ;
+    virtual string atomize() { assert(false); }
 };
 class _ADDR_LIST: public _LIST {
 public:

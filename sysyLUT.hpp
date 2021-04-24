@@ -133,9 +133,9 @@ public:
     void ascend() { record.push({}); paramNum = 0; }
     void insert(dataDescript* dd, bool param = false) {
         if (param)
-            dd->eeyore = "p" + newp();
+            dd->eeyore = newp();
         else
-            dd->eeyore = "T" + newT();
+            dd->eeyore = newT();
         if (table.find(dd->token) != table.end()) {
             dataDescript* old = table[dd->token];
             record.top().push_back( ddPair(old, dd));

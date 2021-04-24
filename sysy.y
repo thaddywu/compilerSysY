@@ -106,7 +106,7 @@ Stmt : IF '(' Expr ')' Stmt { $$ = new _IF($3, $5); }
     | Decl { $$ = $1; }
     ;
 
-Assign : Expr ASSIGN Expr { $$ = new _ASSIGN($1, $3); }
+Assign : Expr ASSIGN Expr ';' { $$ = new _ASSIGN($1, $3); }
     ;
 
 Func : INT Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6); }

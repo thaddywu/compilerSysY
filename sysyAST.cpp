@@ -55,20 +55,20 @@ string _ADDR_LIST::atomize(string token) {
     }
     assert(cur == NULL);
     string t = tokenManager->newt();
-    printf("\t%s = %s * 4 %d\n", t.c_str(), ret.c_str());
+    printf("\t%s = %s * 4\n", t.c_str(), ret.c_str());
     return t;
 }
 string _ARRAY_ITEM::atomize() {
     string t = tokenManager->newt();
-    string lval = param->atomize();
+    string lval = param->atomize(token);
     printf("\t%s = %s [ %s ]\n", t.c_str(), tokenManager->getEeyore(token).c_str(), lval.c_str());
     return t;
 }
 string _FUNC_CALL::atomize() {
     string t = tokenManager->newt();
-    if (param) param->atomize();
+    if (param) param->pass();
         /* param = NULL when func() */
-    printf("\tt = call f_%s\n", token.c_str());
+    printf("\t%s = call f_%s\n", t.c_str(), token.c_str());
     return t;
 }
 string _VAR::atomize() {
@@ -81,7 +81,7 @@ string _VAR::atomize() {
 /*      - var, array item                            */
 /* ================================================= */
 string _ARRAY_ITEM::lvalize() {
-    string lval = param->atomize();
+    string lval = param->atomize(token);
     return tokenManager->getEeyore(token) + " [ " + lval + " ] ";
 }
 string _VAR::lvalize() {
@@ -115,28 +115,29 @@ void _STMT_SEQ::traverse(string cp) {
 }
 void _IF::traverse(string cp) {
     string c = cond->atomize();
-    cp = tokenManager->newp();
-    printf("\t if %s == 0 goto %s\n", c.c_str(), cp.c_str());
+    cp = tokenManager->newl();
+    printf("\tif %s == 0 goto %s\n", c.c_str(), cp.c_str());
     body->traverse(cp.c_str());
     printf("%s:\n", cp.c_str());
 }
 void _IF_THEN::traverse(string cp) {
+    string cp1 = tokenManager->newl();
+    string cp2 = tokenManager->newl();
     string c = cond->atomize();
-    string cp1 = tokenManager->newp();
-    string cp2 = tokenManager->newp();
     printf("\tif %s == 0 goto %s\n", c.c_str(), cp1.c_str());
     body->traverse(cp2);
-    printf("\tgoto %s", cp2.c_str());
+    printf("\tgoto %s\n", cp2.c_str());
     printf("%s:\n", cp1.c_str());
     ebody->traverse(cp2);
     printf("%s:\n", cp2.c_str());
 }
 void _WHILE::traverse(string cp) {
-    string c = cond->atomize();
-    string cp1 = tokenManager->newp();
-    string cp2 = tokenManager->newp();
+    string cp1 = tokenManager->newl();
+    string cp2 = tokenManager->newl();
     printf("%s:\n", cp1.c_str());
-    printf("\t if %s == 0 goto %s\n", c.c_str(), cp2.c_str());
+        /* must set chk-point first, then atomize cond */
+    string c = cond->atomize();
+    printf("\tif %s == 0 goto %s\n", c.c_str(), cp2.c_str());
     body->traverse(cp2);
     printf("\tgoto %s\n", cp1.c_str());
     printf("%s:\n", cp2.c_str());
@@ -170,7 +171,7 @@ void _FUNC::traverse(string cp) {
     printf("end f_%s\n", token.c_str());
 }
 void _FUNC_CALL::traverse(string cp) {
-    if (param) param->atomize();
+    if (param) param->pass();
         /* param = NULL when func() */
     printf("\tcall f_%s\n", token.c_str());
 }
