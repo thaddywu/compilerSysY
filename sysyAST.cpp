@@ -213,7 +213,8 @@ void _ASSIGN::traverse(string ctn, string brk, bool glb) {
 }
 void _BLOCK::traverse(string ctn, string brk, bool glb) {
     tokenManager->ascend();
-    block->traverse(ctn, brk, glb);
+    if (block) block->traverse(ctn, brk, glb);
+        /* possible occassions: block body is empty */
     tokenManager->descend();
 }
 void _PARAM_LIST::traverse(string ctn, string brk, bool glb) {
@@ -232,6 +233,7 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
         for (auto glb_var : globalInitList)
             glb_var->initialize();
     }
+    assert(body != NULL);
     body->traverse(ctn, brk, false);
     printStmt();
     printDecl("end f_" + token);

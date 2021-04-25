@@ -211,7 +211,18 @@ public:
 class FuncManager {
 public:
     map<string, vector<int> > table;
-    FuncManager() {}
+    FuncManager() {
+        vector<int> uniarr {0};
+        vector<int> univar {1};
+        vector<int> novar {1};
+        vector<int> mix {1, 0};
+        table["getint"] = novar;
+        table["getch"] = novar;
+        table["getarray"] = uniarr;
+        table["putint"] = univar;
+        table["putch"] = univar;
+        table["putarray"] = mix;
+    }
     int insert(string token, nodeAST *param) {
         assert(table.find(token) == table.end());
         vector<int> plist {};
