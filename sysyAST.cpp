@@ -4,6 +4,7 @@
 using namespace std;
 
 extern TokenManager *tokenManager;
+extern vector<nodeAST *> globalInitList;
 
 /* ================================================= */
 /* eval                                              */
@@ -27,14 +28,14 @@ int _ARRAY_ITEM::eval() {
 string _UNARY_OP::atomize() {
     string aop = op->atomize();
     string t = tokenManager->newt();
-    printf("\t%s = %s %s\n", t.c_str(), symbol().c_str(), aop.c_str());
+    bufferStmt("\t" + t + " = " + symbol() + aop);
     return t;
 }
 string _BINARY_OP::atomize() {
     string alop = lop->atomize();
     string arop = rop->atomize();
     string t = tokenManager->newt();
-    printf("\t%s = %s %s %s\n", t.c_str(), alop.c_str(), symbol().c_str(), arop.c_str());
+    bufferStmt("\t" + t + " = " + alop + " " + symbol() + " " + arop);
     return t;
 }
 string _ADDR_LIST::atomize(string token) {
@@ -48,28 +49,29 @@ string _ADDR_LIST::atomize(string token) {
         string nxt = cur->head->atomize();
         string t1 = tokenManager->newt();
         string t2 = tokenManager->newt();
-        printf("\t%s = %s * %d\n", t1.c_str(), ret.c_str(), dim[k]);
-        printf("\t%s = %s + %s\n", t2.c_str(), t1.c_str(), nxt.c_str());
+
+        bufferStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
+        bufferStmt("\t" + t2 + " = " + t1 + " + " + nxt);
         ret = t2;
         cur = (_ADDR_LIST *) (cur->tail);
     }
     assert(cur == NULL);
     string t = tokenManager->newt();
-    printf("\t%s = %s * 4\n", t.c_str(), ret.c_str());
+    bufferStmt("\t" + t + " = " + ret + " * 4");
     return t;
 }
 string _ARRAY_ITEM::atomize() {
     /* potential optimization for constant array */
     string t = tokenManager->newt();
     string lval = param->atomize(token);
-    printf("\t%s = %s [ %s ]\n", t.c_str(), tokenManager->getEeyore(token).c_str(), lval.c_str());
+    bufferStmt("\t" + t + " = " + tokenManager->getEeyore(token) + "[" + lval + "]");
     return t;
 }
 string _FUNC_CALL::atomize() {
     string t = tokenManager->newt();
     if (param) param->pass();
         /* param = NULL when func() */
-    printf("\t%s = call f_%s\n", t.c_str(), token.c_str());
+    bufferStmt("\t" + t + " = call f_" + token);
     return t;
 }
 string _VAR::atomize() {
@@ -83,7 +85,7 @@ string _VAR::atomize() {
 /* ================================================= */
 string _ARRAY_ITEM::lvalize() {
     string lval = param->atomize(token);
-    return tokenManager->getEeyore(token) + " [ " + lval + " ] ";
+    return tokenManager->getEeyore(token) + "[" + lval + "]";
 }
 string _VAR::lvalize() {
     return tokenManager->getEeyore(token);
@@ -102,7 +104,7 @@ void _CALL_LIST::pass() {
         cur = (_CALL_LIST *) (cur->tail);
     }
     for (auto p: call_list)
-        printf("\tparam %s\n", p.c_str());
+        bufferStmt("\tparam " + p);
 }
 
 /* ================================================= */
@@ -111,10 +113,10 @@ void _CALL_LIST::pass() {
 /*      - by tokenManager, must after construction   */
 /* ================================================= */
 void _DEF_CONST_VAR::instantialize() {
-    tokenManager->instantialize(token);
+    if (inits) tokenManager->instantialize(token);
 }
 void _DEF_CONST_ARR::instantialize() {
-    tokenManager->instantialize(token);
+    if (inits) tokenManager->instantialize(token);
 }
 /* ================================================= */
 /* initialize                                        */
@@ -122,115 +124,125 @@ void _DEF_CONST_ARR::instantialize() {
 /*      - global var ought to be initialized in main */
 /* ================================================= */
 void _DEF_VAR::initialize() {
-    tokenManager->initialize(token, true);
+    if (inits) tokenManager->initialize(token, true);
 }
 void _DEF_ARR::initialize() {
-    tokenManager->initialize(token, false);
+    if (inits) tokenManager->initialize(token, false);
 }
 
-/* ================================================= */
-/* decl                                              */
-/*      - program declares global var in head        */
-/*      - return when encountering function          */
-/* ================================================= */
-void _PROGRAM::decl() {
-    program->decl();
-}
 /* ================================================= */
 /* traverse                                          */
 /*      -                                            */
 /*      -                                            */
 /* ================================================= */
-void _PROGRAM::traverse(string cp) {
-    program->decl();
+void _PROGRAM::traverse(string cp, bool glb) {
+    if (program)
+        program->traverse(cp, glb);
+    printStmt();
 }
-void _STMT_SEQ::traverse(string cp) {
-    if (head != NULL) head->traverse(cp);
-    if (tail != NULL) tail->traverse(cp);
+void _STMT_SEQ::traverse(string cp, bool glb) {
+    if (head != NULL) head->traverse(cp, glb);
+    if (tail != NULL) tail->traverse(cp, glb);
 }
-void _IF::traverse(string cp) {
+void _IF::traverse(string cp, bool glb) {
     string c = cond->atomize();
     cp = tokenManager->newl();
-    printf("\tif %s == 0 goto %s\n", c.c_str(), cp.c_str());
-    body->traverse(cp.c_str());
-    printf("%s:\n", cp.c_str());
+    bufferStmt("\tif " + c + " == 0 goto " + cp);
+    body->traverse(cp, glb);
+    bufferStmt(cp + ":");
 }
-void _IF_THEN::traverse(string cp) {
+void _IF_ELSE::traverse(string cp, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
     string c = cond->atomize();
-    printf("\tif %s == 0 goto %s\n", c.c_str(), cp1.c_str());
-    body->traverse(cp2);
-    printf("\tgoto %s\n", cp2.c_str());
-    printf("%s:\n", cp1.c_str());
-    ebody->traverse(cp2);
-    printf("%s:\n", cp2.c_str());
+    bufferStmt("\tif " + c + " == 0 goto " + cp1);
+    body->traverse(cp2, glb);
+    bufferStmt("\tgoto " + cp2);
+    bufferStmt(cp1 + ":");
+    ebody->traverse(cp2, glb);
+    bufferStmt(cp2 + ":");
 }
-void _WHILE::traverse(string cp) {
+void _WHILE::traverse(string cp, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
-    printf("%s:\n", cp1.c_str());
+    bufferStmt(cp1 + ":");
         /* must set chk-point first, then atomize cond */
     string c = cond->atomize();
-    printf("\tif %s == 0 goto %s\n", c.c_str(), cp2.c_str());
-    body->traverse(cp2);
-    printf("\tgoto %s\n", cp1.c_str());
-    printf("%s:\n", cp2.c_str());
+    bufferStmt("\tif " + c + " == 0 goto " + cp2);
+    body->traverse(cp2, glb);
+    bufferStmt("\tgoto " + cp1);
+    bufferStmt(cp2 + ":");
 }
-void _RETURN_VOID::traverse(string cp) {
-    printf("\treturn\n");
+void _RETURN_VOID::traverse(string cp, bool glb) {
+    bufferStmt("\treturn");
 }
-void _RETURN_EXPR::traverse(string cp) {
+void _RETURN_EXPR::traverse(string cp, bool glb) {
     string t = expr->atomize();
-    printf("\treturn %s\n", t.c_str());
+    bufferStmt("\treturn " + t);
 }
-void _CONTINUE::traverse(string cp) {
-    printf("\tgoto %s\n", cp.c_str());
+void _CONTINUE::traverse(string cp, bool glb) {
+    bufferStmt("\tgoto " + cp);
 }
-void _ASSIGN::traverse(string cp) {
+void _ASSIGN::traverse(string cp, bool glb) {
     string lval = lop->lvalize();
     string rval = rop->atomize();
-    printf("\t%s = %s\n", lval.c_str(), rval.c_str());
+    bufferStmt("\t" + lval + " = " + rval);
 }
-void _BLOCK::traverse(string cp) {
+void _BLOCK::traverse(string cp, bool glb) {
     tokenManager->ascend();
-    block->traverse(cp);
+    block->traverse(cp, glb);
     tokenManager->descend();
 }
-void _FUNC::traverse(string cp) {
-    int c = param ? param->countp() : 0;
-    if (param) param->traverse(cp);
-        /* param = NULL when func() {} */
-    printf("begin f_%s [ %d ]\n", token.c_str(), c);
-    body->traverse(cp);
-    printf("end f_%s\n", token.c_str());
+void _PARAM_LIST::traverse(string cp, bool glb) {
+    if (head) head->traverse(cp, glb);
+    if (tail) tail->traverse(cp, glb);
 }
-void _FUNC_CALL::traverse(string cp) {
+void _FUNC::traverse(string cp, bool glb) {
+    int c = param ? param->countp() : 0;
+    if (param) param->traverse(cp, glb);
+        /* param = NULL when func() {} */
+    printDecl("f_" + token + " [" + to_string(c) + "]");
+    if (token == "main") {
+        /* initialization of global var */
+        for (auto glb_var : globalInitList)
+            glb_var->initialize();
+    }
+    body->traverse(cp, false);
+    printStmt();
+    printDecl("end f_" + token);
+}
+void _FUNC_CALL::traverse(string cp, bool glb) {
     if (param) param->pass();
         /* param = NULL when func() */
-    printf("\tcall f_%s\n", token.c_str());
+    bufferStmt("\tcall f_" + token);
 }
-void _DEF_VAR::traverse(string cp) {
+void _DEF_VAR::traverse(string cp, bool glb) {
     vector<int> dim {};
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd);
     instantialize();
-    initialize();
+    if (!glb)
+        initialize();
+    else
+        globalInitList.push_back(this);
 }
-void _PARAM_VAR::traverse(string cp) {
+void _PARAM_VAR::traverse(string cp, bool glb) {
     vector<int> dim {};
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd, true);
 }
-void _DEF_ARR::traverse(string cp) {
+void _DEF_ARR::traverse(string cp, bool glb) {
     vector<int> dim {};
     addr->vectorize(dim);
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd);
     instantialize();
-    initialize();
+    if (!glb)
+        initialize();
+    else
+        globalInitList.push_back(this);
 }
-void _PARAM_ARR::traverse(string cp) {
+void _PARAM_ARR::traverse(string cp, bool glb) {
     vector<int> dim {0};
     if (addr) addr->vectorize(dim);
         /* addr = NULL when token[] */

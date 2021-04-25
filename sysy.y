@@ -13,6 +13,11 @@ extern int yylex();
 extern void yyerror(char *mss);
 
 TokenManager *tokenManager;
+string stmtPrintBuffer;
+vector<nodeAST *> globalInitList;
+void printDecl(string str) ;
+void bufferStmt(string str) ;
+void printStmt(string str) ;
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -32,7 +37,7 @@ TokenManager *tokenManager;
 
 %%
 
-Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse(""); }
+Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse("", true); }
     ;
     
 Str : KEY { $$ = new _STRING(_sysy_str); }
@@ -94,7 +99,7 @@ DefList : Def ',' DefList { $$ = new _STMT_SEQ($1, $3); }
 
 
 Stmt : IF '(' Expr ')' Stmt { $$ = new _IF($3, $5); }
-    | IF '(' Expr ')' Stmt ELSE Stmt { $$ = new _IF_THEN($3, $5, $7); }
+    | IF '(' Expr ')' Stmt ELSE Stmt { $$ = new _IF_ELSE($3, $5, $7); }
     | WHILE '(' Expr ')' Stmt { $$ = new _WHILE($3, $5);}
     | RETURN ';' { $$ = new _RETURN_VOID(); }
     | RETURN Expr ';' { $$ = new _RETURN_EXPR($2); }
@@ -128,7 +133,7 @@ Def : Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
     | Str AddrList ASSIGN Init { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
     ;
 ConstDef : Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
-    | Str ASSIGN Expr { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
+    | Str ASSIGN Init { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_CONST_ARR($1->getToken(), $2, NULL); }
     | Str AddrList ASSIGN Init { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
     ;
@@ -142,10 +147,19 @@ Init : InitItem { $$ = $1; }
     ;
 %%
 
+
+int flatten(vector<int> &dim) {
+    /* return flattened size */
+    int ret = 1; for (auto x: dim) ret *= x; return ret;
+}
+void printDecl(string str) { cout << str << endl; }
+void bufferStmt(string str) { stmtPrintBuffer += str + "\n"; }
+void printStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
 int main()
 {
     tokenManager = new TokenManager();
     tokenManager->ascend();
+    stmtPrintBuffer = "";
     yyparse();
     return 0;
 }

@@ -1,6 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+extern void printDecl(string str) ;
+extern void bufferStmt(string str) ;
+extern void printStmt() ;
+extern int flatten(vector<int> &dim); // defined in sysy.y
+
 class dataCell {
 public:
     int depth;
@@ -88,9 +93,9 @@ public:
         if (expr == NULL) return ;
         string t = expr->atomize();
         if (var)
-            printf("\t%s = %s\n", eeyore.c_str(), t.c_str());
+            bufferStmt("\t" + eeyore + " = " + t);
         else
-            printf("\t%s [ %d ] = %s\n", eeyore.c_str(), addr * 4, t.c_str());
+            bufferStmt("\t" + eeyore + "[" + to_string(addr * 4) + "] = " + t);
     }
 };
 
@@ -102,7 +107,7 @@ public:
     dataCell *inits;
     dataDescript(string _token, vector<int> _dim, _TREE *_node):
         token(_token), dim(_dim), inits(NULL) { 
-        if (!_node) return ;
+        if (_node == NULL) return ;
         inits = ((dataAggr *)construct(new dataAggr(-1), _node))->aggr[0];
         while (inits->depth > 0) {
             dataAggr *anc = new dataAggr(inits->depth - 1);
@@ -121,14 +126,17 @@ public:
         }
         return ((dataLeaf *)node)->expr->eval();
     }
-    int eval() {return inits ? ((dataLeaf *)inits)->expr->eval() : 0;}
+    int eval() { return inits ? ((dataLeaf *)inits)->expr->eval() : 0; }
+    int getSize() { return flatten(dim); }
 private:
     dataCell* construct(dataAggr *tree, _TREE *node) {
+        assert(node != NULL);
         dataCell *incr = NULL;
         if (node->leaf())
             incr = (dataCell*) new dataLeaf(dim.size(), node->getExpr());
         else
             incr = construct(new dataAggr(-1), node->getChild());
+
         tree->liftup(dim, incr->depth);
         tree->aggr.push_back(incr);
         return node->sibling ? construct(tree, node->sibling) : tree->rework(dim);
@@ -146,8 +154,9 @@ private:
     
 public:
     TokenManager(): tempNum(0), globalNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
-    string newt() { string t = "t" + to_string(tempNum); tempNum++; return t;}
-    string newT() { string T = "T" + to_string(globalNum); globalNum++; return T;}
+    string newt() { string t = "t" + to_string(tempNum); tempNum++; printDecl("\tvar " + t); return t;}
+    string newT() { string T = "T" + to_string(globalNum); globalNum++; printDecl("\tvar " + T); return T;}
+    string newT(int sz) { string T = "T" + to_string(globalNum); globalNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
     string newl() { string l = "l" + to_string(cpNum); cpNum++; return l;}
     void ascend() { record.push({}); paramNum = 0; }
@@ -155,7 +164,8 @@ public:
         if (param)
             dd->eeyore = newp();
         else
-            dd->eeyore = newT();
+            dd->eeyore = dd->dim.empty() ? newT() : newT(flatten(dd->dim));
+        /* decl print in newT */
         if (table.find(dd->token) != table.end()) {
             dataDescript* old = table[dd->token];
             record.top().push_back( ddPair(old, dd));
@@ -177,6 +187,7 @@ public:
     string getEeyore(string token) { return table[token]->eeyore; } /* return correspoding token in eeyore */
     vector<int>& getDim(string token) { return table[token]->dim; } /* return dim vector of given token */
     dataCell* getInits(string token) { return table[token]->inits; } /* return inits tree of given token */
+    int getSize(string token) { return table[token]->getSize(); }
 
     void instantialize(string token) {
         /* convert constant expr to integer */
