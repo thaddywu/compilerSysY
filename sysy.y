@@ -26,14 +26,17 @@ void printStmt(string str) ;
 %token ADD SUB MUL DIV MOD
 %token NOT AND OR ASSIGN
 %token INTEGER INT KEY VOID CONST
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 %left ','
 %right ASSIGN
+%left GT LT GE LE EQ NEQ
 %left OR
 %left AND
-%left GT LT GE LE EQ NEQ
+%right NOT
 %left ADD SUB
 %left MUL DIV MOD
-%right NOT
 %right UMINUS
 
 %%
@@ -99,7 +102,7 @@ DefList : Def ',' DefList { $$ = new _STMT_SEQ($1, $3); }
     ;
 
 
-Stmt : IF '(' Expr ')' Stmt { $$ = new _IF($3, $5); }
+Stmt : IF '(' Expr ')' Stmt %prec LOWER_THAN_ELSE { $$ = new _IF($3, $5); }
     | IF '(' Expr ')' Stmt ELSE Stmt { $$ = new _IF_ELSE($3, $5, $7); }
     | WHILE '(' Expr ')' Stmt { $$ = new _WHILE($3, $5);}
     | RETURN ';' { $$ = new _RETURN_VOID(); }
