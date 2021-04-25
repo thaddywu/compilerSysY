@@ -201,6 +201,7 @@ void _PARAM_LIST::traverse(string ctn, string brk, bool glb) {
     if (tail) tail->traverse(ctn, brk, glb);
 }
 void _FUNC::traverse(string ctn, string brk, bool glb) {
+    tokenManager->ascend();
     int c = param ? param->countp() : 0;
     if (param) param->traverse(ctn, brk, glb);
         /* param = NULL when func() {} */
@@ -213,6 +214,7 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
     body->traverse(ctn, brk, false);
     printStmt();
     printDecl("end f_" + token);
+    tokenManager->descend();
 }
 void _FUNC_CALL::traverse(string ctn, string brk, bool glb) {
     if (param) param->pass();
