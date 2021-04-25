@@ -59,6 +59,7 @@ string _ADDR_LIST::atomize(string token) {
     return t;
 }
 string _ARRAY_ITEM::atomize() {
+    /* potential optimization for constant array */
     string t = tokenManager->newt();
     string lval = param->atomize(token);
     printf("\t%s = %s [ %s ]\n", t.c_str(), tokenManager->getEeyore(token).c_str(), lval.c_str());
@@ -105,10 +106,44 @@ void _CALL_LIST::pass() {
 }
 
 /* ================================================= */
+/* instantialize                                     */
+/*      - eval constant var/arr                      */
+/*      - by tokenManager, must after construction   */
+/* ================================================= */
+void _DEF_CONST_VAR::instantialize() {
+    tokenManager->instantialize(token);
+}
+void _DEF_CONST_ARR::instantialize() {
+    tokenManager->instantialize(token);
+}
+/* ================================================= */
+/* initialize                                        */
+/*      - initialize when construction               */
+/*      - global var ought to be initialized in main */
+/* ================================================= */
+void _DEF_VAR::initialize() {
+    tokenManager->initialize(token, true);
+}
+void _DEF_ARR::initialize() {
+    tokenManager->initialize(token, false);
+}
+
+/* ================================================= */
+/* decl                                              */
+/*      - program declares global var in head        */
+/*      - return when encountering function          */
+/* ================================================= */
+void _PROGRAM::decl() {
+    program->decl();
+}
+/* ================================================= */
 /* traverse                                          */
 /*      -                                            */
 /*      -                                            */
 /* ================================================= */
+void _PROGRAM::traverse(string cp) {
+    program->decl();
+}
 void _STMT_SEQ::traverse(string cp) {
     if (head != NULL) head->traverse(cp);
     if (tail != NULL) tail->traverse(cp);
@@ -179,6 +214,8 @@ void _DEF_VAR::traverse(string cp) {
     vector<int> dim {};
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd);
+    instantialize();
+    initialize();
 }
 void _PARAM_VAR::traverse(string cp) {
     vector<int> dim {};
@@ -190,6 +227,8 @@ void _DEF_ARR::traverse(string cp) {
     addr->vectorize(dim);
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd);
+    instantialize();
+    initialize();
 }
 void _PARAM_ARR::traverse(string cp) {
     vector<int> dim {0};

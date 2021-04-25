@@ -32,7 +32,7 @@ TokenManager *tokenManager;
 
 %%
 
-Program : StmtSeq { $1->traverse(""); }
+Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse(""); }
     ;
     
 Str : KEY { $$ = new _STRING(_sysy_str); }

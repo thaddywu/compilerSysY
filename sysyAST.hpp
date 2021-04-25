@@ -17,10 +17,22 @@ public:
     virtual void vectorize(vector<int> &v) { assert(false); }
         // _CALL_LIST:: param pass
     virtual void pass() { assert(false); }
+        // _DECL:
+    virtual void instantialize() { assert(false); }
+    virtual void initialize() { assert(false); }
         // basic function for all node
-    virtual void traverse(string cp) { assert(false); }
 
     virtual int countp() { assert(false); }
+
+    virtual void decl() { assert(false); }
+    virtual void traverse(string cp) { assert(false); }
+    /* For every function, decl first, then traverse */
+    /* Logic structrue:
+        global : decl , (stop at function)
+                then traverse
+        func : print structure, then decl, then traverse
+                in main, implement initialization of global vars
+    */
 
     /* some virtual functions are embedded in _TREE,
         so as to avoid enormous declaration in nodeAST,
@@ -31,6 +43,8 @@ public:
 
 /*
     Definition of nodes, so as to construct Abstraction Syntax Tree
+    _PROGRAM:
+        whole structure
     _EXPR:
         - _BINARY_OP: lop, rop
             - _AND, _SUB, _DIV, _MUL, _MOD, _AND, _OR, _LT, _GT, _LE, _GE, _EQ, _NEQ
@@ -80,6 +94,13 @@ public:
     virtual string getToken() { return token; }
 };
 
+class _PROGRAM: public nodeAST {
+public:
+    nodeAST *program;
+    _PROGRAM(nodeAST *_program): program(_program) {}
+    virtual void traverse(string cp) ;
+    virtual void decl() ;
+};
 /* ==================================== */
 /*                 _EXPR                */
 /* ==================================== */
@@ -209,7 +230,7 @@ public:
     string token; nodeAST *param;
     _FUNC_CALL(string _token, nodeAST *_param): token(_token), param(_param) {}
     virtual string atomize() ;
-    virtual void traverse(string cp) ;
+    virtual void traverse(string cp);
 };
 class _ARRAY_ITEM: public _EXPR {
 public:
@@ -252,7 +273,7 @@ public:
 class _STMT_SEQ: public _LIST {
 public:
     _STMT_SEQ(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
     virtual int countp() { return (head ? head->countp() : 0) + (tail ? tail->countp() : 0);}
 };
 
@@ -268,47 +289,47 @@ class _IF: public _STMT {
 public:
     nodeAST *cond, *body;
     _IF(nodeAST *_cond, nodeAST *_body): cond(_cond), body(_body) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _IF_THEN: public _STMT {
 public:
     nodeAST *cond, *body, *ebody;
     _IF_THEN(nodeAST *_cond, nodeAST *_body, nodeAST *_ebody): cond(_cond), body(_body), ebody(_ebody) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _WHILE: public _STMT {
 public:
     nodeAST *cond, *body;
     _WHILE(nodeAST *_cond, nodeAST *_body): cond(_cond), body(_body) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _RETURN_VOID: public _STMT {
 public:
     _RETURN_VOID() {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _RETURN_EXPR: public _STMT {
 public:
     nodeAST *expr;
     _RETURN_EXPR(nodeAST *_expr): expr(_expr) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _CONTINUE: public _STMT {
 public:
     _CONTINUE() {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _ASSIGN: public _STMT {
 public:
     nodeAST *lop, *rop;
     _ASSIGN(nodeAST *_lop, nodeAST *_rop): lop(_lop), rop(_rop) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 class _BLOCK: public _STMT {
 public:
     nodeAST *block;
     _BLOCK(nodeAST *_block): block(_block) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 
 
@@ -319,7 +340,7 @@ class _FUNC: public _STMT {
 public:
     string token; nodeAST *param, *body;
     _FUNC(string _token, nodeAST *_param, nodeAST *_body): token(_token), param(_param), body(_body) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
 };
 
 /* ==================================== */
@@ -328,37 +349,44 @@ public:
 class _DECL: public nodeAST {
 public:
     _DECL() {}
+    virtual void instantialize() {} /* do nothing except for CONST */
 };
 class _DEF_VAR: public _DECL {
 public:
     string token; nodeAST *inits;
     _DEF_VAR(string _token, nodeAST *_inits): token(_token), inits(_inits) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
+    virtual void initialize() ;
 };
 class _DEF_CONST_VAR: public _DEF_VAR {
 public:
     _DEF_CONST_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
+    virtual void instantialize();
 };
 class _PARAM_VAR: public _DEF_VAR {
 public:
     _PARAM_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
+    virtual void initialize() { assert(false); } /* redundant assertion */
 };
 
 class _DEF_ARR: public _DECL {
 public:
     string token; nodeAST *addr, *inits;
     _DEF_ARR(string _token, nodeAST *_addr, nodeAST *_inits): token(_token), addr(_addr), inits(_inits) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
+    virtual void initialize() ;
 };
 class _DEF_CONST_ARR: public _DEF_ARR {
 public:
     _DEF_CONST_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
+    virtual void instantialize();
 };
 class _PARAM_ARR: public _DEF_ARR {
 public:
     _PARAM_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
-    virtual void traverse( string cp ) ;
+    virtual void traverse(string cp);
+    virtual void initialize() { assert(false); } /* redundant assertion */
 };
 
 /* ==================================== */

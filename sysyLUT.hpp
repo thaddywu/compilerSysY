@@ -6,6 +6,8 @@ public:
     int depth;
     dataCell(int _depth): depth(_depth) {}
     virtual void debug() { assert(false); }
+    virtual void instantialize() { assert(false); }
+    virtual void initialize(string &eeyore, vector<int> &dim, int addr, bool var) { assert(false); }
 };
 class dataAggr: public dataCell{
 public:
@@ -66,12 +68,30 @@ public:
         }
         printf(" }");
     }
+    virtual void instantialize() {
+        for (auto child: aggr)
+            child->instantialize();
+    }
+    virtual void initialize(string &eeyore, vector<int> &dim, int addr, bool var) {
+        addr *= dim[depth];
+        for (int i = 0; i < aggr.size(); i++)
+            aggr[i]->initialize(eeyore, dim, addr + i, var);
+    }
 };
 class dataLeaf: public dataCell{
 public:
     nodeAST *expr;
     dataLeaf(int _depth, nodeAST *_expr): dataCell(_depth), expr(_expr) {}
     virtual void debug() { if (expr) printf("%d", expr->eval() ); else printf("x"); }
+    virtual void instantialize() { if (expr) expr = new _INTEGER(expr->eval()); }
+    virtual void initialize(string &eeyore, vector<int> &dim, int addr, bool var) {
+        if (expr == NULL) return ;
+        string t = expr->atomize();
+        if (var)
+            printf("\t%s = %s\n", eeyore.c_str(), t.c_str());
+        else
+            printf("\t%s [ %d ] = %s\n", eeyore.c_str(), addr * 4, t.c_str());
+    }
 };
 
 class dataDescript {
@@ -156,4 +176,23 @@ public:
     
     string getEeyore(string token) { return table[token]->eeyore; } /* return correspoding token in eeyore */
     vector<int>& getDim(string token) { return table[token]->dim; } /* return dim vector of given token */
+    dataCell* getInits(string token) { return table[token]->inits; } /* return inits tree of given token */
+
+    void instantialize(string token) {
+        /* convert constant expr to integer */
+        assert(table.find(token) != table.end());
+        assert(table[token] != NULL);
+        vector<int> &dim = table[token]->dim;
+        dataCell *inits = table[token]->inits;
+        if (inits) inits->instantialize();
+    }
+    void initialize(string token, bool var) {
+        /* do original assignment */
+        assert(table.find(token) != table.end());
+        assert(table[token] != NULL);
+        vector<int> &dim = table[token]->dim;
+        dataCell *inits = table[token]->inits;
+        string eeyore = table[token]->eeyore;
+        if (inits) inits->initialize(eeyore, dim, 0, var);
+    }
 };
