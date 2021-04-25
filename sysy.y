@@ -37,7 +37,7 @@ void printStmt(string str) ;
 
 %%
 
-Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse("", true); }
+Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse("", "", true); }
     ;
     
 Str : KEY { $$ = new _STRING(_sysy_str); }
@@ -104,6 +104,7 @@ Stmt : IF '(' Expr ')' Stmt { $$ = new _IF($3, $5); }
     | RETURN ';' { $$ = new _RETURN_VOID(); }
     | RETURN Expr ';' { $$ = new _RETURN_EXPR($2); }
     | CONTINUE ';' { $$ = new _CONTINUE(); }
+    | BREAK ';' { $$ = new _BREAK(); }
     | '{' StmtSeq '}' { $$ = new _BLOCK($2); }
     | Assign { $$ = $1; }
     | Func { $$ = $1; }
@@ -128,14 +129,14 @@ Decl : INT DefList ';' { $$ = $2; }
 
 
 Def : Str { $$ = new _DEF_VAR($1->getToken(), NULL); }
-    | Str ASSIGN Init { $$ = new _DEF_VAR($1->getToken(), $3); }
+    | Str ASSIGN InitItem { $$ = new _DEF_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN Init { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
+    | Str AddrList ASSIGN InitItem { $$ = new _DEF_ARR($1->getToken(), $2, $4); }
     ;
 ConstDef : Str { $$ = new _DEF_CONST_VAR($1->getToken(), NULL); }
-    | Str ASSIGN Init { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
+    | Str ASSIGN InitItem { $$ = new _DEF_CONST_VAR($1->getToken(), $3); }
     | Str AddrList { $$ = new _DEF_CONST_ARR($1->getToken(), $2, NULL); }
-    | Str AddrList ASSIGN Init { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
+    | Str AddrList ASSIGN InitItem { $$ = new _DEF_CONST_ARR($1->getToken(), $2, $4); }
     ;
 
 InitItem : '{' '}' { $$ = new _TREE_NODE( new _TREE_LEAF(NULL)); }
@@ -170,3 +171,12 @@ int main(int argc, char **argv)
     yyparse();
     return 0;
 }
+/*
+int main()
+{
+    tokenManager = new TokenManager();
+    tokenManager->ascend();
+    stmtPrintBuffer = "";
+    yyparse();
+    return 0;
+}*/

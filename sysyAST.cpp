@@ -135,71 +135,74 @@ void _DEF_ARR::initialize() {
 /*      -                                            */
 /*      -                                            */
 /* ================================================= */
-void _PROGRAM::traverse(string cp, bool glb) {
+void _PROGRAM::traverse(string ctn, string brk, bool glb) {
     if (program)
-        program->traverse(cp, glb);
+        program->traverse(ctn, brk, glb);
     printStmt();
 }
-void _STMT_SEQ::traverse(string cp, bool glb) {
-    if (head != NULL) head->traverse(cp, glb);
-    if (tail != NULL) tail->traverse(cp, glb);
+void _STMT_SEQ::traverse(string ctn, string brk, bool glb) {
+    if (head != NULL) head->traverse(ctn, brk, glb);
+    if (tail != NULL) tail->traverse(ctn, brk, glb);
 }
-void _IF::traverse(string cp, bool glb) {
+void _IF::traverse(string ctn, string brk, bool glb) {
     string c = cond->atomize();
-    cp = tokenManager->newl();
+    string cp = tokenManager->newl();
     bufferStmt("\tif " + c + " == 0 goto " + cp);
-    body->traverse(cp, glb);
+    body->traverse(ctn, brk, glb);
     bufferStmt(cp + ":");
 }
-void _IF_ELSE::traverse(string cp, bool glb) {
+void _IF_ELSE::traverse(string ctn, string brk, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
     string c = cond->atomize();
     bufferStmt("\tif " + c + " == 0 goto " + cp1);
-    body->traverse(cp2, glb);
+    body->traverse(ctn, brk, glb);
     bufferStmt("\tgoto " + cp2);
     bufferStmt(cp1 + ":");
-    ebody->traverse(cp2, glb);
+    ebody->traverse(ctn, brk, glb);
     bufferStmt(cp2 + ":");
 }
-void _WHILE::traverse(string cp, bool glb) {
+void _WHILE::traverse(string ctn, string brk, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
     bufferStmt(cp1 + ":");
         /* must set chk-point first, then atomize cond */
     string c = cond->atomize();
     bufferStmt("\tif " + c + " == 0 goto " + cp2);
-    body->traverse(cp2, glb);
+    body->traverse(cp1, cp2, glb);
     bufferStmt("\tgoto " + cp1);
     bufferStmt(cp2 + ":");
 }
-void _RETURN_VOID::traverse(string cp, bool glb) {
+void _RETURN_VOID::traverse(string ctn, string brk, bool glb) {
     bufferStmt("\treturn");
 }
-void _RETURN_EXPR::traverse(string cp, bool glb) {
+void _RETURN_EXPR::traverse(string ctn, string brk, bool glb) {
     string t = expr->atomize();
     bufferStmt("\treturn " + t);
 }
-void _CONTINUE::traverse(string cp, bool glb) {
-    bufferStmt("\tgoto " + cp);
+void _CONTINUE::traverse(string ctn, string brk, bool glb) {
+    bufferStmt("\tgoto " + ctn);
 }
-void _ASSIGN::traverse(string cp, bool glb) {
+void _BREAK::traverse(string ctn, string brk, bool glb) {
+    bufferStmt("\tgoto " + brk);
+}
+void _ASSIGN::traverse(string ctn, string brk, bool glb) {
     string lval = lop->lvalize();
     string rval = rop->atomize();
     bufferStmt("\t" + lval + " = " + rval);
 }
-void _BLOCK::traverse(string cp, bool glb) {
+void _BLOCK::traverse(string ctn, string brk, bool glb) {
     tokenManager->ascend();
-    block->traverse(cp, glb);
+    block->traverse(ctn, brk, glb);
     tokenManager->descend();
 }
-void _PARAM_LIST::traverse(string cp, bool glb) {
-    if (head) head->traverse(cp, glb);
-    if (tail) tail->traverse(cp, glb);
+void _PARAM_LIST::traverse(string ctn, string brk, bool glb) {
+    if (head) head->traverse(ctn, brk, glb);
+    if (tail) tail->traverse(ctn, brk, glb);
 }
-void _FUNC::traverse(string cp, bool glb) {
+void _FUNC::traverse(string ctn, string brk, bool glb) {
     int c = param ? param->countp() : 0;
-    if (param) param->traverse(cp, glb);
+    if (param) param->traverse(ctn, brk, glb);
         /* param = NULL when func() {} */
     printDecl("f_" + token + " [" + to_string(c) + "]");
     if (token == "main") {
@@ -207,16 +210,16 @@ void _FUNC::traverse(string cp, bool glb) {
         for (auto glb_var : globalInitList)
             glb_var->initialize();
     }
-    body->traverse(cp, false);
+    body->traverse(ctn, brk, false);
     printStmt();
     printDecl("end f_" + token);
 }
-void _FUNC_CALL::traverse(string cp, bool glb) {
+void _FUNC_CALL::traverse(string ctn, string brk, bool glb) {
     if (param) param->pass();
         /* param = NULL when func() */
     bufferStmt("\tcall f_" + token);
 }
-void _DEF_VAR::traverse(string cp, bool glb) {
+void _DEF_VAR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {};
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd);
@@ -226,12 +229,12 @@ void _DEF_VAR::traverse(string cp, bool glb) {
     else
         globalInitList.push_back(this);
 }
-void _PARAM_VAR::traverse(string cp, bool glb) {
+void _PARAM_VAR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {};
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd, true);
 }
-void _DEF_ARR::traverse(string cp, bool glb) {
+void _DEF_ARR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {};
     addr->vectorize(dim);
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
@@ -242,7 +245,7 @@ void _DEF_ARR::traverse(string cp, bool glb) {
     else
         globalInitList.push_back(this);
 }
-void _PARAM_ARR::traverse(string cp, bool glb) {
+void _PARAM_ARR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {0};
     if (addr) addr->vectorize(dim);
         /* addr = NULL when token[] */
