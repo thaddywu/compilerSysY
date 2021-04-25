@@ -29,14 +29,13 @@ void printStmt(string str) ;
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
-%left ','
 %right ASSIGN
 %left GT LT GE LE EQ NEQ
 %left OR
 %left AND
-%right NOT
 %left ADD SUB
 %left MUL DIV MOD
+%right NOT
 %right UMINUS
 
 %%
