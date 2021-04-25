@@ -150,7 +150,7 @@ private:
     typedef pair<dataDescript*, dataDescript*> ddPair;
     typedef vector<ddPair> Record;
     stack< Record > record;
-    int tempNum, globalNum, paramNum, cpNum; /* #t, #T, #l*/
+    int tempNum, globalNum, paramNum, cpNum; /* #t, #T, #p, #l*/
     
 public:
     TokenManager(): tempNum(0), globalNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
@@ -159,7 +159,7 @@ public:
     string newT(int sz) { string T = "T" + to_string(globalNum); globalNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
     string newl() { string l = "l" + to_string(cpNum); cpNum++; return l;}
-    void ascend() { record.push({}); paramNum = 0; }
+    void ascend() { record.push({}); paramNum = 0; /* not-good implementation here */ }
     void insert(dataDescript* dd, bool param = false) {
         if (param)
             dd->eeyore = newp();
@@ -205,5 +205,27 @@ public:
         dataCell *inits = table[token]->inits;
         string eeyore = table[token]->eeyore;
         if (inits) inits->initialize(eeyore, dim, 0, var);
+    }
+};
+
+class FuncManager {
+public:
+    map<string, vector<int> > table;
+    FuncManager() {}
+    int insert(string token, nodeAST *param) {
+        assert(table.find(token) == table.end());
+        vector<int> plist {};
+        if (param != NULL) {
+            _PARAM_LIST *cur = (_PARAM_LIST *) param;
+            while (cur != NULL) {
+                plist.push_back(cur->head->var());
+                cur = (_PARAM_LIST *) (cur->tail);
+            }
+        }
+        table[token] = plist;
+        return plist.size();
+    }
+    vector<int>& query(string token) {
+        return table[token];
     }
 };

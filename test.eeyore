@@ -1,0 +1,17 @@
+f_func [1]
+	return p0
+end f_func
+f_main [0]
+	var 348480 T0
+	var t0
+	var t1
+	var t2
+	var t3
+	t1 = 3 * 88
+	t2 = t1 * 99
+	t3 = t2 * 4
+	t0 = T0[t3]
+	param t0
+	call f_func
+	return 0
+end f_main

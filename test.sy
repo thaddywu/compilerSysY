@@ -1,0 +1,8 @@
+int func(int a) {
+    return a;
+}
+int main() {
+    int a[10][88][99];
+    func(a[3]);
+    return 0;
+}

@@ -1,10 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-extern void printDecl(string str) ;
-extern void bufferStmt(string str) ;
-extern void printStmt() ;
-
 class nodeAST {
 public:
     nodeAST() {}
@@ -24,9 +20,9 @@ public:
         // _DECL:
     virtual void instantialize() { assert(false); }
     virtual void initialize() { assert(false); }
+        // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM
+    virtual int var() { assert(false); }
         // basic function for all node
-
-    virtual int countp() { assert(false); }
 
     virtual void traverse(string ctn, string brk, bool glb) { assert(false); }
     /* For every function, decl first, then traverse */
@@ -226,6 +222,7 @@ public:
     virtual int eval();
     virtual string atomize() ;
     virtual string lvalize() ;
+    virtual int var() { return 1; }
 };
 class _FUNC_CALL: public _EXPR {
 public:
@@ -233,6 +230,7 @@ public:
     _FUNC_CALL(string _token, nodeAST *_param): token(_token), param(_param) {}
     virtual string atomize() ;
     virtual void traverse(string ctn, string brk, bool glb);
+    virtual void pass() ;
 };
 class _ARRAY_ITEM: public _EXPR {
 public:
@@ -241,6 +239,7 @@ public:
     virtual int eval();
     virtual string atomize() ;
     virtual string lvalize() ;
+    virtual int var() { return 0; }
 };
 
 
@@ -255,8 +254,6 @@ public:
 class _CALL_LIST: public _LIST {
 public:
     _CALL_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
-    virtual void pass() ;
-    virtual string atomize() { assert(false); }
 };
 class _ADDR_LIST: public _LIST {
 public:
@@ -266,18 +263,18 @@ public:
         if (tail) tail->vectorize(v);
     }
     virtual string atomize(string token) ;
+    virtual string atomize() { assert(false); }
 };
 class _PARAM_LIST: public _LIST {
 public:
     _PARAM_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
-    virtual int countp() { return (head ? 1 : 0) + (tail ? tail->countp() : 0);}
     virtual void traverse(string ctn, string brk, bool glb);
+    virtual string atomize() { assert(false); }
 };
 class _STMT_SEQ: public _LIST {
 public:
     _STMT_SEQ(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
     virtual void traverse(string ctn, string brk, bool glb);
-    virtual int countp() { return (head ? head->countp() : 0) + (tail ? tail->countp() : 0);}
 };
 
 
@@ -376,6 +373,7 @@ public:
     _PARAM_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
     virtual void traverse(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
+    virtual int var() { return 1; }
 };
 
 class _DEF_ARR: public _DECL {
@@ -395,6 +393,7 @@ public:
     _PARAM_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
     virtual void traverse(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
+    virtual int var() { return 0; }
 };
 
 /* ==================================== */

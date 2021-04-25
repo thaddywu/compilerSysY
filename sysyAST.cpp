@@ -4,6 +4,7 @@
 using namespace std;
 
 extern TokenManager *tokenManager;
+extern FuncManager *funcManager;
 extern vector<nodeAST *> globalInitList;
 
 /* ================================================= */
@@ -44,8 +45,8 @@ string _ADDR_LIST::atomize(string token) {
     string ret = head->atomize();
     _ADDR_LIST *cur = (_ADDR_LIST *)tail;
     for (int k = 1; k < dim.size(); k++)
-    {
-        assert(cur && cur->head);
+    if (cur) {
+        assert(cur->head);
         string nxt = cur->head->atomize();
         string t1 = tokenManager->newt();
         string t2 = tokenManager->newt();
@@ -54,6 +55,11 @@ string _ADDR_LIST::atomize(string token) {
         bufferStmt("\t" + t2 + " = " + t1 + " + " + nxt);
         ret = t2;
         cur = (_ADDR_LIST *) (cur->tail);
+    }
+    else {
+        string t1 = tokenManager->newt();
+        bufferStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
+        ret = t1;
     }
     assert(cur == NULL);
     string t = tokenManager->newt();
@@ -69,8 +75,8 @@ string _ARRAY_ITEM::atomize() {
 }
 string _FUNC_CALL::atomize() {
     string t = tokenManager->newt();
-    if (param) param->pass();
-        /* param = NULL when func() */
+    if (param) pass();
+        /* if could be deleted */
     bufferStmt("\t" + t + " = call f_" + token);
     return t;
 }
@@ -96,11 +102,25 @@ string _VAR::lvalize() {
 /*      - pass var within function call              */
 /*      - using param, closely followed by calling   */
 /* ================================================= */
-void _CALL_LIST::pass() {
+void _FUNC_CALL::pass() {
     vector<string> call_list {};
-    _CALL_LIST *cur = this;
-    while (cur != NULL) {
-        call_list.push_back(cur->head->atomize());
+    _CALL_LIST *cur = (_CALL_LIST *) param;
+    vector<int> &isvars = funcManager->query(token);
+    
+    for (auto isvar: isvars) {
+        assert(cur->head != NULL);
+        if (isvar || cur->head->var())
+            call_list.push_back(cur->head->atomize());
+        else {
+            /* ought to compute addr */
+            _ARRAY_ITEM *ai = (_ARRAY_ITEM *) (cur->head);
+            string t = tokenManager->newt();
+            string addr = ai->param->atomize(ai->token);
+                /* ai->token, token must be passed!!
+                    no definition on _ADDR_LIST->atomize(void) */
+            bufferStmt("\t" + t + " = " + ai->token + " + " + addr);
+            call_list.push_back(t);
+        }
         cur = (_CALL_LIST *) (cur->tail);
     }
     for (auto p: call_list)
@@ -202,10 +222,11 @@ void _PARAM_LIST::traverse(string ctn, string brk, bool glb) {
 }
 void _FUNC::traverse(string ctn, string brk, bool glb) {
     tokenManager->ascend();
-    int c = param ? param->countp() : 0;
+    int p = funcManager->insert(token, param);
+        /* bool vector: is each param an var(T)/array(F) */
     if (param) param->traverse(ctn, brk, glb);
         /* param = NULL when func() {} */
-    printDecl("f_" + token + " [" + to_string(c) + "]");
+    printDecl("f_" + token + " [" + to_string(p) + "]");
     if (token == "main") {
         /* initialization of global var */
         for (auto glb_var : globalInitList)
@@ -217,7 +238,7 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
     tokenManager->descend();
 }
 void _FUNC_CALL::traverse(string ctn, string brk, bool glb) {
-    if (param) param->pass();
+    if (param) pass();
         /* param = NULL when func() */
     bufferStmt("\tcall f_" + token);
 }

@@ -13,6 +13,7 @@ extern int yylex();
 extern void yyerror(char *mss);
 
 TokenManager *tokenManager;
+FuncManager *funcManager;
 string stmtPrintBuffer;
 vector<nodeAST *> globalInitList;
 void printDecl(string str) ;
@@ -33,7 +34,7 @@ void printStmt(string str) ;
 %left ADD SUB
 %left MUL DIV MOD
 %right NOT
-%nonassoc UMINUS
+%right UMINUS
 
 %%
 
@@ -156,27 +157,25 @@ int flatten(vector<int> &dim) {
 void printDecl(string str) { cout << str << endl; }
 void bufferStmt(string str) { stmtPrintBuffer += str + "\n"; }
 void printStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
+
+#ifdef MANUAL_INPUT
+int main() {
+#else
 int main(int argc, char **argv)
 {
     assert(argc == 6);
     assert(strcmp(argv[1], "-S") == 0);
     assert(strcmp(argv[2], "-e") == 0);
     assert(strcmp(argv[4], "-o") == 0);
-    
+
     freopen(argv[3], "r", stdin);
     freopen(argv[5], "w", stdout);
+#endif
+
     tokenManager = new TokenManager();
     tokenManager->ascend();
     stmtPrintBuffer = "";
+    funcManager = new FuncManager();
     yyparse();
     return 0;
 }
-/*
-int main()
-{
-    tokenManager = new TokenManager();
-    tokenManager->ascend();
-    stmtPrintBuffer = "";
-    yyparse();
-    return 0;
-}*/
