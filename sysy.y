@@ -155,8 +155,15 @@ int flatten(vector<int> &dim) {
 void printDecl(string str) { cout << str << endl; }
 void bufferStmt(string str) { stmtPrintBuffer += str + "\n"; }
 void printStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
-int main()
+int main(int argc, char **argv)
 {
+    assert(argc == 6);
+    assert(strcmp(argv[1], "-S") == 0);
+    assert(strcmp(argv[2], "-e") == 0);
+    assert(strcmp(argv[4], "-o") == 0);
+    
+    freopen(argv[3], "r", stdin);
+    freopen(argv[5], "w", stdout);
     tokenManager = new TokenManager();
     tokenManager->ascend();
     stmtPrintBuffer = "";
