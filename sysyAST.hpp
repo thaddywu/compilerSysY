@@ -88,7 +88,7 @@ public:
         - _TREE_LEAF: expr
 
     _STRING:  $token$
-
+    _DUMMY: non-sense
 */
 
 class _STRING: public nodeAST {
@@ -96,6 +96,13 @@ public:
     string token;
     _STRING(string _token): token(_token) {}
     virtual string getToken() { return token; }
+};
+class _DUMMY: public nodeAST {
+    /* this class is necessary, designed for
+        empty statement or expr statement */
+public:
+    string token;
+    virtual void traverse(string ctn, string brk, bool glb) { } /* do nothing */
 };
 
 class _PROGRAM: public nodeAST {
