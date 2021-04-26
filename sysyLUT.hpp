@@ -2,8 +2,8 @@
 using namespace std;
 
 extern void printDecl(string str) ;
-extern void bufferStmt(string str) ;
-extern void printStmt() ;
+extern void printStmt(string str) ;
+extern void refreshStmt() ;
 extern int flatten(vector<int> &dim); // defined in sysy.y
 
 class dataCell {
@@ -93,9 +93,9 @@ public:
         if (expr == NULL) return ;
         string t = expr->atomize();
         if (var)
-            bufferStmt("\t" + eeyore + " = " + t);
+            printStmt("\t" + eeyore + " = " + t);
         else
-            bufferStmt("\t" + eeyore + "[" + to_string(addr * 4) + "] = " + t);
+            printStmt("\t" + eeyore + "[" + to_string(addr * 4) + "] = " + t);
     }
 };
 

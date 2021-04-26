@@ -30,38 +30,38 @@ int _ARRAY_ITEM::eval() {
 string _UNARY_OP::atomize() {
     string aop = op->atomize();
     string t = tokenManager->newt();
-    bufferStmt("\t" + t + " = " + symbol() + aop);
+    printStmt("\t" + t + " = " + symbol() + aop);
     return t;
 }
 string _BINARY_OP::atomize() {
     string alop = lop->atomize();
     string arop = rop->atomize();
     string t = tokenManager->newt();
-    bufferStmt("\t" + t + " = " + alop + " " + symbol() + " " + arop);
+    printStmt("\t" + t + " = " + alop + " " + symbol() + " " + arop);
     return t;
 }
 string _AND::atomize() {
     string t = tokenManager->newt();
-    bufferStmt("\t" + t + " = 0");
+    printStmt("\t" + t + " = 0");
     string alop = lop->atomize();
     string cp = tokenManager->newl();
-    bufferStmt("\tif " + alop + " == 0 goto " + cp);
+    printStmt("\tif " + alop + " == 0 goto " + cp);
     string arop = rop->atomize();
-    bufferStmt("\tif " + arop + " == 0 goto " + cp);
-    bufferStmt("\t" + t + " = 1");
-    bufferStmt(cp + ":");
+    printStmt("\tif " + arop + " == 0 goto " + cp);
+    printStmt("\t" + t + " = 1");
+    printStmt(cp + ":");
     return t;
 }
 string _OR::atomize() {
     string t = tokenManager->newt();
-    bufferStmt("\t" + t + " = 1");
+    printStmt("\t" + t + " = 1");
     string alop = lop->atomize();
     string cp = tokenManager->newl();
-    bufferStmt("\tif " + alop + " != 0 goto " + cp);
+    printStmt("\tif " + alop + " != 0 goto " + cp);
     string arop = rop->atomize();
-    bufferStmt("\tif " + arop + " != 0 goto " + cp);
-    bufferStmt("\t" + t + " = 0");
-    bufferStmt(cp + ":");
+    printStmt("\tif " + arop + " != 0 goto " + cp);
+    printStmt("\t" + t + " = 0");
+    printStmt(cp + ":");
     return t;
 }
 string _ADDR_LIST::atomize(string token) {
@@ -76,33 +76,33 @@ string _ADDR_LIST::atomize(string token) {
         string t1 = tokenManager->newt();
         string t2 = tokenManager->newt();
 
-        bufferStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
-        bufferStmt("\t" + t2 + " = " + t1 + " + " + nxt);
+        printStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
+        printStmt("\t" + t2 + " = " + t1 + " + " + nxt);
         ret = t2;
         cur = (_ADDR_LIST *) (cur->tail);
     }
     else {
         string t1 = tokenManager->newt();
-        bufferStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
+        printStmt("\t" + t1 + " = " + ret + " * " + to_string(dim[k]));
         ret = t1;
     }
     assert(cur == NULL);
     string t = tokenManager->newt();
-    bufferStmt("\t" + t + " = " + ret + " * 4");
+    printStmt("\t" + t + " = " + ret + " * 4");
     return t;
 }
 string _ARRAY_ITEM::atomize() {
     /* potential optimization for constant array */
     string t = tokenManager->newt();
     string lval = param->atomize(token);
-    bufferStmt("\t" + t + " = " + tokenManager->getEeyore(token) + "[" + lval + "]");
+    printStmt("\t" + t + " = " + tokenManager->getEeyore(token) + "[" + lval + "]");
     return t;
 }
 string _FUNC_CALL::atomize() {
     string t = tokenManager->newt();
     if (param) pass();
         /* if could be deleted */
-    bufferStmt("\t" + t + " = call f_" + token);
+    printStmt("\t" + t + " = call f_" + token);
     return t;
 }
 string _VAR::atomize() {
@@ -143,13 +143,13 @@ void _FUNC_CALL::pass() {
             string addr = ai->param->atomize(ai->token);
                 /* ai->token, token must be passed!!
                     no definition on _ADDR_LIST->atomize(void) */
-            bufferStmt("\t" + t + " = " + ai->token + " + " + addr);
+            printStmt("\t" + t + " = " + ai->token + " + " + addr);
             call_list.push_back(t);
         }
         cur = (_CALL_LIST *) (cur->tail);
     }
     for (auto p: call_list)
-        bufferStmt("\tparam " + p);
+        printStmt("\tparam " + p);
 }
 
 /* ================================================= */
@@ -183,7 +183,7 @@ void _DEF_ARR::initialize() {
 void _PROGRAM::traverse(string ctn, string brk, bool glb) {
     if (program)
         program->traverse(ctn, brk, glb);
-    printStmt();
+    refreshStmt();
 }
 void _EXPR::traverse(string ctn, string brk, bool glb) {
     /* do nothing , expr ;*/
@@ -195,49 +195,49 @@ void _STMT_SEQ::traverse(string ctn, string brk, bool glb) {
 void _IF::traverse(string ctn, string brk, bool glb) {
     string c = cond->atomize();
     string cp = tokenManager->newl();
-    bufferStmt("\tif " + c + " == 0 goto " + cp);
+    printStmt("\tif " + c + " == 0 goto " + cp);
     body->traverse(ctn, brk, glb);
-    bufferStmt(cp + ":");
+    printStmt(cp + ":");
 }
 void _IF_ELSE::traverse(string ctn, string brk, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
     string c = cond->atomize();
-    bufferStmt("\tif " + c + " == 0 goto " + cp1);
+    printStmt("\tif " + c + " == 0 goto " + cp1);
     body->traverse(ctn, brk, glb);
-    bufferStmt("\tgoto " + cp2);
-    bufferStmt(cp1 + ":");
+    printStmt("\tgoto " + cp2);
+    printStmt(cp1 + ":");
     ebody->traverse(ctn, brk, glb);
-    bufferStmt(cp2 + ":");
+    printStmt(cp2 + ":");
 }
 void _WHILE::traverse(string ctn, string brk, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
-    bufferStmt(cp1 + ":");
+    printStmt(cp1 + ":");
         /* must set chk-point first, then atomize cond */
     string c = cond->atomize();
-    bufferStmt("\tif " + c + " == 0 goto " + cp2);
+    printStmt("\tif " + c + " == 0 goto " + cp2);
     body->traverse(cp1, cp2, glb);
-    bufferStmt("\tgoto " + cp1);
-    bufferStmt(cp2 + ":");
+    printStmt("\tgoto " + cp1);
+    printStmt(cp2 + ":");
 }
 void _RETURN_VOID::traverse(string ctn, string brk, bool glb) {
-    bufferStmt("\treturn");
+    printStmt("\treturn");
 }
 void _RETURN_EXPR::traverse(string ctn, string brk, bool glb) {
     string t = expr->atomize();
-    bufferStmt("\treturn " + t);
+    printStmt("\treturn " + t);
 }
 void _CONTINUE::traverse(string ctn, string brk, bool glb) {
-    bufferStmt("\tgoto " + ctn);
+    printStmt("\tgoto " + ctn);
 }
 void _BREAK::traverse(string ctn, string brk, bool glb) {
-    bufferStmt("\tgoto " + brk);
+    printStmt("\tgoto " + brk);
 }
 void _ASSIGN::traverse(string ctn, string brk, bool glb) {
     string lval = lop->lvalize();
     string rval = rop->atomize();
-    bufferStmt("\t" + lval + " = " + rval);
+    printStmt("\t" + lval + " = " + rval);
 }
 void _BLOCK::traverse(string ctn, string brk, bool glb) {
     tokenManager->ascend();
@@ -263,15 +263,15 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
     }
     assert(body != NULL);
     body->traverse(ctn, brk, false);
-    if (isvoid) bufferStmt("\treturn");
-    printStmt();
+    if (isvoid) printStmt("\treturn");
+    refreshStmt();
     printDecl("end f_" + token);
     tokenManager->descend();
 }
 void _FUNC_CALL::traverse(string ctn, string brk, bool glb) {
     if (param) pass();
         /* param = NULL when func() */
-    bufferStmt("\tcall f_" + token);
+    printStmt("\tcall f_" + token);
 }
 void _DEF_VAR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {};

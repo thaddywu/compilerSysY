@@ -4,7 +4,6 @@
 #include "sysyLUT.hpp"
 using namespace std;
 #define YYSTYPE nodeAST*
-#define maxSon 3
 
 extern int _sysy_val;
 extern string _sysy_str;
@@ -17,8 +16,8 @@ FuncManager *funcManager;
 string stmtPrintBuffer;
 vector<nodeAST *> globalInitList;
 void printDecl(string str) ;
-void bufferStmt(string str) ;
 void printStmt(string str) ;
+void refreshStmt() ;
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -157,8 +156,8 @@ int flatten(vector<int> &dim) {
     int ret = 1; for (auto x: dim) ret *= x; return ret;
 }
 void printDecl(string str) { cout << str << endl; }
-void bufferStmt(string str) { stmtPrintBuffer += str + "\n"; }
-void printStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
+void printStmt(string str) { stmtPrintBuffer += str + "\n"; }
+void refreshStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
 
 #ifdef MANUAL_INPUT
 int main() {
