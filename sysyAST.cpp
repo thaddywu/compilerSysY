@@ -57,9 +57,9 @@ string _OR::atomize() {
     bufferStmt("\t" + t + " = 1");
     string alop = lop->atomize();
     string cp = tokenManager->newl();
-    bufferStmt("\tif " + alop + " == 1 goto " + cp);
+    bufferStmt("\tif " + alop + " != 0 goto " + cp);
     string arop = rop->atomize();
-    bufferStmt("\tif " + arop + " == 1 goto " + cp);
+    bufferStmt("\tif " + arop + " != 0 goto " + cp);
     bufferStmt("\t" + t + " = 0");
     bufferStmt(cp + ":");
     return t;
