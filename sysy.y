@@ -36,7 +36,7 @@ void printStmt(string str) ;
 %left GT LT GE LE
 %left ADD SUB
 %left MUL DIV MOD
-%right UMINUS NOT
+%right UMINUS UPLUS NOT
 
 %%
 
@@ -61,6 +61,7 @@ Expr : Expr ADD Expr { $$ = new _ADD($1, $3); }
     | Expr EQ Expr { $$ = new _EQ($1, $3); }
     | '(' Expr ')' { $$ = $2; }
     | SUB Expr %prec UMINUS { $$ = new _NEG($2); }
+    | ADD Expr %prec UPLUS { $$ = $2; }
     | NOT Expr { $$ = new _NOT($2); }
     | INTEGER { $$ = new _INTEGER(_sysy_val); }
     | KEY { $$ = new _VAR(_sysy_str); }
