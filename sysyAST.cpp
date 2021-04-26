@@ -25,6 +25,7 @@ int _ARRAY_ITEM::eval() {
 /* atomize                                           */
 /*      - reduce to var                              */
 /*      - including function call & array item       */
+/*      - AND/ OR is special                         */
 /* ================================================= */
 string _UNARY_OP::atomize() {
     string aop = op->atomize();
@@ -37,6 +38,30 @@ string _BINARY_OP::atomize() {
     string arop = rop->atomize();
     string t = tokenManager->newt();
     bufferStmt("\t" + t + " = " + alop + " " + symbol() + " " + arop);
+    return t;
+}
+string _AND::atomize() {
+    string t = tokenManager->newt();
+    bufferStmt("\t" + t + " = 0");
+    string alop = lop->atomize();
+    string cp = tokenManager->newl();
+    bufferStmt("\tif " + alop + " == 0 goto " + cp);
+    string arop = rop->atomize();
+    bufferStmt("\tif " + arop + " == 0 goto " + cp);
+    bufferStmt("\t" + t + " = 1");
+    bufferStmt(cp + ":");
+    return t;
+}
+string _OR::atomize() {
+    string t = tokenManager->newt();
+    bufferStmt("\t" + t + " = 1");
+    string alop = lop->atomize();
+    string cp = tokenManager->newl();
+    bufferStmt("\tif " + alop + " == 1 goto " + cp);
+    string arop = rop->atomize();
+    bufferStmt("\tif " + arop + " == 1 goto " + cp);
+    bufferStmt("\t" + t + " = 0");
+    bufferStmt(cp + ":");
     return t;
 }
 string _ADDR_LIST::atomize(string token) {

@@ -9,7 +9,9 @@ public:
     virtual string getToken() { assert(false); }
         // _EXPR:: eval expression, reduce to var & return operational symbol
     virtual int eval() { assert(false); }
+        // _EXPR:: all except for AND, OR. case : true || array[-1] should not incur error
     virtual string atomize() { assert(false); }
+        // For _ADDR_LIST, corresponding function name is passed
     virtual string atomize(string token) { assert(false); }
     virtual string symbol() { assert(false); }
     virtual string lvalize() { assert(false); }
@@ -17,7 +19,10 @@ public:
     virtual void vectorize(vector<int> &v) { assert(false); }
         // _CALL_LIST:: param pass
     virtual void pass() { assert(false); }
-        // _DECL:
+        /* _DECL:
+            instantialize: _DEF_CONST_VAR, _DEF_CONST_ARR calls tokenManager/ other _DECL type do nothing
+            initialize: all, implemented in _DEF_VAR & _DEF_ARR
+        */
     virtual void instantialize() { assert(false); }
     virtual void initialize() { assert(false); }
         // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM
@@ -165,12 +170,14 @@ public:
     _AND(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() && rop->eval(); }
     virtual string symbol() { return "&&"; }
+    virtual string atomize() ;
 };
 class _OR: public _BINARY_OP {
 public:
     _OR(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() || rop->eval(); }
     virtual string symbol() { return "||"; }
+    virtual string atomize() ;
 };
 class _LT: public _BINARY_OP {
 public:
