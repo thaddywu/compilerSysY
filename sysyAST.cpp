@@ -185,6 +185,9 @@ void _PROGRAM::traverse(string ctn, string brk, bool glb) {
         program->traverse(ctn, brk, glb);
     printStmt();
 }
+void _EXPR::traverse(string ctn, string brk, bool glb) {
+    /* do nothing , expr ;*/
+}
 void _STMT_SEQ::traverse(string ctn, string brk, bool glb) {
     if (head != NULL) head->traverse(ctn, brk, glb);
     if (tail != NULL) tail->traverse(ctn, brk, glb);

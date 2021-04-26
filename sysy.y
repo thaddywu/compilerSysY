@@ -113,7 +113,7 @@ Stmt : IF '(' Expr ')' Stmt %prec LOWER_THAN_ELSE { $$ = new _IF($3, $5); }
     | Func { $$ = $1; }
     | Decl { $$ = $1; }
     | ';' { $$ = new _DUMMY(); }
-    | Expr ';' { $$ = new _DUMMY(); }
+    | Expr ';' { $$ = $1; }
     ;
 
 Assign : Expr ASSIGN Expr ';' { $$ = new _ASSIGN($1, $3); }

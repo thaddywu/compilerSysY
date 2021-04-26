@@ -117,6 +117,7 @@ public:
 class _EXPR: public nodeAST {
 public:
     _EXPR() {}
+    void traverse(string ctn, string brk, bool glb) ;
 };
 class _UNARY_OP: public _EXPR {
 public:
