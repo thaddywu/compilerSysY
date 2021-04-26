@@ -260,6 +260,7 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
     }
     assert(body != NULL);
     body->traverse(ctn, brk, false);
+    if (isvoid) bufferStmt("\treturn");
     printStmt();
     printDecl("end f_" + token);
     tokenManager->descend();

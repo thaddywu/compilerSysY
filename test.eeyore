@@ -1,0 +1,9 @@
+f_func [0]
+	var 24 T0
+	T0[0] = 2
+	T0[4] = 3
+	return
+end f_func
+f_main [0]
+	return 0
+end f_main

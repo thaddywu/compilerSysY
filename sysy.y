@@ -111,7 +111,6 @@ Stmt : IF '(' Expr ')' Stmt %prec LOWER_THAN_ELSE { $$ = new _IF($3, $5); }
     | '{' StmtSeq '}' { $$ = new _BLOCK($2); }
     | Assign { $$ = $1; }
     | Func { $$ = $1; }
-    | FuncCall { $$ = $1; }
     | Decl { $$ = $1; }
     | ';' { $$ = new _DUMMY(); }
     | Expr ';' { $$ = new _DUMMY(); }
@@ -120,13 +119,11 @@ Stmt : IF '(' Expr ')' Stmt %prec LOWER_THAN_ELSE { $$ = new _IF($3, $5); }
 Assign : Expr ASSIGN Expr ';' { $$ = new _ASSIGN($1, $3); }
     ;
 
-Func : INT Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6); }
-    | VOID Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6); }
-    | INT Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5); }
-    | VOID Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5); }
+Func : INT Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6, false); }
+    | VOID Str '(' ParamList ')' Stmt { $$ = new _FUNC($2->getToken(), $4, $6, true); }
+    | INT Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5, false); }
+    | VOID Str '(' ')' Stmt { $$ = new _FUNC($2->getToken(), NULL, $5, true); }
     ;
-
-FuncCall : FuncRet ';' { $$ = $1; }
 
 Decl : INT DefList ';' { $$ = $2; }
     | CONST INT ConstDefList ';' { $$ = $3; }

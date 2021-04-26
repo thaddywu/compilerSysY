@@ -357,8 +357,8 @@ public:
 /* ==================================== */
 class _FUNC: public _STMT {
 public:
-    string token; nodeAST *param, *body;
-    _FUNC(string _token, nodeAST *_param, nodeAST *_body): token(_token), param(_param), body(_body) {}
+    string token; nodeAST *param, *body; bool isvoid;
+    _FUNC(string _token, nodeAST *_param, nodeAST *_body, bool _isvoid): token(_token), param(_param), body(_body), isvoid(_isvoid) {}
     virtual void traverse(string ctn, string brk, bool glb);
 };
 
