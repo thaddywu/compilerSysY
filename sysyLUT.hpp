@@ -214,7 +214,7 @@ public:
     FuncManager() {
         vector<int> uniarr {0};
         vector<int> univar {1};
-        vector<int> novar {1};
+        vector<int> novar {};
         vector<int> mix {1, 0};
         table["getint"] = novar;
         table["getch"] = novar;
@@ -222,6 +222,8 @@ public:
         table["putint"] = univar;
         table["putch"] = univar;
         table["putarray"] = mix;
+        table["starttime"] = novar;
+        table["stoptime"] = novar;
     }
     int insert(string token, nodeAST *param) {
         assert(table.find(token) == table.end());
