@@ -10,7 +10,7 @@ string _sysy_str;
 
 digit [0-9]
 letter [a-zA-Z_]
-delim [ \t\n]
+delim [ \r\t\n]
 ws {delim}+
 hex 0[Xx][0-9A-Fa-f]+
 oct 0[0-7]*
