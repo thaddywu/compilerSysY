@@ -101,7 +101,6 @@ string _ARRAY_ITEM::atomize() {
 string _FUNC_CALL::atomize() {
     string t = tokenManager->newt();
     if (param) pass();
-        /* if could be deleted */
     printStmt("\t" + t + " = call f_" + token);
     return t;
 }
@@ -134,7 +133,7 @@ void _FUNC_CALL::pass() {
     
     for (auto isvar: isvars) {
         assert(cur->head != NULL);
-        if (isvar || cur->head->var())
+        if (isvar || cur->head->isvar())
             call_list.push_back(cur->head->atomize());
         else {
             /* ought to compute addr */
@@ -177,8 +176,10 @@ void _DEF_ARR::initialize() {
 
 /* ================================================= */
 /* traverse                                          */
-/*      -                                            */
-/*      -                                            */
+/*      -  traverse AST, and do the conversion.      */
+/*      - ctn: continue to where                     */
+/*      - brk: break to where                        */
+/*      - glb: in global environment?                */
 /* ================================================= */
 void _PROGRAM::traverse(string ctn, string brk, bool glb) {
     if (program)
@@ -240,21 +241,21 @@ void _ASSIGN::traverse(string ctn, string brk, bool glb) {
     printStmt("\t" + lval + " = " + rval);
 }
 void _BLOCK::traverse(string ctn, string brk, bool glb) {
-    tokenManager->ascend();
+    tokenManager->newEnviron();
     if (block) block->traverse(ctn, brk, glb);
         /* possible occassions: block body is empty */
-    tokenManager->descend();
+    tokenManager->deleteEnviron();
 }
 void _PARAM_LIST::traverse(string ctn, string brk, bool glb) {
     if (head) head->traverse(ctn, brk, glb);
     if (tail) tail->traverse(ctn, brk, glb);
 }
 void _FUNC::traverse(string ctn, string brk, bool glb) {
-    tokenManager->ascend();
+    tokenManager->newEnviron();
     int p = funcManager->insert(token, param);
         /* bool vector: is each param an var(T)/array(F) */
     if (param) param->traverse(ctn, brk, glb);
-        /* param = NULL when func() {} */
+        /* param = NULL in case func() {} */
     printDecl("f_" + token + " [" + to_string(p) + "]");
     if (token == "main") {
         /* initialization of global var */
@@ -266,11 +267,11 @@ void _FUNC::traverse(string ctn, string brk, bool glb) {
     if (isvoid) printStmt("\treturn");
     refreshStmt();
     printDecl("end f_" + token);
-    tokenManager->descend();
+    tokenManager->deleteEnviron();
 }
 void _FUNC_CALL::traverse(string ctn, string brk, bool glb) {
     if (param) pass();
-        /* param = NULL when func() */
+        /* param = NULL in case func() */
     printStmt("\tcall f_" + token);
 }
 void _DEF_VAR::traverse(string ctn, string brk, bool glb) {
@@ -302,7 +303,7 @@ void _DEF_ARR::traverse(string ctn, string brk, bool glb) {
 void _PARAM_ARR::traverse(string ctn, string brk, bool glb) {
     vector<int> dim {0};
     if (addr) addr->vectorize(dim);
-        /* addr = NULL when token[] */
+        /* addr = NULL in case token[] */
     dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
     tokenManager->insert(dd, true);
 }

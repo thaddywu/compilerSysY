@@ -5,32 +5,40 @@ class nodeAST {
 public:
     nodeAST() {}
     ~nodeAST() {}
-        // _STR:: return string
+        // _STR::getToken return string
     virtual string getToken() { assert(false); }
-        // _EXPR:: eval expression, reduce to var & return operational symbol
+        // _EXPR::eval return its integer value, 
     virtual int eval() { assert(false); }
-        // _EXPR:: all except for AND, OR. case : true || array[-1] should not incur error
+        // _EXPR::atomize return its representation which could appear in the right of assignment. special case : true || array[-1] should not incur error
     virtual string atomize() { assert(false); }
         // For _ADDR_LIST, corresponding function name is passed
     virtual string atomize(string token) { assert(false); }
+        // symbol: For expr, return its operator
     virtual string symbol() { assert(false); }
+        // lvalize: For expr, return its representation which chould apper in the left of assignment
     virtual string lvalize() { assert(false); }
-        // _ADDR_LIST:: vectorize list & reduce to unary var
+        // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
     virtual void vectorize(vector<int> &v) { assert(false); }
-        // _CALL_LIST:: param pass
+        // _CALL_LIST::pass pass params
     virtual void pass() { assert(false); }
-        /* _DECL:
+        /* _DECL structure:
             instantialize: _DEF_CONST_VAR, _DEF_CONST_ARR calls tokenManager/ other _DECL type do nothing
-            initialize: all, implemented in _DEF_VAR & _DEF_ARR
+                to substitute expression with its integer value.
+            initialize: for all, implemented in _DEF_VAR & _DEF_ARR
         */
     virtual void instantialize() { assert(false); }
     virtual void initialize() { assert(false); }
-        // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM
-    virtual int var() { assert(false); }
+        // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM::: isvar, return a boolean 
+    virtual int isvar() { assert(false); }
         // basic function for all node
 
+        /* traverse: traverse AST, and do the conversion.
+            - ctn: continue to where
+            - brk: break to where
+            - glb: if now in function
+        */
     virtual void traverse(string ctn, string brk, bool glb) { assert(false); }
-    /* For every function, decl first, then traverse */
+
     /* Logic structrue:
         global : decl , (stop at function)
                 then traverse
@@ -237,7 +245,7 @@ public:
     virtual int eval();
     virtual string atomize() ;
     virtual string lvalize() ;
-    virtual int var() { return 1; }
+    virtual int isvar() { return 1; }
 };
 class _FUNC_CALL: public _EXPR {
 public:
@@ -254,7 +262,7 @@ public:
     virtual int eval();
     virtual string atomize() ;
     virtual string lvalize() ;
-    virtual int var() { return 0; }
+    virtual int isvar() { return 0; }
 };
 
 
@@ -388,7 +396,7 @@ public:
     _PARAM_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
     virtual void traverse(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
-    virtual int var() { return 1; }
+    virtual int isvar() { return 1; }
 };
 
 class _DEF_ARR: public _DECL {
@@ -408,7 +416,7 @@ public:
     _PARAM_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
     virtual void traverse(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
-    virtual int var() { return 0; }
+    virtual int isvar() { return 0; }
 };
 
 /* ==================================== */

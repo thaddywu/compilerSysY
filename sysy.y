@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 #endif
 
     tokenManager = new TokenManager();
-    tokenManager->ascend();
+    tokenManager->newEnviron();
     stmtPrintBuffer = "";
     funcManager = new FuncManager();
     yyparse();

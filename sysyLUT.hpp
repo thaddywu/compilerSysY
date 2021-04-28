@@ -6,6 +6,11 @@ extern void printStmt(string str) ;
 extern void refreshStmt() ;
 extern int flatten(vector<int> &dim); // defined in sysy.y
 
+/*
+    dataCell:
+        - dataLeaf: leaf node of data tree, expr represents its value.
+        - dataAggr: internal node of data tree, aggr stores its children's ptrs
+*/
 class dataCell {
 public:
     int depth;
@@ -18,8 +23,12 @@ class dataAggr: public dataCell{
 public:
     vector<dataCell*> aggr;
     dataAggr(int _depth): dataCell(_depth) {}
+/* =============================================== */
+/* condese                                         */
+/*      - merge nodes of the same depth            */
+/*      - at most n nodes be merged once, n:length */
+/* =============================================== */
     void condense(vector<int> &dim) {
-        /* merge cells in the end of the same depth. */
         assert(!aggr.empty());
         int depth = aggr.back()->depth;
         assert(depth > 0);
@@ -35,8 +44,12 @@ public:
         reverse(cds->aggr.begin(), cds->aggr.end());
         aggr.push_back(cds);
     }
+/* =============================================== */
+/* merge                                           */
+/*      - merge nodes of the same depth            */
+/*      - only exactly n nodes                     */
+/* =============================================== */
     void merge(vector<int> &dim) {
-        /* merge only when #cells reaches the array's boundray. */
         while (!aggr.empty()) {
             int depth = aggr.back()->depth;
             if (depth == 0) {
@@ -48,9 +61,13 @@ public:
             condense(dim);
         }
     }
+/* =============================================== */
+/* liftup                                          */
+/*      - extend current array into higher-dim     */
+/*      - remember to merge nodes of the same      */
+/*          depth immediately after liftup once    */
+/* =============================================== */
     void liftup(vector<int> &dim, int depth) {
-        /* lift node to given depth, every time condense the end,
-            but remember to merge the end immediately !! */
         while (!aggr.empty() && aggr.back()->depth > depth)
             { condense(dim); merge(dim); }
     }
@@ -73,10 +90,18 @@ public:
         }
         printf(" }");
     }
+/* =============================================== */
+/* instantialize                                   */
+/*      - substitue expr with its integer value    */
+/* =============================================== */
     virtual void instantialize() {
         for (auto child: aggr)
             child->instantialize();
     }
+/* =============================================== */
+/* initialize                                      */
+/*      - set initial value                        */
+/* =============================================== */
     virtual void initialize(string &eeyore, vector<int> &dim, int addr, bool var) {
         addr *= dim[depth];
         for (int i = 0; i < aggr.size(); i++)
@@ -99,6 +124,17 @@ public:
     }
 };
 
+/* ====================================================== */
+/* dataDescript                                           */
+/*      - token: array/var's name                         */
+/*      - eeyore: name after translation                  */
+/*      - dim: shape of array, dim[i] for length of dim-i */
+/*           for var, it's empty                          */
+/*      - inits: data, type of _DATA_CELL                 */
+/*      - eval(addr): return value array's given position */
+/*      - eval(): return value of var                     */
+/*      - getSize(): get occupied memory size without * 4 */
+/* ====================================================== */
 class dataDescript {
 public:
     string token;
@@ -143,23 +179,39 @@ private:
     }
 };
 
-
+/* ============================================================ */
+/* TokenManager                                                 */
+/*      - table: map for token->dataDescript                    */
+/*      - record: declaration records in this domain            */
+/*      - newp(), newt(), newT(), newl(): new var or annotation */
+/*      - newEnviron(): create new environ                      */
+/*      - deleteEnviron(): back to last environ                 */
+/*      - insert(dd, param): insert a var/array                 */
+/*          - dd: dataDescript                                  */
+/*          - param: boolean, to determine p0 or T0             */
+/*      - getEeyore(token): translate name                      */
+/*      - getDim(token): return its shape                       */
+/*      - getSize(token): return its flattened size             */
+/*          - no definition for var                             */
+/*      - initialize(token)                                     */
+/*      - instantialize(token)                                  */
+/* ============================================================ */
 class TokenManager {
 private:
     map<string, dataDescript*> table;
     typedef pair<dataDescript*, dataDescript*> ddPair;
     typedef vector<ddPair> Record;
     stack< Record > record;
-    int tempNum, globalNum, paramNum, cpNum; /* #t, #T, #p, #l*/
+    int tempNum, varNum, paramNum, cpNum; /* #t, #T, #p, #l*/
     
 public:
-    TokenManager(): tempNum(0), globalNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
+    TokenManager(): tempNum(0), varNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
     string newt() { string t = "t" + to_string(tempNum); tempNum++; printDecl("\tvar " + t); return t;}
-    string newT() { string T = "T" + to_string(globalNum); globalNum++; printDecl("\tvar " + T); return T;}
-    string newT(int sz) { string T = "T" + to_string(globalNum); globalNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
+    string newT() { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + T); return T;}
+    string newT(int sz) { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
     string newl() { string l = "l" + to_string(cpNum); cpNum++; return l;}
-    void ascend() { record.push({}); paramNum = 0; /* not-good implementation here */ }
+    void newEnviron() { record.push({}); paramNum = 0; /* not-good implementation here */ }
     void insert(dataDescript* dd, bool param = false) {
         if (param)
             dd->eeyore = newp();
@@ -175,7 +227,7 @@ public:
         }
         table[dd->token] = dd;
     }
-    void descend() {
+    void deleteEnviron() {
         for (auto item: record.top())
             table[item.second->token] = item.first;
         record.pop();
@@ -186,7 +238,6 @@ public:
     
     string getEeyore(string token) { return table[token]->eeyore; } /* return correspoding token in eeyore */
     vector<int>& getDim(string token) { return table[token]->dim; } /* return dim vector of given token */
-    dataCell* getInits(string token) { return table[token]->inits; } /* return inits tree of given token */
     int getSize(string token) { return table[token]->getSize(); }
 
     void instantialize(string token) {
@@ -231,7 +282,7 @@ public:
         if (param != NULL) {
             _PARAM_LIST *cur = (_PARAM_LIST *) param;
             while (cur != NULL) {
-                plist.push_back(cur->head->var());
+                plist.push_back(cur->head->isvar());
                 cur = (_PARAM_LIST *) (cur->tail);
             }
         }
