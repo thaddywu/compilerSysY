@@ -202,15 +202,15 @@ private:
     typedef pair<dataDescript*, dataDescript*> ddPair;
     typedef vector<ddPair> Record;
     stack< Record > record;
-    int tempNum, varNum, paramNum, cpNum; /* #t, #T, #p, #l*/
+    int tempNum, varNum, paramNum, labelNum; /* #t, #T, #p, #l*/
     
 public:
-    TokenManager(): tempNum(0), varNum(0), paramNum(0), cpNum(0) { assert(record.empty()); }
+    TokenManager(): tempNum(0), varNum(0), paramNum(0), labelNum(0) { assert(record.empty()); }
     string newt() { string t = "t" + to_string(tempNum); tempNum++; printDecl("\tvar " + t); return t;}
     string newT() { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + T); return T;}
     string newT(int sz) { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
-    string newl() { string l = "l" + to_string(cpNum); cpNum++; return l;}
+    string newl() { string l = "l" + to_string(labelNum); labelNum++; return l;}
     void newEnviron() { record.push({}); paramNum = 0; /* not-good implementation here */ }
     void insert(dataDescript* dd, bool param = false) {
         if (param)

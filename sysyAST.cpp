@@ -215,7 +215,7 @@ void _WHILE::traverse(string ctn, string brk, bool glb) {
     string cp1 = tokenManager->newl();
     string cp2 = tokenManager->newl();
     printStmt(cp1 + ":");
-        /* must set chk-point first, then atomize cond */
+        /* must set label first, then atomize cond */
     string c = cond->atomize();
     printStmt("\tif " + c + " == 0 goto " + cp2);
     body->traverse(cp1, cp2, glb);
@@ -281,7 +281,7 @@ void _DEF_VAR::traverse(string ctn, string brk, bool glb) {
     instantialize();
     if (!glb)
         initialize();
-    else
+    else /* delay global variables' initialization, do it in main */
         globalInitList.push_back(this);
 }
 void _PARAM_VAR::traverse(string ctn, string brk, bool glb) {
