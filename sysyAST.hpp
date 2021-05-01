@@ -30,7 +30,6 @@ public:
     virtual void initialize() { assert(false); }
         // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM::: isvar, return a boolean 
     virtual int isvar() { assert(false); }
-        // basic function for all node
 
         /* traverse: traverse AST, and do the conversion.
             - ctn: continue to where
@@ -39,24 +38,16 @@ public:
         */
     virtual void traverse(string ctn, string brk, bool glb) { assert(false); }
 
-    /* Logic structrue:
-        global : decl , (stop at function)
-                then traverse
-        func : print structure, then decl, then traverse
-                in main, implement initialization of global vars
-    */
-
-    /* some virtual functions are embedded in _TREE,
-        so as to avoid enormous declaration in nodeAST,
-        but therefore explicit conversion is needed,
-        when using functions of _TREE
+    /* some virtual functions are only declared in _TREE,
+        so as to avoid excessive declaration in based type nodeAST.
+        As a result, coercion is needed when calling those functions.
     */
 };
 
 /*
     Definition of nodes, so as to construct Abstraction Syntax Tree
     _PROGRAM:
-        whole structure
+        program.. top module
     _EXPR:
         - _BINARY_OP: lop, rop
             - _AND, _SUB, _DIV, _MUL, _MOD, _AND, _OR, _LT, _GT, _LE, _GE, _EQ, _NEQ

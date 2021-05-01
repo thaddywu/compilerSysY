@@ -273,8 +273,6 @@ public:
         table["putint"] = univar;
         table["putch"] = univar;
         table["putarray"] = mix;
-        table["starttime"] = novar;
-        table["stoptime"] = novar;
     }
     int insert(string token, nodeAST *param) {
         assert(table.find(token) == table.end());
