@@ -229,13 +229,13 @@ void _ASSIGN::translate(string ctn, string brk, bool glb) {
     eeyoreAST* rval = rop->atomize();
     if (lop->isvar()) {
         _VAR *var = (_VAR *)lop;
-        eeyoreStmt(new _eDIRECT(new _eVAR(var->token), rval));
+        eeyoreStmt(new _eDIRECT(new _eVAR(tokenManager->getEeyore(var->token)), rval));
     }
     else {
         _ARRAY_ITEM *ai = (_ARRAY_ITEM *)lop;
         eeyoreAST* param = ai->param->atomize(ai->token);
             /* remember to write ->atomize(token) !!! */
-        eeyoreStmt(new _eSTORE(ai->token, param, rval));
+        eeyoreStmt(new _eSTORE(tokenManager->getEeyore(ai->token), param, rval));
     }
 }
 void _BLOCK::translate(string ctn, string brk, bool glb) {
