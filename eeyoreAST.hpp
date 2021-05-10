@@ -40,9 +40,9 @@ public:
 };
 class _eDEFARR: public eeyoreAST {
 public:
-    string var; int size;
+    string var; int size; // without * 4
     _eDEFARR(string _var, int _size): var(_var), size(_size) {}
-    virtual void Dump() { printTab("var " + to_string(size) + " " + var); }
+    virtual void Dump() { printTab("var " + to_string(size * 4) + " " + var); }
 };
 class _eDIRECT: public eeyoreAST {
 public:
