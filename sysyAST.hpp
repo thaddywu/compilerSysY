@@ -1,22 +1,24 @@
 #include <bits/stdc++.h>
+#ifndef eeyoreAST_hpp
+#include "eeyoreAST.hpp"
+#define eeyoreAST_hpp
+#endif
 using namespace std;
 
-class nodeAST {
+class sysyAST {
 public:
-    nodeAST() {}
-    ~nodeAST() {}
+    sysyAST() {}
+    ~sysyAST() {}
         // _STR::getToken return string
     virtual string getToken() { assert(false); }
         // _EXPR::eval return its integer value, 
     virtual int eval() { assert(false); }
         // _EXPR::atomize return its representation which could appear in the right of assignment. special case : true || array[-1] should not incur error
-    virtual string atomize() { assert(false); }
+    virtual eeyoreAST* atomize() { assert(false); }
         // For _ADDR_LIST, corresponding function name is passed
-    virtual string atomize(string token) { assert(false); }
+    virtual eeyoreAST* atomize(string token) { assert(false); }
         // symbol: For expr, return its operator
     virtual string symbol() { assert(false); }
-        // lvalize: For expr, return its representation which chould apper in the left of assignment
-    virtual string lvalize() { assert(false); }
         // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
     virtual void vectorize(vector<int> &v) { assert(false); }
         // _CALL_LIST::pass pass params
@@ -31,28 +33,28 @@ public:
         // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM::: isvar, return a boolean 
     virtual int isvar() { assert(false); }
 
-        /* traverse: traverse AST, and do the conversion.
+        /* translate: translate into Abstraction Syntax Tree of eeyore form
             - ctn: continue to where
             - brk: break to where
             - glb: if now in function
         */
-    virtual void traverse(string ctn, string brk, bool glb) { assert(false); }
+    virtual void translate(string ctn, string brk, bool glb) { assert(false); }
 
     /* some virtual functions are only declared in _TREE,
-        so as to avoid excessive declaration in based type nodeAST.
+        so as to avoid excessive declaration in based type sysyAST.
         As a result, coercion is needed when calling those functions.
     */
 };
 
 /*
-    Definition of nodes, so as to construct Abstraction Syntax Tree
+    Definition of nodes in Abstraction Syntax Tree of sysyY
     _PROGRAM:
         program.. top module
     _EXPR:
         - _BINARY_OP: lop, rop
-            - _AND, _SUB, _DIV, _MUL, _MOD, _AND, _OR, _LT, _GT, _LE, _GE, _EQ, _NEQ
+            - _ADD, _SUB, _DIV, _MUL, _MOD, _AND, _OR, _LT, _GT, _LE, _GE, _EQ, _NEQ
         - _UNARY_OP: op
-            _NEG, _NOT
+            - _NEG, _NOT
         - _INTEGER: $num$
         - _VAR: $token$
         - _FUNC_CALL: $token$ param
@@ -90,135 +92,135 @@ public:
     _DUMMY: non-sense
 */
 
-class _STRING: public nodeAST {
+class _STRING: public sysyAST {
 public:
     string token;
     _STRING(string _token): token(_token) {}
     virtual string getToken() { return token; }
 };
-class _DUMMY: public nodeAST {
+class _DUMMY: public sysyAST {
     /* this class is necessary, designed for
         empty statement or expr statement */
 public:
     string token;
-    virtual void traverse(string ctn, string brk, bool glb) { } /* do nothing */
+    virtual void translate(string ctn, string brk, bool glb) { } /* do nothing */
 };
 
-class _PROGRAM: public nodeAST {
+class _PROGRAM: public sysyAST {
 public:
-    nodeAST *program;
-    _PROGRAM(nodeAST *_program): program(_program) {}
-    virtual void traverse(string ctn, string brk, bool glb) ;
+    sysyAST *program;
+    _PROGRAM(sysyAST *_program): program(_program) {}
+    virtual void translate(string ctn, string brk, bool glb) ;
 };
 /* ==================================== */
 /*                 _EXPR                */
 /* ==================================== */
-class _EXPR: public nodeAST {
+class _EXPR: public sysyAST {
 public:
     _EXPR() {}
-    void traverse(string ctn, string brk, bool glb) ;
+    void translate(string ctn, string brk, bool glb) ;
 };
 class _UNARY_OP: public _EXPR {
 public:
-    nodeAST *op;
-    _UNARY_OP(nodeAST *_op): op(_op) {}
-    virtual string atomize() ;
+    sysyAST *op;
+    _UNARY_OP(sysyAST *_op): op(_op) {}
+    virtual eeyoreAST* atomize() ;
 };
 class _BINARY_OP: public _EXPR {
 public:
-    nodeAST *lop, *rop;
-    _BINARY_OP(nodeAST *_lop, nodeAST *_rop): lop(_lop), rop(_rop) {}
-    virtual string atomize() ;
+    sysyAST *lop, *rop;
+    _BINARY_OP(sysyAST *_lop, sysyAST *_rop): lop(_lop), rop(_rop) {}
+    virtual eeyoreAST* atomize() ;
 };
 class _NEG: public _UNARY_OP {
 public:
-    _NEG(nodeAST *_op): _UNARY_OP(_op) {}
+    _NEG(sysyAST *_op): _UNARY_OP(_op) {}
     virtual int eval() { return - op->eval(); }
     virtual string symbol() { return "-"; }
 };
 class _NOT: public _UNARY_OP {
 public:
-    _NOT(nodeAST *_op): _UNARY_OP(_op) {}
+    _NOT(sysyAST *_op): _UNARY_OP(_op) {}
     virtual int eval() { return ! op->eval(); }
     virtual string symbol() { return "!"; }
 };
 class _ADD: public _BINARY_OP {
 public:
-    _ADD(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _ADD(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() + rop->eval(); }
     virtual string symbol() { return "+"; }
 };
 class _SUB: public _BINARY_OP {
 public:
-    _SUB(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _SUB(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() - rop->eval(); }
     virtual string symbol() { return "-"; }
 };
 class _MUL: public _BINARY_OP {
 public:
-    _MUL(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _MUL(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() * rop->eval(); }
     virtual string symbol() { return "*"; }
 };
 class _DIV: public _BINARY_OP {
 public:
-    _DIV(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _DIV(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() / rop->eval(); }
     virtual string symbol() { return "/"; }
 };
 class _MOD: public _BINARY_OP {
 public:
-    _MOD(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _MOD(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() % rop->eval(); }
     virtual string symbol() { return "\%"; }
 };
 class _AND: public _BINARY_OP {
 public:
-    _AND(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _AND(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() && rop->eval(); }
     virtual string symbol() { return "&&"; }
-    virtual string atomize() ;
+    virtual eeyoreAST* atomize() ;
 };
 class _OR: public _BINARY_OP {
 public:
-    _OR(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _OR(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() || rop->eval(); }
     virtual string symbol() { return "||"; }
-    virtual string atomize() ;
+    virtual eeyoreAST* atomize() ;
 };
 class _LT: public _BINARY_OP {
 public:
-    _LT(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _LT(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() < rop->eval(); }
     virtual string symbol() { return "<"; }
 };
 class _LE: public _BINARY_OP {
 public:
-    _LE(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _LE(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() <= rop->eval(); }
     virtual string symbol() { return "<="; }
 };
 class _GT: public _BINARY_OP {
 public:
-    _GT(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _GT(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() > rop->eval(); }
     virtual string symbol() { return ">"; }
 };
 class _GE: public _BINARY_OP {
 public:
-    _GE(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _GE(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() >= rop->eval(); }
     virtual string symbol() { return ">="; }
 };
 class _EQ: public _BINARY_OP {
 public:
-    _EQ(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _EQ(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() == rop->eval(); }
     virtual string symbol() { return "=="; }
 };
 class _NEQ: public _BINARY_OP {
 public:
-    _NEQ(nodeAST *_lop, nodeAST *_rop): _BINARY_OP(_lop, _rop) {}
+    _NEQ(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() != rop->eval(); }
     virtual string symbol() { return "!="; }
 };
@@ -227,32 +229,30 @@ public:
     int num;
     _INTEGER(int _num): num(_num) {}
     virtual int eval() { return num; }
-    virtual string atomize() { return to_string(num); }
+    virtual eeyoreAST* atomize() ;
 };
 class _VAR: public _EXPR {
 public:
     string token;
     _VAR(string _token): token(_token) {}
     virtual int eval();
-    virtual string atomize() ;
-    virtual string lvalize() ;
+    virtual eeyoreAST* atomize() ;
     virtual int isvar() { return 1; }
 };
 class _FUNC_CALL: public _EXPR {
 public:
-    string token; nodeAST *param;
-    _FUNC_CALL(string _token, nodeAST *_param): token(_token), param(_param) {}
-    virtual string atomize() ;
-    virtual void traverse(string ctn, string brk, bool glb);
+    string token; sysyAST *param;
+    _FUNC_CALL(string _token, sysyAST *_param): token(_token), param(_param) {}
+    virtual eeyoreAST* atomize() ;
+    virtual void translate(string ctn, string brk, bool glb);
     virtual void pass() ;
 };
 class _ARRAY_ITEM: public _EXPR {
 public:
-    string token; nodeAST *param;
-    _ARRAY_ITEM(string _token, nodeAST *_param): token(_token), param(_param) {}
+    string token; sysyAST *param;
+    _ARRAY_ITEM(string _token, sysyAST *_param): token(_token), param(_param) {}
     virtual int eval();
-    virtual string atomize() ;
-    virtual string lvalize() ;
+    virtual eeyoreAST* atomize() ;
     virtual int isvar() { return 0; }
 };
 
@@ -260,95 +260,95 @@ public:
 /* ==================================== */
 /*                 _LIST                */
 /* ==================================== */
-class _LIST: public nodeAST {
+class _LIST: public sysyAST {
 public:
-    nodeAST *head, *tail;
-    _LIST(nodeAST *_head, nodeAST *_tail): head(_head), tail(_tail) {}
+    sysyAST *head, *tail;
+    _LIST(sysyAST *_head, sysyAST *_tail): head(_head), tail(_tail) {}
 };
 class _CALL_LIST: public _LIST {
 public:
-    _CALL_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
+    _CALL_LIST(sysyAST *_head, sysyAST *_tail): _LIST(_head, _tail) {}
 };
 class _ADDR_LIST: public _LIST {
 public:
-    _ADDR_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
+    _ADDR_LIST(sysyAST *_head, sysyAST *_tail): _LIST(_head, _tail) {}
     virtual void vectorize(vector<int> &v) {
         if (head) v.push_back(head->eval());
         if (tail) tail->vectorize(v);
     }
-    virtual string atomize(string token) ;
-    virtual string atomize() { assert(false); }
+    virtual eeyoreAST* atomize(string token) ;
+    virtual eeyoreAST* atomize() { assert(false); }
 };
 class _PARAM_LIST: public _LIST {
 public:
-    _PARAM_LIST(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
-    virtual void traverse(string ctn, string brk, bool glb);
-    virtual string atomize() { assert(false); }
+    _PARAM_LIST(sysyAST *_head, sysyAST *_tail): _LIST(_head, _tail) {}
+    virtual void translate(string ctn, string brk, bool glb);
+    virtual eeyoreAST* atomize() { assert(false); }
 };
 class _STMT_SEQ: public _LIST {
 public:
-    _STMT_SEQ(nodeAST *_head, nodeAST *_tail): _LIST(_head, _tail) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    _STMT_SEQ(sysyAST *_head, sysyAST *_tail): _LIST(_head, _tail) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 
 
 /* ==================================== */
 /*                 _STMT                */
 /* ==================================== */
-class _STMT: public nodeAST {
+class _STMT: public sysyAST {
 public:
     _STMT() {}
 };
 class _IF: public _STMT {
 public:
-    nodeAST *cond, *body;
-    _IF(nodeAST *_cond, nodeAST *_body): cond(_cond), body(_body) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *cond, *body;
+    _IF(sysyAST *_cond, sysyAST *_body): cond(_cond), body(_body) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _IF_ELSE: public _STMT {
 public:
-    nodeAST *cond, *body, *ebody;
-    _IF_ELSE(nodeAST *_cond, nodeAST *_body, nodeAST *_ebody): cond(_cond), body(_body), ebody(_ebody) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *cond, *body, *ebody;
+    _IF_ELSE(sysyAST *_cond, sysyAST *_body, sysyAST *_ebody): cond(_cond), body(_body), ebody(_ebody) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _WHILE: public _STMT {
 public:
-    nodeAST *cond, *body;
-    _WHILE(nodeAST *_cond, nodeAST *_body): cond(_cond), body(_body) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *cond, *body;
+    _WHILE(sysyAST *_cond, sysyAST *_body): cond(_cond), body(_body) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _RETURN_VOID: public _STMT {
 public:
     _RETURN_VOID() {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _RETURN_EXPR: public _STMT {
 public:
-    nodeAST *expr;
-    _RETURN_EXPR(nodeAST *_expr): expr(_expr) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *expr;
+    _RETURN_EXPR(sysyAST *_expr): expr(_expr) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _CONTINUE: public _STMT {
 public:
     _CONTINUE() {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _BREAK: public _STMT {
 public:
     _BREAK() {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _ASSIGN: public _STMT {
 public:
-    nodeAST *lop, *rop;
-    _ASSIGN(nodeAST *_lop, nodeAST *_rop): lop(_lop), rop(_rop) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *lop, *rop;
+    _ASSIGN(sysyAST *_lop, sysyAST *_rop): lop(_lop), rop(_rop) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 class _BLOCK: public _STMT {
 public:
-    nodeAST *block;
-    _BLOCK(nodeAST *_block): block(_block) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    sysyAST *block;
+    _BLOCK(sysyAST *_block): block(_block) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 
 
@@ -357,55 +357,55 @@ public:
 /* ==================================== */
 class _FUNC: public _STMT {
 public:
-    string token; nodeAST *param, *body; bool isvoid;
-    _FUNC(string _token, nodeAST *_param, nodeAST *_body, bool _isvoid): token(_token), param(_param), body(_body), isvoid(_isvoid) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    string token; sysyAST *param, *body; bool isvoid;
+    _FUNC(string _token, sysyAST *_param, sysyAST *_body, bool _isvoid): token(_token), param(_param), body(_body), isvoid(_isvoid) {}
+    virtual void translate(string ctn, string brk, bool glb);
 };
 
 /* ==================================== */
 /*                 _DECL                */
 /* ==================================== */
-class _DECL: public nodeAST {
+class _DECL: public sysyAST {
 public:
     _DECL() {}
     virtual void instantialize() {} /* do nothing except for CONST */
 };
 class _DEF_VAR: public _DECL {
 public:
-    string token; nodeAST *inits;
-    _DEF_VAR(string _token, nodeAST *_inits): token(_token), inits(_inits) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    string token; sysyAST *inits;
+    _DEF_VAR(string _token, sysyAST *_inits): token(_token), inits(_inits) {}
+    virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
 };
 class _DEF_CONST_VAR: public _DEF_VAR {
 public:
-    _DEF_CONST_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
+    _DEF_CONST_VAR(string _token, sysyAST *_inits): _DEF_VAR(_token, _inits) {}
     virtual void instantialize();
 };
 class _PARAM_VAR: public _DEF_VAR {
 public:
-    _PARAM_VAR(string _token, nodeAST *_inits): _DEF_VAR(_token, _inits) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    _PARAM_VAR(string _token, sysyAST *_inits): _DEF_VAR(_token, _inits) {}
+    virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
     virtual int isvar() { return 1; }
 };
 
 class _DEF_ARR: public _DECL {
 public:
-    string token; nodeAST *addr, *inits;
-    _DEF_ARR(string _token, nodeAST *_addr, nodeAST *_inits): token(_token), addr(_addr), inits(_inits) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    string token; sysyAST *addr, *inits;
+    _DEF_ARR(string _token, sysyAST *_addr, sysyAST *_inits): token(_token), addr(_addr), inits(_inits) {}
+    virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
 };
 class _DEF_CONST_ARR: public _DEF_ARR {
 public:
-    _DEF_CONST_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
+    _DEF_CONST_ARR(string _token, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
     virtual void instantialize();
 };
 class _PARAM_ARR: public _DEF_ARR {
 public:
-    _PARAM_ARR(string _token, nodeAST *_addr, nodeAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
-    virtual void traverse(string ctn, string brk, bool glb);
+    _PARAM_ARR(string _token, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
+    virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
     virtual int isvar() { return 0; }
 };
@@ -413,12 +413,12 @@ public:
 /* ==================================== */
 /*                 _TREE                */
 /* ==================================== */
-class _TREE: public nodeAST {
+class _TREE: public sysyAST {
 public:
     _TREE *sibling;
     _TREE(): sibling(NULL) {}
     virtual bool leaf() { assert(false); }
-    virtual nodeAST* getExpr() { assert(false); }
+    virtual sysyAST* getExpr() { assert(false); }
     virtual _TREE* getChild() { assert(false); }
     virtual void debug(int ws = 0) {}
 };
@@ -436,10 +436,10 @@ public:
 };
 class _TREE_LEAF: public _TREE {
 public:
-    nodeAST *expr;
-    _TREE_LEAF(nodeAST *_expr): _TREE(), expr(_expr) {}
+    sysyAST *expr;
+    _TREE_LEAF(sysyAST *_expr): _TREE(), expr(_expr) {}
     virtual bool leaf() { return true; }
-    virtual nodeAST* getExpr() { return expr; }
+    virtual sysyAST* getExpr() { return expr; }
     virtual void debug(int ws = 0) {
         for (int i = 1; i <= ws; i++) printf(" "); printf("unit\n");
         if (sibling) sibling->debug(ws);

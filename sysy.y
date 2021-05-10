@@ -1,8 +1,10 @@
 %{
-#include <bits/stdc++.h>
+#ifndef defs_hpp
 #include "defs.hpp"
+#define defs_hpp
+#endif
 using namespace std;
-#define YYSTYPE nodeAST*
+#define YYSTYPE sysyAST*
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -24,7 +26,7 @@ using namespace std;
 
 %%
 
-Program : StmtSeq { $$ = new _PROGRAM($1); $$->traverse("", "", true); }
+Program : StmtSeq { $$ = new _PROGRAM($1); sysyRoot = $$; }
     ;
     
 Str : KEY { $$ = new _STRING(_sysy_str); }
@@ -134,21 +136,3 @@ Init : InitItem { $$ = $1; }
     | InitItem ',' Init { $$ = $1; ((_TREE*)$1)->sibling = (_TREE*)$3; }
     ;
 %%
-
-#ifdef MANUAL_INPUT
-int main() {
-#else
-int main(int argc, char **argv)
-{
-    assert(argc == 6);
-    assert(strcmp(argv[1], "-S") == 0);
-    assert(strcmp(argv[2], "-e") == 0);
-    assert(strcmp(argv[4], "-o") == 0);
-
-    freopen(argv[3], "r", stdin);
-    freopen(argv[5], "w", stdout);
-#endif
-    tokenManager->newEnviron();
-    yyparse();
-    return 0;
-}

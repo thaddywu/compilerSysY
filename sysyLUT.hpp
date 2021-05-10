@@ -1,10 +1,19 @@
 #include <bits/stdc++.h>
+#ifndef eeyoreAST_hpp
+#include "eeyoreAST.hpp"
+#define eeyoreAST_hpp
+#endif
+#ifndef sysyAST_hpp
+#include "sysyAST.hpp"
+#define sysyAST_hpp
+#endif
+
 using namespace std;
 
-extern void printDecl(string str) ;
-extern void printStmt(string str) ;
-extern void refreshStmt() ;
+
 extern int flatten(vector<int> &dim); // defined in sysy.y
+extern void eeyoreStmt(eeyoreAST *x);
+extern void eeyoreDecl(eeyoreAST *x);
 
 /*
     dataCell:
@@ -110,17 +119,17 @@ public:
 };
 class dataLeaf: public dataCell{
 public:
-    nodeAST *expr;
-    dataLeaf(int _depth, nodeAST *_expr): dataCell(_depth), expr(_expr) {}
+    sysyAST *expr;
+    dataLeaf(int _depth, sysyAST *_expr): dataCell(_depth), expr(_expr) {}
     virtual void debug() { if (expr) printf("%d", expr->eval() ); else printf("x"); }
     virtual void instantialize() { if (expr) expr = new _INTEGER(expr->eval()); }
     virtual void initialize(string &eeyore, vector<int> &dim, int addr, bool var) {
         if (expr == NULL) return ;
-        string t = expr->atomize();
+        eeyoreAST *t = expr->atomize();
         if (var)
-            printStmt("\t" + eeyore + " = " + t);
+            eeyoreStmt(new _eDIRECT(new _eVAR(eeyore), t));
         else
-            printStmt("\t" + eeyore + "[" + to_string(addr * 4) + "] = " + t);
+            eeyoreStmt(new _eSTORE(eeyore, new _eNUM(addr * 4), t));
     }
 };
 
@@ -189,7 +198,7 @@ private:
 /*      - insert(dd, param): insert a var/array                 */
 /*          - dd: dataDescript                                  */
 /*          - param: boolean, to determine p0 or T0             */
-/*      - getEeyore(token): translate name                      */
+/*      - getEeyore(token): atomize name                      */
 /*      - getDim(token): return its shape                       */
 /*      - getSize(token): return its flattened size             */
 /*          - no definition for var                             */
@@ -206,9 +215,9 @@ private:
     
 public:
     TokenManager(): tempNum(0), varNum(0), paramNum(0), labelNum(0) { assert(record.empty()); }
-    string newt() { string t = "t" + to_string(tempNum); tempNum++; printDecl("\tvar " + t); return t;}
-    string newT() { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + T); return T;}
-    string newT(int sz) { string T = "T" + to_string(varNum); varNum++; printDecl("\tvar " + to_string(sz * 4) + " " + T); return T;}
+    string newt() { string t = "t" + to_string(tempNum); tempNum++; eeyoreDecl(new _eDEFVAR(t)); return t;}
+    string newT() { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFVAR(T)); return T;}
+    string newT(int sz) { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFARR(T, sz)); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
     string newl() { string l = "l" + to_string(labelNum); labelNum++; return l;}
     void newEnviron() { record.push({}); paramNum = 0; /* not-good implementation here */ }
@@ -274,7 +283,7 @@ public:
         table["putch"] = univar;
         table["putarray"] = mix;
     }
-    int insert(string token, nodeAST *param) {
+    int insert(string token, sysyAST *param) {
         assert(table.find(token) == table.end());
         vector<int> plist {};
         if (param != NULL) {

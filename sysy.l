@@ -1,6 +1,9 @@
 %{
 #include "sysy.tab.hpp"
+#ifndef defs_hpp
 #include "defs.hpp"
+#define defs_hpp
+#endif
 using namespace std;
 
 int _sysy_val;
