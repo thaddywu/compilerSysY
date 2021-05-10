@@ -1,7 +1,8 @@
 %{
 #include "sysy.tab.hpp"
-#include <bits/stdc++.h>
+#include "defs.hpp"
 using namespace std;
+
 int _sysy_val;
 string _sysy_str;
 %}

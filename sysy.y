@@ -1,23 +1,8 @@
 %{
 #include <bits/stdc++.h>
-#include "sysyAST.hpp"
-#include "sysyLUT.hpp"
+#include "defs.hpp"
 using namespace std;
 #define YYSTYPE nodeAST*
-
-extern int _sysy_val;
-extern string _sysy_str;
-extern int yylineno;
-extern int yylex();
-extern void yyerror(char *mss);
-
-TokenManager *tokenManager;
-FuncManager *funcManager;
-string stmtPrintBuffer;
-vector<nodeAST *> globalInitList;
-void printDecl(string str) ;
-void printStmt(string str) ;
-void refreshStmt() ;
 %}
 
 %token IF ELSE WHILE BREAK RETURN CONTINUE
@@ -150,15 +135,6 @@ Init : InitItem { $$ = $1; }
     ;
 %%
 
-
-int flatten(vector<int> &dim) {
-    /* return flattened size */
-    int ret = 1; for (auto x: dim) ret *= x; return ret;
-}
-void printDecl(string str) { cout << str << endl; }
-void printStmt(string str) { stmtPrintBuffer += str + "\n"; }
-void refreshStmt() { cout << stmtPrintBuffer; stmtPrintBuffer = ""; }
-
 #ifdef MANUAL_INPUT
 int main() {
 #else
@@ -172,11 +148,7 @@ int main(int argc, char **argv)
     freopen(argv[3], "r", stdin);
     freopen(argv[5], "w", stdout);
 #endif
-
-    tokenManager = new TokenManager();
     tokenManager->newEnviron();
-    stmtPrintBuffer = "";
-    funcManager = new FuncManager();
     yyparse();
     return 0;
 }

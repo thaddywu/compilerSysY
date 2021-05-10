@@ -1,11 +1,5 @@
-#include <bits/stdc++.h>
-#include "sysyAST.hpp"
-#include "sysyLUT.hpp"
+#include "defs.hpp"
 using namespace std;
-
-extern TokenManager *tokenManager;
-extern FuncManager *funcManager;
-extern vector<nodeAST *> globalInitList;
 
 /* ================================================= */
 /* eval                                              */
