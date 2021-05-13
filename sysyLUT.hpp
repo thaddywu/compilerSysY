@@ -129,7 +129,7 @@ public:
         if (var)
             eeyoreStmt(new _eDIRECT(new _eVAR(eeyore), t));
         else
-            eeyoreStmt(new _eSTORE(eeyore, new _eNUM(addr * 4), t));
+            eeyoreStmt(new _eSAVE(eeyore, new _eNUM(addr * 4), t));
     }
 };
 

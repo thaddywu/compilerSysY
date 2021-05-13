@@ -92,7 +92,7 @@ eeyoreAST* _ARRAY_ITEM::atomize() {
     /* potential optimization for constant array */
     eeyoreAST* t = new _eVAR(tokenManager->newt());
     eeyoreAST* lval = param->atomize(token);
-    eeyoreStmt(new _eLOAD(t, tokenManager->getEeyore(token), lval));
+    eeyoreStmt(new _eSEEK(t, tokenManager->getEeyore(token), lval));
     return t;
 }
 eeyoreAST* _FUNC_CALL::atomize() {
@@ -235,7 +235,7 @@ void _ASSIGN::translate(string ctn, string brk, bool glb) {
         _ARRAY_ITEM *ai = (_ARRAY_ITEM *)lop;
         eeyoreAST* param = ai->param->atomize(ai->token);
             /* remember to write ->atomize(token) !!! */
-        eeyoreStmt(new _eSTORE(tokenManager->getEeyore(ai->token), param, rval));
+        eeyoreStmt(new _eSAVE(tokenManager->getEeyore(ai->token), param, rval));
     }
 }
 void _BLOCK::translate(string ctn, string brk, bool glb) {

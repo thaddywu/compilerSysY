@@ -1,8 +1,4 @@
 #include <bits/stdc++.h>
-#ifndef eeyoreAST_hpp
-#include "eeyoreAST.hpp"
-#define eeyoreAST_hpp
-#endif
 #ifndef sysyAST_hpp
 #include "sysyAST.hpp"
 #define sysyAST_hpp
@@ -10,6 +6,14 @@
 #ifndef sysyLUT_hpp
 #include "sysyLUT.hpp"
 #define sysyLUT_hpp
+#endif
+#ifndef eeyoreAST_hpp
+#include "eeyoreAST.hpp"
+#define eeyoreAST_hpp
+#endif
+#ifndef tiggerAST_hpp
+#include "tiggerAST.hpp"
+#define tiggerAST_hpp
 #endif
 
 /* defined in sysy.l*/
@@ -19,18 +23,34 @@ extern int yylineno;
 extern int yylex();
 extern void yyerror(char *mss);
 
-/* defined in defs.cpp */
-extern void eeyoreDecl(eeyoreAST *x);
-extern void eeyoreStmt(eeyoreAST *x);
+extern sysyAST *sysyRoot;
+extern eeyoreAST *eeyoreRoot;
 
+/* tools for sysY->eeyore */
 extern TokenManager *tokenManager;
 extern FuncManager *funcManager;
 extern vector<sysyAST *> globalInitList;
-extern vector<eeyoreAST *> eeyoreList;
-extern vector<eeyoreAST *> eeyoreStmtList;
-extern vector<eeyoreAST *> eeyoreDeclList;
+extern vector<eeyoreAST *> eeyoreList; /* global decls with functions */
+extern vector<eeyoreAST *> eeyoreStmtList; /* statement list in function */
+extern vector<eeyoreAST *> eeyoreDeclList; /* decl list in function */
 
-extern sysyAST *sysyRoot;
-extern eeyoreAST *eeyoreRoot;
-void print(string x) ;
-void printTab(string x) ;
+extern void eeyoreDecl(eeyoreAST *x);
+extern void eeyoreStmt(eeyoreAST *x);
+
+/* tools for eeyore->tigger */
+extern RegManager *regManager;
+extern vector<tiggerAST *> tiggerList;
+extern vector<tiggerAST *> tiggerStmtList;
+extern vector<tiggerAST *> tiggerDeclList;
+
+extern bool isreg(string x) ;
+extern bool islogicop(string x) ;
+extern void tiggerDecl(tiggerAST *x);
+extern void tiggerStmt(tiggerAST *x);
+
+/* handy tools */
+extern void print(string x) ;
+extern void printTab(string x) ;
+
+extern int unary_result(string op, int a);
+extern int binary_result(int a, string op, int b);
