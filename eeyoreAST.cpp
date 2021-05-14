@@ -145,9 +145,9 @@ void _eSEEK::translate() {
         int t_addr = regManager->getreaddr(t);
         if (x->isnum()) {
             if (a_reg)
-                tiggerStmt(new _tLOAD(t_addr + x->getInt(), a_reg->reg_name));
+                tiggerStmt(new _tLOAD((t_addr >> 2) + x->getInt(), a_reg->reg_name));
             else {
-                tiggerStmt(new _tLOAD(t_addr + x->getInt(), reserved_reg1));
+                tiggerStmt(new _tLOAD((t_addr >> 2) + x->getInt(), reserved_reg1));
                 regManager->store_reg(reserved_reg1, a->getName());
             }
         }
@@ -187,7 +187,7 @@ void _eSAVE::translate() {
         int a_addr = regManager->getreaddr(a);
         string t_reg_name = load_into_register(t, reserved_reg1);
         if (x->isnum())
-            tiggerStmt(new _tSTORE(t_reg_name, a_addr + x->getInt()));
+            tiggerStmt(new _tSTORE(t_reg_name, (a_addr >> 2) + x->getInt()));
         else {
             string x_reg_name = load_into_register(x, reserved_reg2);
             tiggerStmt(new _tBINARY(reserved_reg2, x_reg_name, "+", a_addr));
@@ -200,7 +200,7 @@ void _eFUNCRET::translate() {
     /* before call */
 
     /* a = call f_func */
-    tiggerStmt(new _tRETURN());
+    tiggerStmt(new _tCALL(func));
     Register *a_reg = regManager->alloc_reg[a->getName()];
     if (a_reg)
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
@@ -216,7 +216,7 @@ void _eCALL::translate() {
     regManager->caller_store();
     /* before call */
 
-    tiggerStmt(new _tRETURN());
+    tiggerStmt(new _tCALL(func));
 
     /* after call */
     regManager->caller_restore();

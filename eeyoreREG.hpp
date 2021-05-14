@@ -43,7 +43,7 @@ public:
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
     void setlocal(string s, int sz, bool isvar) { readdr[s] = sz; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
-    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s] >> 2; } /* returned value is the index without *4 */
+    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the index without *4 */
     
     map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
@@ -83,9 +83,9 @@ public:
         }
         else {
             if (isvar(var))
-                tiggerStmt(new _tLOAD(getreaddr(var), reg));
+                tiggerStmt(new _tLOAD(getreaddr(var) >> 2, reg));
             else
-                tiggerStmt(new _tLOADADDR(getreaddr(var), reg));
+                tiggerStmt(new _tLOADADDR(getreaddr(var) >> 2, reg));
         }
     }
     void store(string reg_name) {
