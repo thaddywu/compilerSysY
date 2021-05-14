@@ -37,7 +37,7 @@ public:
     map<string, bool> _isvar;
     map<string, int> readdr; //mapping: local var/array -> relative address on stack (with * 4)
 
-    int next_vacant_reg, param_cnt, stack_size;
+    int next_vacant_reg, param_cnt, stack_size, global_cnt;
 
     void setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; }
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }

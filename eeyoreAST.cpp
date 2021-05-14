@@ -30,7 +30,8 @@ string load_into_register_nonum(string var, string default_reg) {
 
 void _eDEFVAR::translate() {
     /* only global vars could enter this function */
-    tiggerDecl(new _tGLBVAR(var));
+    string _var = "v" + to_string(regManager->global_cnt++);
+    tiggerDecl(new _tGLBVAR(_var));
     regManager->setglobal(var, true);
 }
 void _eDEFVAR::try_allocate() {
@@ -39,7 +40,8 @@ void _eDEFVAR::try_allocate() {
 }
 void _eDEFARR::translate() {
     /* only global vars could enter this function */
-    tiggerDecl(new _tGLBARR(var, size));
+    string _var = "v" + to_string(regManager->global_cnt++);
+    tiggerDecl(new _tGLBARR(_var, size));
     regManager->setglobal(var, false);
 }
 void _eDEFARR::try_allocate() {
