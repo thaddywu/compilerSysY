@@ -43,7 +43,7 @@ public:
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
     void setlocal(string s, int sz, bool isvar) { readdr[s] = sz; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
-    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; }
+    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s] >> 2; } /* returned value is the index without *4 */
     
     map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
@@ -115,12 +115,12 @@ public:
     void callee_store() {
         /* in charge of storation of registers %sx */
         for (int i = 0; i < Reg_s; i++)
-            tiggerStmt(new _tSTORE("s" + to_string(i), i << 2));
+            tiggerStmt(new _tSTORE("s" + to_string(i), i));
     }
     void callee_restore() {
         /* in charge of restoration of registers %sx */
         for (int i = 0; i < Reg_s; i++)
-            tiggerStmt(new _tLOAD(i << 2, "s" + to_string(i)));
+            tiggerStmt(new _tLOAD(i, "s" + to_string(i)));
     }
     void new_environ() {
         next_vacant_reg = 0;

@@ -11,11 +11,6 @@ int main() {
 #else
 int main(int argc, char **argv)
 {
-    assert(argc == 6);
-    assert(strcmp(argv[1], "-S") == 0);
-    assert(strcmp(argv[2], "-e") == 0);
-    assert(strcmp(argv[4], "-o") == 0);
-
     freopen(argv[3], "r", stdin);
     freopen(argv[5], "w", stdout);
 #endif
@@ -23,7 +18,7 @@ int main(int argc, char **argv)
     yyparse();
     sysyRoot->translate("", "", true);
 #ifndef LOCALTEST
-    if (strcmp(argv[2], "-e"))
+    if (strcmp(argv[2], "-e") == 0)
         eeyoreRoot->Dump();
         /* compile to eeyore */
     else {
