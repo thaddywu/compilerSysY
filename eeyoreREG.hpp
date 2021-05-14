@@ -42,7 +42,7 @@ public:
 
     string setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; return _token[s] = "v" + to_string(global_cnt++); }
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
-    void setlocal(string s, int sz, bool isvar) { readdr[s] = sz; _isvar[s] = isvar; stack_size += sz; }
+    void setlocal(string s, int sz, bool isvar) { readdr[s] = stack_size; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
     int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the index without *4 */
     string tigger(string s) { assert(isglobal(s)); return _token[s]; }
