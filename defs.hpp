@@ -11,6 +11,10 @@
 #include "eeyoreAST.hpp"
 #define eeyoreAST_hpp
 #endif
+#ifndef eeyoreREG_hpp
+#include "eeyoreREG.hpp"
+#define eeyoreREG_hpp
+#endif
 #ifndef tiggerAST_hpp
 #include "tiggerAST.hpp"
 #define tiggerAST_hpp
@@ -25,6 +29,7 @@ extern void yyerror(char *mss);
 
 extern sysyAST *sysyRoot;
 extern eeyoreAST *eeyoreRoot;
+extern tiggerAST *tiggerRoot;
 
 /* tools for sysY->eeyore */
 extern TokenManager *tokenManager;
@@ -32,7 +37,7 @@ extern FuncManager *funcManager;
 extern vector<sysyAST *> globalInitList;
 extern vector<eeyoreAST *> eeyoreList; /* global decls with functions */
 extern vector<eeyoreAST *> eeyoreStmtList; /* statement list in function */
-extern vector<eeyoreAST *> eeyoreDeclList; /* decl list in function */
+extern vector<eeyoreAST *> eeyoreDeclList; /* decls */
 
 extern void eeyoreDecl(eeyoreAST *x);
 extern void eeyoreStmt(eeyoreAST *x);
@@ -41,7 +46,6 @@ extern void eeyoreStmt(eeyoreAST *x);
 extern RegManager *regManager;
 extern vector<tiggerAST *> tiggerList;
 extern vector<tiggerAST *> tiggerStmtList;
-extern vector<tiggerAST *> tiggerDeclList;
 
 extern bool isreg(string x) ;
 extern bool islogicop(string x) ;

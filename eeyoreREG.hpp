@@ -5,45 +5,51 @@
 #endif
 using namespace std;
 
-#define Reg_s 10
+#define Reg_s 9
 #define Reg_t 7
 #define Reg_a 8
 #define Reg_N (Reg_s + Reg_t + Reg_a)
 
+#define reserved_reg1 "s9"
+#define reserved_reg2 "s10"
+#define reserved_reg3 "s11"
+
 extern void tiggerStmt(tiggerAST *x);
 /* RegManager is in charge of allocation of registers,
 and it is also responsible for var name record */
+class Register {
+public:
+    Register(string _name): reg_name(_name) {}
+    
+    string reg_name;
+    bool allocated;
+    string allocated_var;
+
+    bool contain(string s) {
+        return allocated && allocated_var == s;
+    }
+    void new_environ() { allocated = false; }
+};
+
 class RegManager {
 public:
     map<string, bool> _global; //mapping: global var/array -> if is var
     map<string, bool> _isvar;
     map<string, int> readdr; //mapping: local var/array -> relative address on stack (with * 4)
 
+    int next_vacant_reg, param_cnt, stack_size;
+
     void setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; }
-    bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; } /* no multiple variables with a same name */
-    void setlocal(string s, int addr, bool isvar) { readdr[s] = addr; _isvar[s] = isvar; }
+    bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
+    void setlocal(string s, int sz, bool isvar) { readdr[s] = sz; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
     int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; }
-
-    int timeStamp;
-    struct Register {
-        Register(string name): allocated(false), lastAccess(0), reg_name(name), ever_used(false) {}
-        bool allocated;
-        int lastAccess;
-        string allocated_var;
-        string reg_name;
-        bool dirty;
-        bool ever_used; // has it been 
-        bool write_back; // write back when released?
-        /* enter into a new function, previous info should be cleared */
-        bool contain(string s) { return allocated && allocated_var == s; }
-        void store() { tiggerStmt(new _tSTORE(reg_name, getreaddr(reg_name))); }
-        void restore() { tiggerStmt(new _tLOAD(getreaddr(reg_name), reg_name)); }
-        void refresh() {allocated = dirty = ever_used = false; lastAccess = 0;}
-    };
+    
+    map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
     Register *registers[Reg_N];
-    int existed_param = 0;
+    
+    // bool isalternative(string s) { return reg_ptr.find(s) == reg_ptr.end(); }
     /* s11 & s10 is reserved for global address & number respectively, can not be allocated */
     RegManager() {
         for (int i = 0; i < Reg_t; i++)
@@ -56,130 +62,77 @@ public:
         for (int i = 0; i < Reg_N; i++)
             reg_ptr[registers[i]->reg_name] = registers[i];
     }
-
-    void dirty(string s) { assert (reg_ptr.find(s) != reg_ptr.end()); reg_ptr[s]->dirty = true; }
-    bool isallocated(string s) {
-        for (int i = 0; i < Reg_N; i++)
-            if (registers[i]->contain(s)) return true;
-        return false;
-    }
-    void writeback(Register *reg) {
-        assert(reg->allocated);
-        if (!reg->dirty) return ;
-        if (!reg->write_back) return ;
-        /* if register is not modified, or explicitly set,
-            no write-back is needed */
-        reg->dirty = false;
-        if (isglobal(reg->allocated_var)) {
-            /* global array's address should not be modified anytime.
-            Don't need to care that conditio,
-            because it must be filtered by !reg->dirty */
-            tiggerStmt(new _tLOADADDR(reg->allocated_var, "s11"));
-                /* possible redundance here */
-            tiggerStmt(new _tSAVE("s11", 0, reg->reg_name));
+    void store_reg(string reg, string var) {
+        /* store register in heap / stack, depending on the type of variables */
+        if (!isvar(var)) return ; /* no need to restore the start address of any array */
+        if (isglobal(var)) {
+            /* no STORE VAR REG in RISC-V */
+            tiggerStmt(new _tLOADADDR(var, reserved_reg3));
+            tiggerStmt(new _tSAVE(reserved_reg3, 0, reg));
         }
-        else {
-            assert(readdr.find(reg->allocated_var) != readdr.end());
-            tiggerStmt(new _tSTORE(reg->reg_name, readdr[reg->allocated_var]));
-        }
-    }
-    void writeback(string reg_name) {
-        writeback(reg_ptr[reg_name]);
-    }
-    void release(Register *reg) {
-        /* release register, and write back */
-        if (!reg->allocated) return ;
-        /* potential optimization here:
-            if corresponding variable is no longer useful,
-            there's no need to write back*/
-        reg->allocated = false;
-        writeback(reg);
-    }
-    void release(string reg_name) {
-        release(reg_ptr[reg_name]);
-    }
-    void assign(Register *reg, string s, bool write_back) {
-        /* allocate register(reg_name) to s,
-            real allocation is done somewhere else */
-        reg->allocated = true;
-        reg->allocated_var = s;
-        reg->lastAccess = ++timeStamp;
-        reg->ever_used = true;
-        reg->dirty = true;
-        reg->write_back = write_back;
-    }
-    void assign(string reg_name, string s, bool write_back) {
-        assign(reg_ptr[reg_name], s, write_back);
-    }
-    void load(Register *reg, string s) {
-        /* load value from stack or memory into register */
-        if (!reg->allocated) return ;
-        assert(reg->contain(s));
-        if (isglobal(s)) {
-            if (isvar(s))
-                tiggerStmt(new _tLOAD(s, reg->reg_name));
-            else
-                tiggerStmt(new _tLOADADDR(s, reg->reg_name));
-            reg->dirty = false;
-        }
-        else {
-            if (isvar(s))
-                tiggerStmt(new _tLOAD(getreaddr(s), reg->reg_name));
-            else
-                tiggerStmt(new _tLOADADDR(getreaddr(s), reg->reg_name));
-            reg->dirty = false;
-        }
-    }
-    string getRegister(string s, bool reload) {
-        Register *ret = NULL;
-        for (int i = 0; i < Reg_N; i++)
-        if (!registers[i]->allocated) {
-            if (ret == NULL)
-                ret = registers[i];
-        }
-        else {
-            if (registers[i]->contain(s)) {
-                ret = registers[i];
-                ret->lastAccess = ++timeStamp;
-                /* value in register should be consistent
-                    with value in stack or memory.
-                    However, no effective assetion could be easily
-                    written here. In the future, it is recommended
-                    to add some assertion here. */
-                return ret->reg_name;
-            }
-            if (ret == NULL)
-                ret = registers[i];
-            if (ret->allocated && ret->lastAccess < registers[i]->lastAccess)
-                ret = registers[i];
-        }
-        if (ret->allocated) release(ret);
-        assign(ret, s, true);
-        if (reload) load(ret, s);
-        return ret->reg_name;
-    }
-    void passParam(string s, string param) {
-        /* s can be number, variable, address */
-        Register *cur = NULL, *reg_param = reg_ptr[param];
-        for (int i = 0; i < Reg_N; i++)
-            if (registers[i]->contain(s)) cur = registers[i];
-        if (reg_param->contain(s)) return ;
-
-        release(reg_param);
-        /* it's safe to directly release, because no
-            more register is needed in param pass */
-
-        if (cur != NULL) 
-            /* already in register */
-            tiggerStmt(new _tDIRECT(reg_param->reg_name, cur->reg_name));
         else
-            load(reg_param, s);
+            tiggerStmt(new _tSTORE(reg, getreaddr(var)));
+    }
+    void restore_reg(string var, string reg) {
+        /* restore register from heap / stack, depending on the type of variables */
+        if (isglobal(var)) {
+            if (isvar(var))
+                tiggerStmt(new _tLOAD(var, reg));
+            else
+                tiggerStmt(new _tLOADADDR(var, reg));
+        }
+        else {
+            if (isvar(var))
+                tiggerStmt(new _tLOAD(getreaddr(var), reg));
+            else
+                tiggerStmt(new _tLOADADDR(getreaddr(var), reg));
+        }
+    }
+    void store(string reg_name) {
+        Register *reg = reg_ptr[reg_name];
+        if (reg != NULL && reg->allocated)
+            store_reg(reg_name, reg->allocated_var);
+    }
+    void restore(string reg_name) {
+        Register *reg = reg_ptr[reg_name];
+        if (reg != NULL && reg->allocated)
+            restore_reg(reg->allocated_var, reg_name);
     }
     void caller_store() {
-        for (int i = 0; i < )
+        /* in charge of storation of registers %tx %ax */
+        for (int i = 0; i < Reg_t; i++)
+            store("t" + to_string(i));
+        for (int i = param_cnt; i < Reg_a; i++)
+            store("a" + to_string(i));
+    }
+    void caller_restore() {
+        /* in charge of restoration of registers %tx %ax */
+        for (int i = 0; i < Reg_t; i++)
+            restore("t" + to_string(i));
+        for (int i = param_cnt; i < Reg_a; i++)
+            restore("a" + to_string(i));
     }
     void callee_store() {
+        /* in charge of storation of registers %sx */
         for (int i = 0; i < Reg_s; i++)
-            reg_ptr["s" + to_string(i)]->store();
+            tiggerStmt(new _tSTORE("s" + to_string(i), i << 2));
+    }
+    void callee_restore() {
+        /* in charge of restoration of registers %sx */
+        for (int i = 0; i < Reg_s; i++)
+            tiggerStmt(new _tLOAD(i << 2, "s" + to_string(i)));
+    }
+    void new_environ() {
+        next_vacant_reg = 0;
+        for (int i = 0; i < Reg_N; i++)
+            registers[i]->new_environ();
+        /* bottom of the stack is reserved for callee-registers */
+        stack_size = Reg_s << 2;
+    }
+    void try_allocate(string var) {
+        if (next_vacant_reg >= Reg_N) return ;
+        Register *reg = registers[next_vacant_reg++];
+        reg->allocated = true;
+        reg->allocated_var = var;
     }
 };

@@ -22,6 +22,16 @@ int main(int argc, char **argv)
     tokenManager->newEnviron();
     yyparse();
     sysyRoot->translate("", "", true);
-    eeyoreRoot->Dump();
+#ifndef LOCALTEST
+    if (strcmp(argv[2], "-e"))
+        eeyoreRoot->Dump();
+        /* compile to eeyore */
+    else {
+#endif
+        eeyoreRoot->translate();
+        tiggerRoot->Dump();
+#ifndef LOCALTEST
+    }
+#endif
     return 0;
 }

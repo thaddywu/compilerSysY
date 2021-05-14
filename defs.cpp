@@ -28,7 +28,7 @@ int flatten(vector<int> &dim) {
 void eeyoreStmt(eeyoreAST *x) { eeyoreStmtList.push_back(x); }
 void eeyoreDecl(eeyoreAST *x) { eeyoreDeclList.push_back(x); }
 void tiggerStmt(tiggerAST *x) { tiggerStmtList.push_back(x); }
-void tiggerDecl(tiggerAST *x) { tiggerDeclList.push_back(x); }
+void tiggerDecl(tiggerAST *x) { tiggerList.push_back(x); }
 void print(string x) { cout << x << endl; }
 void printTab(string x) { cout << "\t" + x << endl; }
 bool isreg(string x) { return x[0] == 'x' || x[0] == 's' || x[0] == 't' || x[0] == 'a'; }

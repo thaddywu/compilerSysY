@@ -28,6 +28,7 @@ public:
 class _tFUNC: public tiggerAST {
 public:
     tiggerAST *body; string func; int arity, mem; // mem without * 4
+    _tFUNC(string _func, int _arity): func(_func), arity(_arity) { mem = 0; }
     _tFUNC(string _func, int _arity, int _mem, tiggerAST *_body): func(_func), arity(_arity), mem(_mem), body(_body) {}
     virtual void Dump() { print(func + " [" + to_string(arity) + "] [" + to_string(mem) + "]"); body->Dump(); print("end " + func); }
 };
@@ -54,6 +55,7 @@ class _tBINARY: public tiggerAST {
 public:
     string d, op, s, t;
     _tBINARY(string _d, string _op, string _s, string _t): d(_d), op(_op), s(_s), t(_t) { assert(isreg(d) && isreg(s)); }
+    _tBINARY(string _d, string _op, string _s, int _t): d(_d), op(_op), s(_s), t(to_string(_t)) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + " " + op + " " + t); }
 };
 class _tSAVE: public tiggerAST {
