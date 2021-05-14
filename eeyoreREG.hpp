@@ -35,15 +35,18 @@ class RegManager {
 public:
     map<string, bool> _global; //mapping: global var/array -> if is var
     map<string, bool> _isvar;
+    map<string, string> _token; //mapping: eeyore global var -> tigger global var
     map<string, int> readdr; //mapping: local var/array -> relative address on stack (with * 4)
 
     int next_vacant_reg, param_cnt, stack_size, global_cnt;
 
-    void setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; }
+    string setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; return _token[s] = "v" + to_string(global_cnt++); }
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
     void setlocal(string s, int sz, bool isvar) { readdr[s] = sz; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
     int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the index without *4 */
+    string tigger(string s) { assert(isglobal(s)); return _token[s]; }
+
     
     map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
@@ -67,19 +70,19 @@ public:
         if (!isvar(var)) return ; /* no need to restore the start address of any array */
         if (isglobal(var)) {
             /* no STORE VAR REG in RISC-V */
-            tiggerStmt(new _tLOADADDR(var, reserved_reg3));
+            tiggerStmt(new _tLOADADDR(tigger(var), reserved_reg3));
             tiggerStmt(new _tSAVE(reserved_reg3, 0, reg));
         }
         else
-            tiggerStmt(new _tSTORE(reg, getreaddr(var)));
+            tiggerStmt(new _tSTORE(reg, getreaddr(var) >> 2));
     }
     void restore_reg(string var, string reg) {
         /* restore register from heap / stack, depending on the type of variables */
         if (isglobal(var)) {
             if (isvar(var))
-                tiggerStmt(new _tLOAD(var, reg));
+                tiggerStmt(new _tLOAD(tigger(var), reg));
             else
-                tiggerStmt(new _tLOADADDR(var, reg));
+                tiggerStmt(new _tLOADADDR(tigger(var), reg));
         }
         else {
             if (isvar(var))

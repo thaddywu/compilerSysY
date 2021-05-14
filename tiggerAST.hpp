@@ -17,13 +17,13 @@ class _tGLBVAR: public tiggerAST {
 public:
     string var;
     _tGLBVAR(string _var): var(_var) {}
-    virtual void Dump() { print("var " + var + " = 0"); }
+    virtual void Dump() { print(var + " = 0"); }
 };
 class _tGLBARR: public tiggerAST {
 public:
     string var; int size; // without * 4
     _tGLBARR(string _var, int _size): var(_var), size(_size) {}
-    virtual void Dump() { print("var " + var + " = malloc " + to_string(size * 4)); }
+    virtual void Dump() { print(var + " = malloc " + to_string(size * 4)); }
 };
 class _tFUNC: public tiggerAST {
 public:
