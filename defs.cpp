@@ -31,7 +31,7 @@ void tiggerStmt(tiggerAST *x) { tiggerStmtList.push_back(x); }
 void tiggerDecl(tiggerAST *x) { tiggerList.push_back(x); }
 void print(string x) { cout << x << endl; }
 void printTab(string x) { cout << "\t" + x << endl; }
-bool isreg(string x) { return x[0] == 's' || x[0] == 't' || x[0] == 'a'; }
+bool isreg(string x) { return x[0] == 's' || x[0] == 't' || x[0] == 'a' || x == "x0"; }
 bool islogicop(string x) { return x == "!=" || x == "==" || x == "<" || x == ">" || x == "<=" || x == ">="; }
 int binary_result(int a, string op, int b) {
     if (op == "+") return a + b;

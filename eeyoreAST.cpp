@@ -240,8 +240,10 @@ void _eIFGOTO::translate() {
         if ((op == "==") == (t1->getName() == t2->getName()))
             tiggerStmt(new _tGOTO(l));
     }
-    else
-        tiggerStmt(new _tIFGOTO(t1->getName(), op, "x0", l));
+    else {
+        string t1_reg_name = load_into_register_nonum(t1->getName(), reserved_reg1);
+        tiggerStmt(new _tIFGOTO(t1_reg_name, op, "x0", l));
+    }
 }
 void _eGOTO::translate() {
     tiggerStmt(new _tGOTO(l));
