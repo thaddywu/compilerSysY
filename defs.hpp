@@ -58,3 +58,5 @@ extern void printTab(string x) ;
 
 extern int unary_result(string op, int a);
 extern int binary_result(int a, string op, int b);
+
+extern int STK ;

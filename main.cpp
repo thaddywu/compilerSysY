@@ -14,12 +14,19 @@ int main(int argc, char **argv) {
     string sysy_file = file_name + ".sy";
     string eeyore_file = file_name + ".eeyore";
     string tigger_file = file_name + ".tigger";
+    string riscv_file = file_name + ".asm";
     freopen(sysy_file.c_str(), "r", stdin);
 #else
 int main(int argc, char **argv)
 {
-    freopen(argv[3], "r", stdin);
-    freopen(argv[5], "w", stdout);
+    if (argc == 6) {
+        freopen(argv[3], "r", stdin);
+        freopen(argv[5], "w", stdout);
+    }
+    else {
+        freopen(argv[2], "r", stdin);
+        freopen(argv[4], "w", stdout);
+    }
 #endif
     tokenManager->newEnviron();
     yyparse();
@@ -30,13 +37,18 @@ int main(int argc, char **argv)
     freopen(tigger_file.c_str(), "w", stdout);
     eeyoreRoot->translate();
     tiggerRoot->Dump();
+    freopen(riscv_file.c_str(), "w", stdout);
+    tiggerRoot->translate();
 #else
     if (strcmp(argv[2], "-e") == 0)
         eeyoreRoot->Dump();
         /* compile to eeyore */
     else {
         eeyoreRoot->translate();
-        tiggerRoot->Dump();
+        if (strcmp(argv[2], "-t") == 0)
+            tiggerRoot->Dump();
+        else
+            tiggerRoot->translate();
     }
 #endif
     return 0;

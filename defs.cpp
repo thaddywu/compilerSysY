@@ -20,6 +20,9 @@ vector<eeyoreAST *> eeyoreStmtList{};
 vector<tiggerAST *> tiggerList{};
 vector<tiggerAST *> tiggerStmtList{};
 
+int STK = 0;
+string t0;
+
 int flatten(vector<int> &dim) {
     /* return flattened size */
     int ret = 1; for (auto x: dim) ret *= x; return ret;

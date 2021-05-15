@@ -5,15 +5,6 @@
 #endif
 using namespace std;
 
-#define Reg_s 9
-#define Reg_t 7
-#define Reg_a 8
-#define Reg_N (Reg_s + Reg_t + Reg_a)
-
-#define reserved_reg1 "s9"
-#define reserved_reg2 "s10"
-#define reserved_reg3 "s11"
-
 extern void tiggerStmt(tiggerAST *x);
 /* RegManager is in charge of allocation of registers,
 and it is also responsible for var name record */
@@ -128,12 +119,12 @@ public:
     }
     void callee_store() {
         /* in charge of storation of registers %sx */
-        for (int i = 0; i < Reg_s + 3; i++)
+        for (int i = 0; i < Reg_s_all; i++)
             tiggerStmt(new _tSTORE("s" + to_string(i), i));
     }
     void callee_restore() {
         /* in charge of restoration of registers %sx */
-        for (int i = 0; i < Reg_s + 3; i++)
+        for (int i = 0; i < Reg_s_all; i++)
             tiggerStmt(new _tLOAD(i, "s" + to_string(i)));
     }
     void new_environ() {
@@ -142,7 +133,7 @@ public:
             registers[i]->new_environ();
         /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
-        stack_size = (Reg_s + 3) << 2;
+        stack_size = (Reg_s_all) << 2;
     }
     void must_allocate(string var, string reg_name) {
         Register *reg = reg_ptr[reg_name];
