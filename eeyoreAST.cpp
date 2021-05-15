@@ -318,7 +318,6 @@ void _eFUNC::translate() {
 }
 void _eRET::translate() {
     Register *t_reg = regManager->alloc_reg[t->getName()];
-    regManager->restore("a0");
     if (t_reg)
         tiggerStmt(new _tDIRECT("a0", t_reg->reg_name));
     else if (t->isnum())
