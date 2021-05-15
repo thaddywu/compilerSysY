@@ -19,16 +19,17 @@ extern void tiggerStmt(tiggerAST *x);
 and it is also responsible for var name record */
 class Register {
 public:
-    Register(string _name): reg_name(_name) {}
+    Register(string _name): reg_name(_name) { available = true; }
     
     string reg_name;
     bool allocated;
+    bool available;
     string allocated_var;
 
     bool contain(string s) {
         return allocated && allocated_var == s;
     }
-    void new_environ() { allocated = false; }
+    void new_environ() { allocated = false; assert(available); }
 };
 
 class RegManager {
@@ -44,9 +45,9 @@ public:
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
     void setlocal(string s, int sz, bool isvar) { readdr[s] = stack_size; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
-    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the index without *4 */
+    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the address with * 4 */
     string tigger(string s) { assert(isglobal(s)); return _token[s]; }
-
+    bool isparam(string s) { return s[0] == 'p'; }
     
     map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
@@ -115,10 +116,15 @@ public:
     }
     void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
-        for (int i = 0; i < Reg_t; i++)
+        for (int i = 0; i < Reg_t; i++) {
             restore("t" + to_string(i), skip);
-        for (int i = 0; i < Reg_a; i++)
+            reg_ptr["t" + to_string(i)]->available = true;
+        }
+        for (int i = 0; i < Reg_a; i++) {
             restore("a" + to_string(i), skip);
+            reg_ptr["a" + to_string(i)]->available = true;
+        }
+        /* warning: reset register's available falg */
     }
     void callee_store() {
         /* in charge of storation of registers %sx */
@@ -134,6 +140,7 @@ public:
         next_vacant_reg = 0;
         for (int i = 0; i < Reg_N; i++)
             registers[i]->new_environ();
+        /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
         stack_size = (Reg_s + 3) << 2;
     }

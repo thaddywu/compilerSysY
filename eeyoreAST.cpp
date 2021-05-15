@@ -143,7 +143,8 @@ void _eSEEK::translate() {
     }
     else {
         int t_addr = regManager->getreaddr(t);
-        if (x->isnum()) {
+        /* warning: t could be the param passed by outside function */
+        if (x->isnum() && !regManager->isparam(t)) {
             if (a_reg)
                 tiggerStmt(new _tLOAD((t_addr >> 2) + x->getInt(), a_reg->reg_name));
             else {
@@ -152,8 +153,18 @@ void _eSEEK::translate() {
             }
         }
         else {
-            string t_reg_name = load_into_register_nonum(t, reserved_reg1);
-            string x_reg_name = load_into_register(x, reserved_reg2);
+            string x_reg_name = load_into_register(x, reserved_reg1);
+            /* potential optimization here: x may be an integer */
+            string t_reg_name ;
+            if (regManager->isparam(t)) {
+                assert(t_reg != NULL); /* t must be stored in register */
+                t_reg_name = t_reg->reg_name;
+            }
+            else {
+                tiggerStmt(new _tLOADADDR(t_addr >> 2, reserved_reg2));
+                t_reg_name = reserved_reg2;
+            }
+            
             tiggerStmt(new _tBINARY(reserved_reg1, t_reg_name, "+", x_reg_name));
             /* warning: value stored in reserved_reg1 is only the address */
             if (a_reg)
@@ -186,14 +197,23 @@ void _eSAVE::translate() {
     }
     else {
         int a_addr = regManager->getreaddr(a);
-        if (x->isnum()) {
+        if (x->isnum() && !regManager->isparam(a)) {
             string t_reg_name = load_into_register(t, reserved_reg1);
             tiggerStmt(new _tSTORE(t_reg_name, (a_addr >> 2) + x->getInt()));
         }
         else {
-            string a_reg_name = load_into_register_nonum(a, reserved_reg1);
-            string x_reg_name = load_into_register(x, reserved_reg2);
-            /* potential optimization here: a's address may be calculated */
+            string x_reg_name = load_into_register(x, reserved_reg1);
+            /* potential optimization here: x may be an integer, or a's address may be calculated */
+            string a_reg_name ;
+            if (regManager->isparam(a)) {
+                assert(a_reg != NULL); /* a must be stored in register */
+                a_reg_name = a_reg->reg_name;
+            }
+            else {
+                tiggerStmt(new _tLOADADDR(a_addr >> 2, reserved_reg2));
+                a_reg_name = reserved_reg2;
+            }
+            
             tiggerStmt(new _tBINARY(reserved_reg1, a_reg_name, "+", x_reg_name));
             string t_reg_name = load_into_register(t, reserved_reg2);
             tiggerStmt(new _tSAVE(reserved_reg1, 0, t_reg_name));
@@ -238,12 +258,16 @@ void _ePARAM::translate() {
     string reg_name = "a" + to_string(regManager->param_cnt++);
     regManager->store(reg_name);
     /* potential optimization here: param is luckily just in %ai */
-    if (t_reg)
+    if (t_reg && t_reg->available) /* warning */
         tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
     else if (t->isnum())
         tiggerStmt(new _tDIRECT(reg_name, t->getInt()));
     else
         regManager->restore_reg(t->getName(), reg_name);
+
+    regManager->reg_ptr[reg_name]->available = false;
+    /* if a0 is overwritten,
+        value needs to be load from stack */
 }
 void _eIFGOTO::translate() {
     assert(t2->getName() == "0" && (op == "!=" || op == "=="));

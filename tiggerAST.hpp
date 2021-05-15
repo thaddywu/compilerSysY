@@ -110,7 +110,7 @@ class _tLOADADDR: public tiggerAST {
 public:
     string s, reg;
     _tLOADADDR(string _s, string _reg): s(_s), reg(_reg) { assert(!isreg(s) && isreg(reg)); }
-    _tLOADADDR(int _s, string _reg): s(to_string(_s >> 2)), reg(_reg) { assert(!isreg(s) && isreg(reg)); }
+    _tLOADADDR(int _s, string _reg): s(to_string(_s)), reg(_reg) { assert(!isreg(s) && isreg(reg)); }
     virtual void Dump() { printTab("loadaddr " + s + " " + reg); }
 };
 class _tSTORE: public tiggerAST {
