@@ -318,7 +318,6 @@ void _eFUNC::translate() {
 }
 void _eRET::translate() {
     Register *t_reg = regManager->alloc_reg[t->getName()];
-    regManager->callee_restore();
     regManager->restore("a0");
     if (t_reg)
         tiggerStmt(new _tDIRECT("a0", t_reg->reg_name));
@@ -326,6 +325,8 @@ void _eRET::translate() {
         tiggerStmt(new _tDIRECT("a0", t->getInt()));
     else
         regManager->restore_reg(t->getName(), "a0");
+        /* pass returned value, then callee_save. a0 = t1. */
+    regManager->callee_restore();
     tiggerStmt(new _tRETURN());
 }
 void _eRETVOID::translate() {
