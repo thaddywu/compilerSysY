@@ -30,7 +30,7 @@ public:
     tiggerAST *body; string func; int arity, mem; // mem without * 4
     _tFUNC(string _func, int _arity): func(_func), arity(_arity) { mem = 0; }
     _tFUNC(string _func, int _arity, int _mem, tiggerAST *_body): func(_func), arity(_arity), mem(_mem), body(_body) {}
-    virtual void Dump() { print(func + " [" + to_string(arity) + "] [" + to_string(mem) + "]"); body->Dump(); print("end " + func); }
+    virtual void Dump() { print("f_" + func + " [" + to_string(arity) + "] [" + to_string(mem) + "]"); body->Dump(); print("end f_" + func); }
 };
 class _tSEQ: public tiggerAST {
 public:
@@ -92,7 +92,7 @@ class _tCALL: public tiggerAST {
 public:
     string func;
     _tCALL(string _func): func(_func) {}
-    virtual void Dump() { printTab("call " + func); }
+    virtual void Dump() { printTab("call f_" + func); }
 };
 class _tRETURN: public tiggerAST {
 public:

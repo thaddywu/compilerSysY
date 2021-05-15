@@ -109,7 +109,7 @@ class _eFUNCRET: public eeyoreAST {
 public:
     eeyoreAST *a; string func;
     _eFUNCRET(eeyoreAST *_a, string _func): a(_a), func(_func) {}
-    virtual void Dump() { printTab(a->getName() + " = call " + func); }
+    virtual void Dump() { printTab(a->getName() + " = call f_" + func); }
     virtual void translate() ;
 };
 class _eIFGOTO: public eeyoreAST {
@@ -157,14 +157,14 @@ class _eFUNC: public eeyoreAST {
 public:
     eeyoreAST *body; string func; int arity;
     _eFUNC(string _func, int _arity, eeyoreAST *_body): func(_func), arity(_arity), body(_body) {}
-    virtual void Dump() { print(func + " [" + to_string(arity) + "]"); body->Dump(); print("end " + func); }
+    virtual void Dump() { print("f_" + func + " [" + to_string(arity) + "]"); body->Dump(); print("end f_" + func); }
     virtual void translate() ;
 };
 class _eCALL: public eeyoreAST {
 public:
     string func;
     _eCALL(string _func): func(_func) {}
-    virtual void Dump() { printTab("call " + func); }
+    virtual void Dump() { printTab("call f_" + func); }
     virtual void translate() ;
 };
 class _eSEQ: public eeyoreAST {

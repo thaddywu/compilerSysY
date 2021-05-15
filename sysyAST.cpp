@@ -98,7 +98,7 @@ eeyoreAST* _ARRAY_ITEM::atomize() {
 eeyoreAST* _FUNC_CALL::atomize() {
     eeyoreAST* t = new _eVAR(tokenManager->newt());
     if (param) pass();
-    eeyoreStmt(new _eFUNCRET(t, "f_" + token));
+    eeyoreStmt(new _eFUNCRET(t, token));
     return t;
 }
 eeyoreAST* _VAR::atomize() {
@@ -268,7 +268,7 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     eeyoreDeclList.insert(eeyoreDeclList.end(), eeyoreStmtList.begin(), eeyoreStmtList.end());
     eeyoreStmtList.clear();
     /* concantenate decls with normal codes */
-    eeyoreAST *func = new _eFUNC("f_" + token, p, new _eSEQ(eeyoreDeclList));
+    eeyoreAST *func = new _eFUNC(token, p, new _eSEQ(eeyoreDeclList));
     eeyoreDeclList.clear();
     /* print codes buffer into the structure of function */
     eeyoreDecl(func);
@@ -277,7 +277,7 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
 void _FUNC_CALL::translate(string ctn, string brk, bool glb) {
     if (param) pass();
         /* param = NULL in case func() */
-    eeyoreStmt(new _eCALL("f_" + token));
+    eeyoreStmt(new _eCALL(token));
 }
 void _DEF_VAR::translate(string ctn, string brk, bool glb) {
     vector<int> dim {};
