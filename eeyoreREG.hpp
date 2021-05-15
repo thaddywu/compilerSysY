@@ -93,12 +93,14 @@ public:
     }
     void store(string reg_name) {
         Register *reg = reg_ptr[reg_name];
-        if (reg != NULL && reg->allocated)
+        assert(reg != NULL);
+        if (reg->allocated)
             store_reg(reg_name, reg->allocated_var);
     }
     void restore(string reg_name, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
-        if (reg != NULL && reg->allocated && reg != skip)
+        assert(reg != NULL);
+        if (reg->allocated && reg != skip)
             restore_reg(reg->allocated_var, reg_name);
     }
     void caller_store() {
@@ -106,13 +108,16 @@ public:
         for (int i = 0; i < Reg_t; i++)
             store("t" + to_string(i));
         for (int i = param_cnt; i < Reg_a; i++)
+        /* because of the structure of eeyore Program,
+            Param appears before function call,
+            so some register storation is done before */
             store("a" + to_string(i));
     }
     void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
         for (int i = 0; i < Reg_t; i++)
             restore("t" + to_string(i), skip);
-        for (int i = param_cnt; i < Reg_a; i++)
+        for (int i = 0; i < Reg_a; i++)
             restore("a" + to_string(i), skip);
     }
     void callee_store() {

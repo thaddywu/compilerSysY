@@ -221,7 +221,7 @@ void _eFUNCRET::translate() {
     /* after call */
     regManager->caller_restore(a_reg);
     regManager->param_cnt = 0;
-    /* param_cnt must be reset after caller_store */
+    /* param_cnt must be reset after caller_store ??? */
 }
 void _eCALL::translate() {
     regManager->caller_store();
