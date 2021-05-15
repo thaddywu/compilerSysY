@@ -146,9 +146,9 @@ void _eSEEK::translate() {
         /* warning: t could be the param passed by outside function */
         if (x->isnum() && !regManager->isparam(t)) {
             if (a_reg)
-                tiggerStmt(new _tLOAD((t_addr >> 2) + x->getInt(), a_reg->reg_name));
+                tiggerStmt(new _tLOAD((t_addr + x->getInt()) >> 2 , a_reg->reg_name));
             else {
-                tiggerStmt(new _tLOAD((t_addr >> 2) + x->getInt(), reserved_reg1));
+                tiggerStmt(new _tLOAD((t_addr + x->getInt()) >> 2, reserved_reg1));
                 regManager->store_reg(reserved_reg1, a->getName());
             }
         }
@@ -199,7 +199,7 @@ void _eSAVE::translate() {
         int a_addr = regManager->getreaddr(a);
         if (x->isnum() && !regManager->isparam(a)) {
             string t_reg_name = load_into_register(t, reserved_reg1);
-            tiggerStmt(new _tSTORE(t_reg_name, (a_addr >> 2) + x->getInt()));
+            tiggerStmt(new _tSTORE(t_reg_name, (a_addr + x->getInt()) >> 2));
         }
         else {
             string x_reg_name = load_into_register(x, reserved_reg1);
