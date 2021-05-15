@@ -53,9 +53,9 @@ public:
 };
 class _tBINARY: public tiggerAST {
 public:
-    string d, op, s, t;
-    _tBINARY(string _d, string _op, string _s, string _t): d(_d), op(_op), s(_s), t(_t) { assert(isreg(d) && isreg(s)); }
-    _tBINARY(string _d, string _op, string _s, int _t): d(_d), op(_op), s(_s), t(to_string(_t)) { assert(isreg(d) && isreg(s)); }
+    string d, s, op, t;
+    _tBINARY(string _d, string _s, string _op, string _t): d(_d), op(_op), s(_s), t(_t) { assert(isreg(d) && isreg(s)); }
+    _tBINARY(string _d, string _s, string _op, int _t): d(_d), op(_op), s(_s), t(to_string(_t)) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + " " + op + " " + t); }
 };
 class _tSAVE: public tiggerAST {

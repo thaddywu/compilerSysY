@@ -117,12 +117,12 @@ public:
     }
     void callee_store() {
         /* in charge of storation of registers %sx */
-        for (int i = 0; i < Reg_s; i++)
+        for (int i = 0; i < Reg_s + 3; i++)
             tiggerStmt(new _tSTORE("s" + to_string(i), i));
     }
     void callee_restore() {
         /* in charge of restoration of registers %sx */
-        for (int i = 0; i < Reg_s; i++)
+        for (int i = 0; i < Reg_s + 3; i++)
             tiggerStmt(new _tLOAD(i, "s" + to_string(i)));
     }
     void new_environ() {
@@ -130,7 +130,7 @@ public:
         for (int i = 0; i < Reg_N; i++)
             registers[i]->new_environ();
         /* bottom of the stack is reserved for callee-registers */
-        stack_size = Reg_s << 2;
+        stack_size = (Reg_s + 3) << 2;
     }
     void try_allocate(string var) {
         if (next_vacant_reg >= Reg_N) return ;

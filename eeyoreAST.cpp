@@ -39,7 +39,7 @@ void _eDEFVAR::try_allocate() {
 }
 void _eDEFARR::translate() {
     /* only global vars could enter this function */
-    string _var = regManager->setglobal(var, true);
+    string _var = regManager->setglobal(var, false);
     tiggerDecl(new _tGLBARR(_var, size));
 }
 void _eDEFARR::try_allocate() {
@@ -203,7 +203,7 @@ void _eFUNCRET::translate() {
     if (a_reg)
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
     else
-        regManager->restore_reg("a0", a->getName());
+        regManager->store_reg("a0", a->getName());
     
     /* after call */
     regManager->caller_restore();
@@ -222,16 +222,15 @@ void _eCALL::translate() {
 }
 void _ePARAM::translate() {
     Register *t_reg = regManager->alloc_reg[t->getName()];
-    string reg_name = "a" + to_string(regManager->param_cnt);
-    regManager->param_cnt += 1;
-    regManager->restore(reg_name);
+    string reg_name = "a" + to_string(regManager->param_cnt++);
+    regManager->store(reg_name);
     /* potential optimization here: param is luckily just in %ai */
     if (t_reg)
         tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
     else if (t->isnum())
         tiggerStmt(new _tDIRECT(reg_name, t->getInt()));
     else
-        regManager->store_reg(t->getName(), reg_name);
+        regManager->restore_reg(t->getName(), reg_name);
 }
 void _eIFGOTO::translate() {
     assert(t2->getName() == "0" && (op == "!=" || op == "=="));
