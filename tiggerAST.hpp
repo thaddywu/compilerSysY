@@ -59,17 +59,17 @@ public:
     _tFUNC(string _func, int _arity, int _mem, tiggerAST *_body): func(_func), arity(_arity), mem(_mem), body(_body) {}
     virtual void Dump() { print("f_" + func + " [" + to_string(arity) + "] [" + to_string(mem) + "]"); body->Dump(); print("end f_" + func); }
     virtual void translate() {
+        STK = (mem / 4 + 1) * 16;
         printTab(".text");
         printTab(".align 2");
         printTab(".global " + func);
         printTab(".type " + func + ", @function");
         print(func + ":");
-        STK = (mem / 4 + 1) * 16;
+        printTab("addi sp, sp, -" + to_string(STK));
+        printTab("sw ra, " + to_string(STK-4) + "(sp)");
 
         body->translate();
 
-        printTab("addi sp, sp, -" + to_string(STK));
-        printTab("sw ra, " + to_string(STK-4) + "(sp)");
         printTab(".size " + func + ", .-" + func);
     }
 };
