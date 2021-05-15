@@ -44,7 +44,8 @@ void _eDEFARR::translate() {
 }
 void _eDEFARR::try_allocate() {
     regManager->setlocal(var, size << 2, false);
-    regManager->try_allocate(var);
+    // regManager->try_allocate(var);
+    /* potential optimization here: local array's start address could be stored in register */
 }
 void _eDIRECT::translate() {
     /* a = t, a:var, t:var,int*/
@@ -110,6 +111,7 @@ void _eBINARY::translate() {
     else {
         string t1_reg_name = load_into_register(t1, reserved_reg2);
         string t2_reg_name = load_into_register(t2, reserved_reg3);
+        /* potential optimization here: t2 may be an integer */
         if (a_reg)
             tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2_reg_name));
         else {
@@ -150,8 +152,9 @@ void _eSEEK::translate() {
             }
         }
         else {
-            string x_reg_name = load_into_register(x, reserved_reg1);
-            tiggerStmt(new _tBINARY(reserved_reg1, x_reg_name, "+", t_addr));
+            string t_reg_name = load_into_register_nonum(t, reserved_reg1);
+            string x_reg_name = load_into_register(x, reserved_reg2);
+            tiggerStmt(new _tBINARY(reserved_reg1, t_reg_name, "+", x_reg_name));
             /* warning: value stored in reserved_reg1 is only the address */
             if (a_reg)
                 tiggerStmt(new _tSEEK(a_reg->reg_name, reserved_reg1, 0));
@@ -183,13 +186,17 @@ void _eSAVE::translate() {
     }
     else {
         int a_addr = regManager->getreaddr(a);
-        string t_reg_name = load_into_register(t, reserved_reg1);
-        if (x->isnum())
+        if (x->isnum()) {
+            string t_reg_name = load_into_register(t, reserved_reg1);
             tiggerStmt(new _tSTORE(t_reg_name, (a_addr >> 2) + x->getInt()));
+        }
         else {
+            string a_reg_name = load_into_register_nonum(a, reserved_reg1);
             string x_reg_name = load_into_register(x, reserved_reg2);
-            tiggerStmt(new _tBINARY(reserved_reg2, x_reg_name, "+", a_addr));
-            tiggerStmt(new _tSAVE(reserved_reg2, 0, t_reg_name));
+            /* potential optimization here: a's address may be calculated */
+            tiggerStmt(new _tBINARY(reserved_reg1, a_reg_name, "+", x_reg_name));
+            string t_reg_name = load_into_register(t, reserved_reg2);
+            tiggerStmt(new _tSAVE(reserved_reg1, 0, t_reg_name));
         }
     }
 }
@@ -260,6 +267,11 @@ void _eSEQ::translate() {
 void _eFUNC::translate() {
     _tFUNC *tfunc = new _tFUNC(func, arity);
     regManager->new_environ();
+    /* param is always in register */
+    for (int i = 0; i < arity; i++) {
+        regManager->setlocal("p" + to_string(i), 4, true);
+        regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
+    }
     auto seq = ((_eSEQ *) body)->seq;
     for (auto stmt: seq)
         if (stmt->isdef()) stmt->try_allocate();

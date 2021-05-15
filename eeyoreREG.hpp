@@ -132,10 +132,22 @@ public:
         /* bottom of the stack is reserved for callee-registers */
         stack_size = (Reg_s + 3) << 2;
     }
+    void must_allocate(string var, string reg_name) {
+        Register *reg = reg_ptr[reg_name];
+        assert(!reg->allocated);
+        reg->allocated = true;
+        reg->allocated_var = var;
+        alloc_reg[var] = reg;
+    }
     void try_allocate(string var) {
-        if (next_vacant_reg >= Reg_N) return ;
+        while (next_vacant_reg < Reg_N && registers[next_vacant_reg]->allocated)
+            next_vacant_reg ++;
+        if (next_vacant_reg >= Reg_N) { alloc_reg[var] = NULL; return ;}
+        /* alloc_reg[var] may not be empty,
+            bacause there's no explicit clean for alloc_reg when quit a function */
         Register *reg = registers[next_vacant_reg++];
         reg->allocated = true;
         reg->allocated_var = var;
+        alloc_reg[var] = reg;
     }
 };
