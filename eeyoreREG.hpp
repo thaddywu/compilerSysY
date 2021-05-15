@@ -96,9 +96,9 @@ public:
         if (reg != NULL && reg->allocated)
             store_reg(reg_name, reg->allocated_var);
     }
-    void restore(string reg_name) {
+    void restore(string reg_name, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
-        if (reg != NULL && reg->allocated)
+        if (reg != NULL && reg->allocated && reg != skip)
             restore_reg(reg->allocated_var, reg_name);
     }
     void caller_store() {
@@ -108,12 +108,12 @@ public:
         for (int i = param_cnt; i < Reg_a; i++)
             store("a" + to_string(i));
     }
-    void caller_restore() {
+    void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
         for (int i = 0; i < Reg_t; i++)
-            restore("t" + to_string(i));
+            restore("t" + to_string(i), skip);
         for (int i = param_cnt; i < Reg_a; i++)
-            restore("a" + to_string(i));
+            restore("a" + to_string(i), skip);
     }
     void callee_store() {
         /* in charge of storation of registers %sx */

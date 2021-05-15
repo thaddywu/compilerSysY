@@ -209,11 +209,13 @@ void _eFUNCRET::translate() {
     Register *a_reg = regManager->alloc_reg[a->getName()];
     if (a_reg)
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
+        /* skip restore a_reg, this step is necessray.
+            otherwise, value before update will overwrite the right value. */
     else
         regManager->store_reg("a0", a->getName());
     
     /* after call */
-    regManager->caller_restore();
+    regManager->caller_restore(a_reg);
     regManager->param_cnt = 0;
     /* param_cnt must be reset after caller_store */
 }
