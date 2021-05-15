@@ -207,10 +207,14 @@ void _eFUNCRET::translate() {
     /* a = call f_func */
     tiggerStmt(new _tCALL(func));
     Register *a_reg = regManager->alloc_reg[a->getName()];
-    if (a_reg)
+    if (a_reg) {
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
         /* skip restore a_reg, this step is necessray.
             otherwise, value before update will overwrite the right value. */
+        regManager->store_reg(a_reg->reg_name, a->getName());
+        /* warning: if global var is allowed to be stored in register,
+            write-back may be needed in this scenario */
+    }
     else
         regManager->store_reg("a0", a->getName());
     
