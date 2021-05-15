@@ -45,6 +45,8 @@ int binary_result(int a, string op, int b) {
     if (op == ">=") return a >= b;
     if (op == "||") return a || b;
     if (op == "&&") return a && b;
+    if (op == "==") return a == b;
+    if (op == "!=") return a != b;
     assert(false);
 }
 int unary_result(string op, int b) {
