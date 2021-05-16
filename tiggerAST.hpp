@@ -49,7 +49,7 @@ public:
     _tGLBARR(string _var, int _size): var(_var), size(_size) {}
     virtual void Dump() { print(var + " = malloc " + to_string(size * 4)); }
     virtual void translate() {
-        printTab(".comm " + var + ", " + to_string(size) + ", 4");
+        printTab(".comm " + var + ", " + to_string(size * 4) + ", 4");
     }
 };
 class _tFUNC: public tiggerAST {
