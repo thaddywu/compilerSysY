@@ -16,7 +16,7 @@ public:
         // _EXPR::atomize return its representation which could appear in the right of assignment. special case : true || array[-1] should not incur error
     virtual eeyoreAST* atomize() { assert(false); }
         // For _ADDR_LIST, corresponding function name is passed
-    virtual eeyoreAST* atomize(string token) { assert(false); }
+    virtual eeyoreAST* atomize(string name) { assert(false); }
         // symbol: For expr, return its operator
     virtual string symbol() { assert(false); }
         // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
@@ -24,7 +24,7 @@ public:
         // _CALL_LIST::pass pass params
     virtual void pass() { assert(false); }
         /* _DECL structure:
-            instantialize: _DEF_CONST_VAR, _DEF_CONST_ARR calls tokenManager/ other _DECL type do nothing
+            instantialize: _DEF_CONST_VAR, _DEF_CONST_ARR calls varManager/ other _DECL type do nothing
                 to substitute expression with its integer value.
             initialize: for all, implemented in _DEF_VAR & _DEF_ARR
         */
@@ -56,9 +56,9 @@ public:
         - _UNARY_OP: op
             - _NEG, _NOT
         - _INTEGER: $num$
-        - _VAR: $token$
-        - _FUNC_CALL: $token$ param
-        - _ARRAY_ITEM: $token$ param
+        - _VAR: $name$
+        - _FUNC_CALL: $name$ param
+        - _ARRAY_ITEM: $name$ param
     
     _LIST: head, tail
         - _CALL_LIST: head, tail | head
@@ -74,13 +74,13 @@ public:
         - _RETURN_EXPR: return expr;
         - _CONTINUE: continue;
         - _ASSGIN: lval = rval;
-        - _FUNC: (int | void) $token$ (param) {body}
-        - _DECL: $token$ = expr
-            - _DEF_VAR: $token$ = expr
-                - _DEF_CONST_VAR: $token$ = expr
+        - _FUNC: (int | void) $name$ (param) {body}
+        - _DECL: $name$ = expr
+            - _DEF_VAR: $name$ = expr
+                - _DEF_CONST_VAR: $name$ = expr
                 - _PARAM_VAR: in function declaration
-            - _DEF_ARR: $token$ addr = magic
-                - _DEF_CONST_ARR: $token$ addr = magic
+            - _DEF_ARR: $name$ addr = magic
+                - _DEF_CONST_ARR: $name$ addr = magic
                 - _PARAM_ARR: in function declaration
         - _BLOCK: { .. }
 
@@ -88,21 +88,21 @@ public:
         - _TREE_NODE: child, sibling
         - _TREE_LEAF: expr
 
-    _STRING:  $token$
+    _STRING:  $name$
     _DUMMY: non-sense
 */
 
 class _STRING: public sysyAST {
 public:
-    string token;
-    _STRING(string _token): token(_token) {}
-    virtual string getToken() { return token; }
+    string name;
+    _STRING(string _name): name(_name) {}
+    virtual string getToken() { return name; }
 };
 class _DUMMY: public sysyAST {
     /* this class is necessary, designed for
         empty statement or expr statement */
 public:
-    string token;
+    string name;
     virtual void translate(string ctn, string brk, bool glb) { } /* do nothing */
 };
 
@@ -233,24 +233,24 @@ public:
 };
 class _VAR: public _EXPR {
 public:
-    string token;
-    _VAR(string _token): token(_token) {}
+    string name;
+    _VAR(string _name): name(_name) {}
     virtual int eval();
     virtual eeyoreAST* atomize() ;
     virtual int isvar() { return 1; }
 };
 class _FUNC_CALL: public _EXPR {
 public:
-    string token; sysyAST *param;
-    _FUNC_CALL(string _token, sysyAST *_param): token(_token), param(_param) {}
+    string name; sysyAST *param;
+    _FUNC_CALL(string _name, sysyAST *_param): name(_name), param(_param) {}
     virtual eeyoreAST* atomize() ;
     virtual void translate(string ctn, string brk, bool glb);
     virtual void pass() ;
 };
 class _ARRAY_ITEM: public _EXPR {
 public:
-    string token; sysyAST *param;
-    _ARRAY_ITEM(string _token, sysyAST *_param): token(_token), param(_param) {}
+    string name; sysyAST *param;
+    _ARRAY_ITEM(string _name, sysyAST *_param): name(_name), param(_param) {}
     virtual int eval();
     virtual eeyoreAST* atomize() ;
     virtual int isvar() { return 0; }
@@ -276,7 +276,7 @@ public:
         if (head) v.push_back(head->eval());
         if (tail) tail->vectorize(v);
     }
-    virtual eeyoreAST* atomize(string token) ;
+    virtual eeyoreAST* atomize(string name) ;
     virtual eeyoreAST* atomize() { assert(false); }
 };
 class _PARAM_LIST: public _LIST {
@@ -357,8 +357,8 @@ public:
 /* ==================================== */
 class _FUNC: public _STMT {
 public:
-    string token; sysyAST *param, *body; bool isvoid;
-    _FUNC(string _token, sysyAST *_param, sysyAST *_body, bool _isvoid): token(_token), param(_param), body(_body), isvoid(_isvoid) {}
+    string name; sysyAST *param, *body; bool isvoid;
+    _FUNC(string _name, sysyAST *_param, sysyAST *_body, bool _isvoid): name(_name), param(_param), body(_body), isvoid(_isvoid) {}
     virtual void translate(string ctn, string brk, bool glb);
 };
 
@@ -368,23 +368,25 @@ public:
 class _DECL: public sysyAST {
 public:
     _DECL() {}
-    virtual void instantialize() {} /* do nothing except for CONST */
+    virtual void initialize() { assert(false); }
+    virtual void instantialize() { assert(false); } 
 };
 class _DEF_VAR: public _DECL {
 public:
-    string token; sysyAST *inits;
-    _DEF_VAR(string _token, sysyAST *_inits): token(_token), inits(_inits) {}
+    string name; sysyAST *inits;
+    _DEF_VAR(string _name, sysyAST *_inits): name(_name), inits(_inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
+    virtual void instantialize() ;
 };
 class _DEF_CONST_VAR: public _DEF_VAR {
 public:
-    _DEF_CONST_VAR(string _token, sysyAST *_inits): _DEF_VAR(_token, _inits) {}
-    virtual void instantialize();
+    _DEF_CONST_VAR(string _name, sysyAST *_inits): _DEF_VAR(_name, _inits) {}
+    virtual void initialize() ;
 };
 class _PARAM_VAR: public _DEF_VAR {
 public:
-    _PARAM_VAR(string _token, sysyAST *_inits): _DEF_VAR(_token, _inits) {}
+    _PARAM_VAR(string _name, sysyAST *_inits): _DEF_VAR(_name, _inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
     virtual int isvar() { return 1; }
@@ -392,19 +394,20 @@ public:
 
 class _DEF_ARR: public _DECL {
 public:
-    string token; sysyAST *addr, *inits;
-    _DEF_ARR(string _token, sysyAST *_addr, sysyAST *_inits): token(_token), addr(_addr), inits(_inits) {}
+    string name; sysyAST *addr, *inits;
+    _DEF_ARR(string _name, sysyAST *_addr, sysyAST *_inits): name(_name), addr(_addr), inits(_inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
+    virtual void instantialize() ;
 };
 class _DEF_CONST_ARR: public _DEF_ARR {
 public:
-    _DEF_CONST_ARR(string _token, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
-    virtual void instantialize();
+    _DEF_CONST_ARR(string _name, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_name, _addr, _inits) {}
+    virtual void initialize() ;
 };
 class _PARAM_ARR: public _DEF_ARR {
 public:
-    _PARAM_ARR(string _token, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_token, _addr, _inits) {}
+    _PARAM_ARR(string _name, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_name, _addr, _inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
     virtual int isvar() { return 0; }
@@ -429,7 +432,8 @@ public:
     virtual bool leaf() { return false; }
     virtual _TREE* getChild() { return child; }
     virtual void debug(int ws = 0) {
-        for (int i = 1; i <= ws; i++) printf(" "); printf("-\n");
+        for (int i = 1; i <= ws; i++) printf(" ");
+        printf("-\n");
         child->debug(ws + 1);
         if (sibling) sibling->debug(ws);
     }
@@ -441,7 +445,8 @@ public:
     virtual bool leaf() { return true; }
     virtual sysyAST* getExpr() { return expr; }
     virtual void debug(int ws = 0) {
-        for (int i = 1; i <= ws; i++) printf(" "); printf("unit\n");
+        for (int i = 1; i <= ws; i++) printf(" ");
+        printf("unit\n");
         if (sibling) sibling->debug(ws);
     }
 };

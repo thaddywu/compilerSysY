@@ -7,15 +7,15 @@ using namespace std;
 /* ================================================= */
 /* eval                                              */
 /*      - most parts in .hpp                         */
-/*      - here using tokenManager                    */
+/*      - here using varManager                    */
 /* ================================================= */
 int _VAR::eval() {
-    return tokenManager->query(token);
+    return varManager->query(name);
 }
 int _ARRAY_ITEM::eval() {
     vector<int> addr{};
     param->vectorize(addr);
-    return tokenManager->query(token, addr);
+    return varManager->query(name, addr);
 }
 
 /* ================================================= */
@@ -26,22 +26,22 @@ int _ARRAY_ITEM::eval() {
 /* ================================================= */
 eeyoreAST* _UNARY_OP::atomize() {
     eeyoreAST* aop = op->atomize();
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     eeyoreStmt(new _eUNARY(t, symbol(), aop));
     return t;
 }
 eeyoreAST* _BINARY_OP::atomize() {
     eeyoreAST* alop = lop->atomize();
     eeyoreAST* arop = rop->atomize();
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     eeyoreStmt(new _eBINARY(t, alop, symbol(), arop));
     return t;
 }
 eeyoreAST* _AND::atomize() {
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     eeyoreStmt(new _eDIRECT(t, new _eNUM(0)));
     eeyoreAST* alop = lop->atomize();
-    string cp = tokenManager->newl();
+    string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(alop, "==", new _eNUM(0), cp));
     eeyoreAST* arop = rop->atomize();
     eeyoreStmt(new _eIFGOTO(arop, "==", new _eNUM(0), cp));
@@ -50,10 +50,10 @@ eeyoreAST* _AND::atomize() {
     return t;
 }
 eeyoreAST* _OR::atomize() {
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     eeyoreStmt(new _eDIRECT(t, new _eNUM(1)));
     eeyoreAST* alop = lop->atomize();
-    string cp = tokenManager->newl();
+    string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(alop, "!=", new _eNUM(0), cp));
     eeyoreAST* arop = rop->atomize();
     eeyoreStmt(new _eIFGOTO(arop, "!=", new _eNUM(0), cp));
@@ -61,48 +61,48 @@ eeyoreAST* _OR::atomize() {
     eeyoreStmt(new _eLABEL(cp));
     return t;
 }
-eeyoreAST* _ADDR_LIST::atomize(string token) {
-    vector<int> &dim = tokenManager->getDim(token);
+eeyoreAST* _ADDR_LIST::atomize(string name) {
+    vector<int> &shape = varManager->getshape(name);
     assert(head != NULL);
     eeyoreAST* ret = head->atomize();
     _ADDR_LIST *cur = (_ADDR_LIST *)tail;
-    for (int k = 1; k < dim.size(); k++)
+    for (int k = 1; k < shape.size(); k++)
     if (cur) {
         assert(cur->head);
         eeyoreAST* nxt = cur->head->atomize();
-        eeyoreAST* t1 = new _eVAR(tokenManager->newt());
-        eeyoreAST* t2 = new _eVAR(tokenManager->newt());
+        eeyoreAST* t1 = new _eVAR(varManager->newt());
+        eeyoreAST* t2 = new _eVAR(varManager->newt());
 
-        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(dim[k])));
+        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(shape[k])));
         eeyoreStmt(new _eBINARY(t2, t1, "+", nxt));
         ret = t2;
         cur = (_ADDR_LIST *) (cur->tail);
     }
     else {
-        eeyoreAST* t1 = new _eVAR(tokenManager->newt());
-        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(dim[k])));
+        eeyoreAST* t1 = new _eVAR(varManager->newt());
+        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(shape[k])));
         ret = t1;
     }
     assert(cur == NULL);
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     eeyoreStmt(new _eBINARY(t, ret, "*", new _eNUM(4)));
     return t;
 }
 eeyoreAST* _ARRAY_ITEM::atomize() {
     /* potential optimization for constant array */
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
-    eeyoreAST* lval = param->atomize(token);
-    eeyoreStmt(new _eSEEK(t, tokenManager->getEeyore(token), lval));
+    eeyoreAST* t = new _eVAR(varManager->newt());
+    eeyoreAST* lval = param->atomize(name);
+    eeyoreStmt(new _eSEEK(t, varManager->getEeyore(name), lval));
     return t;
 }
 eeyoreAST* _FUNC_CALL::atomize() {
-    eeyoreAST* t = new _eVAR(tokenManager->newt());
+    eeyoreAST* t = new _eVAR(varManager->newt());
     if (param) pass();
-    eeyoreStmt(new _eFUNCRET(t, token));
+    eeyoreStmt(new _eFUNCRET(t, name));
     return t;
 }
 eeyoreAST* _VAR::atomize() {
-    return new _eVAR(tokenManager->getEeyore(token)); /* atomize name */
+    return new _eVAR(varManager->getEeyore(name)); /* atomize name */
 }
 eeyoreAST* _INTEGER::atomize() {
     return new _eNUM(num);
@@ -116,7 +116,7 @@ eeyoreAST* _INTEGER::atomize() {
 void _FUNC_CALL::pass() {
     vector<eeyoreAST *> call_list {};
     _CALL_LIST *cur = (_CALL_LIST *) param;
-    vector<int> &isvars = funcManager->query(token);
+    vector<int> &isvars = funcManager->query(name);
     
     for (auto isvar: isvars) {
         assert(cur->head != NULL);
@@ -125,11 +125,11 @@ void _FUNC_CALL::pass() {
         else {
             /* ought to compute addr */
             _ARRAY_ITEM *ai = (_ARRAY_ITEM *) (cur->head);
-            eeyoreAST* t = new _eVAR(tokenManager->newt());
-            eeyoreAST* addr = ai->param->atomize(ai->token);
-                /* ai->token, token must be passed!!
+            eeyoreAST* t = new _eVAR(varManager->newt());
+            eeyoreAST* addr = ai->param->atomize(ai->name);
+                /* ai->name, name must be passed!!
                     no definition on _ADDR_LIST->atomize(void) */
-            eeyoreStmt(new _eBINARY(t, new _eVAR(ai->token), "+", addr));
+            eeyoreStmt(new _eBINARY(t, new _eVAR(ai->name), "+", addr));
             call_list.push_back(t);
         }
         cur = (_CALL_LIST *) (cur->tail);
@@ -141,24 +141,30 @@ void _FUNC_CALL::pass() {
 /* ================================================= */
 /* instantialize                                     */
 /*      - eval constant var/arr                      */
-/*      - by tokenManager, must after construction   */
+/*      - by varManager, must after construction   */
 /* ================================================= */
-void _DEF_CONST_VAR::instantialize() {
-    if (inits) tokenManager->instantialize(token);
+void _DEF_VAR::instantialize() {
+    varManager->instantialize(name);
 }
-void _DEF_CONST_ARR::instantialize() {
-    if (inits) tokenManager->instantialize(token);
+void _DEF_ARR::instantialize() {
+    varManager->instantialize(name);
 }
 /* ================================================= */
 /* initialize                                        */
 /*      - initialize when construction               */
 /*      - global var ought to be initialized in main */
 /* ================================================= */
+void _DEF_CONST_VAR::initialize() {
+    varManager->initialize(name, true, true);
+}
+void _DEF_CONST_ARR::initialize() {
+    varManager->initialize(name, false, true);
+}
 void _DEF_VAR::initialize() {
-    if (inits) tokenManager->initialize(token, true);
+    varManager->initialize(name, true, false);
 }
 void _DEF_ARR::initialize() {
-    if (inits) tokenManager->initialize(token, false);
+    varManager->initialize(name, false, false);
 }
 
 /* ================================================= */
@@ -185,14 +191,14 @@ void _STMT_SEQ::translate(string ctn, string brk, bool glb) {
 }
 void _IF::translate(string ctn, string brk, bool glb) {
     eeyoreAST* c = cond->atomize();
-    string cp = tokenManager->newl();
+    string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp));
     body->translate(ctn, brk, glb);
     eeyoreStmt(new _eLABEL(cp));
 }
 void _IF_ELSE::translate(string ctn, string brk, bool glb) {
-    string cp1 = tokenManager->newl();
-    string cp2 = tokenManager->newl();
+    string cp1 = varManager->newl();
+    string cp2 = varManager->newl();
     eeyoreAST* c = cond->atomize();
     eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp1));
     body->translate(ctn, brk, glb);
@@ -202,8 +208,8 @@ void _IF_ELSE::translate(string ctn, string brk, bool glb) {
     eeyoreStmt(new _eLABEL(cp2));
 }
 void _WHILE::translate(string ctn, string brk, bool glb) {
-    string cp1 = tokenManager->newl();
-    string cp2 = tokenManager->newl();
+    string cp1 = varManager->newl();
+    string cp2 = varManager->newl();
     eeyoreStmt(new _eLABEL(cp1));
         /* must set label first, then atomize cond */
     eeyoreAST* c = cond->atomize();
@@ -229,20 +235,20 @@ void _ASSIGN::translate(string ctn, string brk, bool glb) {
     eeyoreAST* rval = rop->atomize();
     if (lop->isvar()) {
         _VAR *var = (_VAR *)lop;
-        eeyoreStmt(new _eDIRECT(new _eVAR(tokenManager->getEeyore(var->token)), rval));
+        eeyoreStmt(new _eDIRECT(new _eVAR(varManager->getEeyore(var->name)), rval));
     }
     else {
         _ARRAY_ITEM *ai = (_ARRAY_ITEM *)lop;
-        eeyoreAST* param = ai->param->atomize(ai->token);
-            /* remember to write ->atomize(token) !!! */
-        eeyoreStmt(new _eSAVE(tokenManager->getEeyore(ai->token), param, rval));
+        eeyoreAST* param = ai->param->atomize(ai->name);
+            /* remember to write ->atomize(name) !!! */
+        eeyoreStmt(new _eSAVE(varManager->getEeyore(ai->name), param, rval));
     }
 }
 void _BLOCK::translate(string ctn, string brk, bool glb) {
-    tokenManager->newEnviron();
+    varManager->newEnviron();
     if (block) block->translate(ctn, brk, glb);
         /* possible occassions: block body is empty */
-    tokenManager->deleteEnviron();
+    varManager->deleteEnviron();
 }
 void _PARAM_LIST::translate(string ctn, string brk, bool glb) {
     if (head) head->translate(ctn, brk, glb);
@@ -252,12 +258,12 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     eeyoreList.insert(eeyoreList.end(), eeyoreDeclList.begin(), eeyoreDeclList.end());
     eeyoreDeclList.clear();
     /* print decls in buffer into the entire code */
-    tokenManager->newEnviron();
-    int p = funcManager->insert(token, param);
+    varManager->newEnviron();
+    int p = funcManager->insert(name, param);
         /* bool vector: is each param an var(T)/array(F) */
     if (param) param->translate(ctn, brk, glb);
         /* param = NULL in case func() {} */
-    if (token == "main") {
+    if (name == "main") {
         /* initialization of global var */
         for (auto glb_var : globalInitList)
             glb_var->initialize();
@@ -268,21 +274,21 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     eeyoreDeclList.insert(eeyoreDeclList.end(), eeyoreStmtList.begin(), eeyoreStmtList.end());
     eeyoreStmtList.clear();
     /* concantenate decls with normal codes */
-    eeyoreAST *func = new _eFUNC(token, p, new _eSEQ(eeyoreDeclList));
+    eeyoreAST *func = new _eFUNC(name, p, new _eSEQ(eeyoreDeclList));
     eeyoreDeclList.clear();
     /* print codes buffer into the structure of function */
     eeyoreDecl(func);
-    tokenManager->deleteEnviron();
+    varManager->deleteEnviron();
 }
 void _FUNC_CALL::translate(string ctn, string brk, bool glb) {
     if (param) pass();
         /* param = NULL in case func() */
-    eeyoreStmt(new _eCALL(token));
+    eeyoreStmt(new _eCALL(name));
 }
 void _DEF_VAR::translate(string ctn, string brk, bool glb) {
-    vector<int> dim {};
-    dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
-    tokenManager->insert(dd);
+    vector<int> shape {};
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    varManager->insert(dd);
     instantialize();
     if (!glb)
         initialize();
@@ -290,15 +296,15 @@ void _DEF_VAR::translate(string ctn, string brk, bool glb) {
         globalInitList.push_back(this);
 }
 void _PARAM_VAR::translate(string ctn, string brk, bool glb) {
-    vector<int> dim {};
-    dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
-    tokenManager->insert(dd, true);
+    vector<int> shape {};
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    varManager->insert(dd, true);
 }
 void _DEF_ARR::translate(string ctn, string brk, bool glb) {
-    vector<int> dim {};
-    addr->vectorize(dim);
-    dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
-    tokenManager->insert(dd);
+    vector<int> shape {};
+    addr->vectorize(shape);
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    varManager->insert(dd);
     instantialize();
     if (!glb)
         initialize();
@@ -306,9 +312,9 @@ void _DEF_ARR::translate(string ctn, string brk, bool glb) {
         globalInitList.push_back(this);
 }
 void _PARAM_ARR::translate(string ctn, string brk, bool glb) {
-    vector<int> dim {0};
-    if (addr) addr->vectorize(dim);
-        /* addr = NULL in case token[] */
-    dataDescript *dd = new dataDescript(token, dim, (_TREE *)inits);
-    tokenManager->insert(dd, true);
+    vector<int> shape {0};
+    if (addr) addr->vectorize(shape);
+        /* addr = NULL in case name[] */
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    varManager->insert(dd, true);
 }

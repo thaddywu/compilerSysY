@@ -32,7 +32,7 @@ extern eeyoreAST *eeyoreRoot;
 extern tiggerAST *tiggerRoot;
 
 /* tools for sysY->eeyore */
-extern TokenManager *tokenManager;
+extern VarManager *varManager;
 extern FuncManager *funcManager;
 extern vector<sysyAST *> globalInitList;
 extern vector<eeyoreAST *> eeyoreList; /* global decls with functions */

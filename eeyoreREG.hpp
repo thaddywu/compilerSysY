@@ -27,17 +27,17 @@ class RegManager {
 public:
     map<string, bool> _global; //mapping: global var/array -> if is var
     map<string, bool> _isvar;
-    map<string, string> _token; //mapping: eeyore global var -> tigger global var
+    map<string, string> _name; //mapping: eeyore global var -> tigger global var
     map<string, int> readdr; //mapping: local var/array -> relative address on stack (with * 4)
 
     int next_vacant_reg, param_cnt, stack_size, global_cnt;
 
-    string setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; return _token[s] = "v" + to_string(global_cnt++); }
+    string setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; return _name[s] = "v" + to_string(global_cnt++); }
     bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
     void setlocal(string s, int sz, bool isvar) { readdr[s] = stack_size; _isvar[s] = isvar; stack_size += sz; }
     bool isvar(string s) { return _isvar[s]; }
     int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the address with * 4 */
-    string tigger(string s) { assert(isglobal(s)); return _token[s]; }
+    string tigger(string s) { assert(isglobal(s)); return _name[s]; }
     bool isparam(string s) { return s[0] == 'p'; }
     
     map<string, Register*> alloc_reg;

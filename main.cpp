@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         freopen(argv[4], "w", stdout);
     }
 #endif
-    tokenManager->newEnviron();
+    varManager->newEnviron();
     yyparse();
     sysyRoot->translate("", "", true);
 #ifdef LOCALTEST

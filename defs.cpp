@@ -4,7 +4,7 @@
 #endif
 using namespace std;
 
-TokenManager *tokenManager = new TokenManager();
+VarManager *varManager = new VarManager();
 FuncManager *funcManager = new FuncManager();
 RegManager *regManager = new RegManager();
 vector<sysyAST *> globalInitList{};
@@ -23,9 +23,9 @@ vector<tiggerAST *> tiggerStmtList{};
 int STK = 0;
 string t0;
 
-int flatten(vector<int> &dim) {
+int flatten(vector<int> &shape) {
     /* return flattened size */
-    int ret = 1; for (auto x: dim) ret *= x; return ret;
+    int ret = 1; for (auto x: shape) ret *= x; return ret;
 }
 
 void eeyoreStmt(eeyoreAST *x) { eeyoreStmtList.push_back(x); }
