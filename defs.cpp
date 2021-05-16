@@ -21,7 +21,7 @@ vector<tiggerAST *> tiggerList{};
 vector<tiggerAST *> tiggerStmtList{};
 
 int STK = 0;
-string t0;
+string t0 = "s8";
 
 int flatten(vector<int> &shape) {
     /* return flattened size */
