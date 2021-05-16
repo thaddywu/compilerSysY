@@ -174,7 +174,7 @@ public:
     _tSAVE(string _d, int _x, string _s): d(_d), x(to_string(_x)), x_int(_x), s(_s) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + "[" + x + "] = " + s); }
     virtual void translate() {
-        if (1 && isint12(x_int))
+        if (0 && isint12(x_int))
             printTab("sw " + s + ", " + x + "(" + d + ")");
         else {
             printTab("li " + t0 + ", " + x);
@@ -189,7 +189,7 @@ public:
     _tSEEK(string _d, string _s, int _x): d(_d), s(_s), x(to_string(_x)), x_int(_x) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + "[" + x + "]"); }
     virtual void translate() {
-        if (1 && isint12(x_int))
+        if (0 && isint12(x_int))
             printTab("lw " + d + ", " + x + "(" + s + ")");
         else {
             printTab("li " + t0 + ", " + x);
