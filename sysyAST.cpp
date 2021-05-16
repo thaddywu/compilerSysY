@@ -271,6 +271,7 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     assert(body != NULL);
     body->translate(ctn, brk, false);
     if (isvoid) eeyoreStmt(new _eRETVOID());
+    else eeyoreStmt(new _eRET(new _eNUM(0)));
     eeyoreDeclList.insert(eeyoreDeclList.end(), eeyoreStmtList.begin(), eeyoreStmtList.end());
     eeyoreStmtList.clear();
     /* concantenate decls with normal codes */
