@@ -377,18 +377,20 @@ public:
     _DEF_VAR(string _name, sysyAST *_inits): name(_name), inits(_inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
-    virtual void instantialize() ;
+    virtual void instantialize() {} /* do nothing */
 };
 class _DEF_CONST_VAR: public _DEF_VAR {
 public:
     _DEF_CONST_VAR(string _name, sysyAST *_inits): _DEF_VAR(_name, _inits) {}
     virtual void initialize() ;
+    virtual void instantialize() ;
 };
 class _PARAM_VAR: public _DEF_VAR {
 public:
     _PARAM_VAR(string _name, sysyAST *_inits): _DEF_VAR(_name, _inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
+    virtual void instantialize() {} /* do nothing */
     virtual int isvar() { return 1; }
 };
 
@@ -398,18 +400,20 @@ public:
     _DEF_ARR(string _name, sysyAST *_addr, sysyAST *_inits): name(_name), addr(_addr), inits(_inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() ;
-    virtual void instantialize() ;
+    virtual void instantialize() {} /* do nothing */
 };
 class _DEF_CONST_ARR: public _DEF_ARR {
 public:
     _DEF_CONST_ARR(string _name, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_name, _addr, _inits) {}
     virtual void initialize() ;
+    virtual void instantialize() ;
 };
 class _PARAM_ARR: public _DEF_ARR {
 public:
     _PARAM_ARR(string _name, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_name, _addr, _inits) {}
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize() { assert(false); } /* redundant assertion */
+    virtual void instantialize() {} /* do nothing */
     virtual int isvar() { return 0; }
 };
 

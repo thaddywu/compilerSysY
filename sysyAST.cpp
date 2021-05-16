@@ -143,10 +143,10 @@ void _FUNC_CALL::pass() {
 /*      - eval constant var/arr                      */
 /*      - by varManager, must after construction   */
 /* ================================================= */
-void _DEF_VAR::instantialize() {
+void _DEF_CONST_VAR::instantialize() {
     varManager->instantialize(name);
 }
-void _DEF_ARR::instantialize() {
+void _DEF_CONST_ARR::instantialize() {
     varManager->instantialize(name);
 }
 /* ================================================= */
