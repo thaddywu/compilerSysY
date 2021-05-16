@@ -174,7 +174,6 @@ public:
     _tSAVE(string _d, int _x, string _s): d(_d), x(to_string(_x)), x_int(_x), s(_s) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + "[" + x + "] = " + s); }
     virtual void translate() {
-        return ;
         if (0 && isint12(x_int))
             printTab("sw " + s + ", " + x + "(" + d + ")");
         else {
@@ -190,7 +189,6 @@ public:
     _tSEEK(string _d, string _s, int _x): d(_d), s(_s), x(to_string(_x)), x_int(_x) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + "[" + x + "]"); }
     virtual void translate() {
-        return ;
         if (0 && isint12(x_int))
             printTab("lw " + d + ", " + x + "(" + s + ")");
         else {
@@ -263,7 +261,6 @@ public:
             printTab("lw " + reg + ", %lo(" + s + ")(" + reg + ")");
         }
         else {
-            return ;
             if (0 && isint10(s_int))
                 printTab("lw " + reg + ", " + to_string(s_int*4) + "(sp)");
             else {
@@ -299,7 +296,6 @@ public:
     _tSTORE(string _reg, int _s): reg(_reg), s_int(_s) { assert(isreg(reg)); }
     virtual void Dump() { printTab("store " + reg + " " + to_string(s_int)); }
     virtual void translate() {
-        return ;
         if (0 && isint10(s_int))
             printTab("sw " + reg + ", " + to_string(s_int*4) + "(sp)");
         else {
