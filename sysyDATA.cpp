@@ -117,7 +117,7 @@ void zero_padding(dataCell* &root, vector<int> &shape, int depth) {
         dataAggr *x = (dataAggr *) root;
         for (auto &child: x->aggr)
             zero_padding(child, shape, depth + 1);
-        for (int i = x->aggr.size(); i < shape.size(); i++) {
+        for (int i = x->aggr.size(); i < shape[depth]; i++) {
             dataCell *child = NULL;
             zero_padding(child, shape, depth + 1);
             x->aggr.push_back(child);

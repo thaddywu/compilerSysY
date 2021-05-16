@@ -109,7 +109,7 @@ void VarManager::initialize(string name, bool var, bool zero_pad) {
     vector<int> &shape = table[name]->shape;
     dataCell *inits = table[name]->inits;
     string eeyore = table[name]->eeyore;
-    //if (zero_pad) zero_padding(inits, shape, 0);
+    if (zero_pad) zero_padding(inits, shape, 0);
     if (inits) inits->initialize(eeyore, shape, 0, var);
 }
 
