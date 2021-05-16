@@ -111,7 +111,7 @@ void _eBINARY::translate() {
     else {
         string t1_reg_name = load_into_register(t1, reserved_reg2);
         string t2_reg_name = load_into_register(t2, reserved_reg3);
-        /* potential optimization here: t2 may be an integer */
+        /* potential optimization here: t2 may be an integer(int12) */
         if (a_reg)
             tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2_reg_name));
         else {

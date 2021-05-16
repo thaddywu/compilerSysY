@@ -17,6 +17,8 @@ extern void print(string x) ;
 extern void printTab(string x) ;
 extern bool isreg(string x) ;
 extern bool islogicop(string x) ;
+extern bool isint10(int x) ;
+extern bool isint12(int x) ;
 
 extern int STK ;
 
@@ -107,12 +109,13 @@ public:
 };
 class _tBINARY: public tiggerAST {
 public:
-    string d, s, op, t;
+    string d, s, op, t; int t_int;
     _tBINARY(string _d, string _s, string _op, string _t): d(_d), op(_op), s(_s), t(_t) { assert(isreg(d) && isreg(s)); }
-    _tBINARY(string _d, string _s, string _op, int _t): d(_d), op(_op), s(_s), t(to_string(_t)) { assert(isreg(d) && isreg(s)); }
+    _tBINARY(string _d, string _s, string _op, int _t): d(_d), op(_op), s(_s), t(to_string(_t)), t_int(_t) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + " " + op + " " + t); }
     virtual void translate() {
-        if (!isreg(t) && (op == "+" || op == "<")) {
+        if (0 && !isreg(t) && isint12(t_int) && (op == "+" || op == "<")) {
+            /* t:int12, op: + < */
             if (op == "+")
                 printTab("addi " + d + ", " + s + ", " + t);
             if (op == "<")
@@ -167,17 +170,35 @@ public:
 };
 class _tSAVE: public tiggerAST {
 public:
-    string d, x, s;
-    _tSAVE(string _d, int _x, string _s): d(_d), x(to_string(_x)), s(_s) { assert(isreg(d) && isreg(s)); }
+    string d, x, s; int x_int;
+    _tSAVE(string _d, int _x, string _s): d(_d), x(to_string(_x)), x_int(_x), s(_s) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + "[" + x + "] = " + s); }
-    virtual void translate() { printTab("sw " + s + ", " + x + "(" + d + ")"); }
+    virtual void translate() {
+        return ;
+        if (0 && isint12(x_int))
+            printTab("sw " + s + ", " + x + "(" + d + ")");
+        else {
+            printTab("li " + t0 + ", " + x);
+            printTab("add " + t0 + ", " + t0 + ", " + d);
+            printTab("sw " + s + ", 0(" + t0 + ")");
+        }
+    }
 };
 class _tSEEK: public tiggerAST {
 public:
-    string d, s, x;
-    _tSEEK(string _d, string _s, int _x): d(_d), s(_s), x(to_string(_x)) { assert(isreg(d) && isreg(s)); }
+    string d, s, x; int x_int;
+    _tSEEK(string _d, string _s, int _x): d(_d), s(_s), x(to_string(_x)), x_int(_x) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + "[" + x + "]"); }
-    virtual void translate() { printTab("lw " + d + ", " + x + "(" + s + ")"); }
+    virtual void translate() {
+        return ;
+        if (0 && isint12(x_int))
+            printTab("lw " + d + ", " + x + "(" + s + ")");
+        else {
+            printTab("li " + t0 + ", " + x);
+            printTab("add " + t0 + ", " + t0 + ", " + s);
+            printTab("lw " + d + ", 0(" + t0 + ")");
+        }
+    }
 };
 class _tIFGOTO: public tiggerAST {
 public:
@@ -241,8 +262,16 @@ public:
             printTab("lui " + reg + ", %hi(" + s + ")");
             printTab("lw " + reg + ", %lo(" + s + ")(" + reg + ")");
         }
-        else
-            printTab("lw " + reg + ", " + to_string(s_int*4) + "(sp)");
+        else {
+            return ;
+            if (0 && isint10(s_int))
+                printTab("lw " + reg + ", " + to_string(s_int*4) + "(sp)");
+            else {
+                printTab("li " + t0 + ", " + to_string(s_int*4));
+                printTab("add " + t0 + ", " + t0 + ", sp");
+                printTab("lw " + reg + ", " +  + "0(" + t0 + ")");
+            }
+        }
     }
 };
 class _tLOADADDR: public tiggerAST {
@@ -254,8 +283,14 @@ public:
     virtual void translate() {
         if (global_var)
             printTab("la " + reg + ", " + s);
-        else
-            printTab("addi " + reg + ", sp, " + to_string(s_int*4));
+        else {
+            if (0 && isint10(s_int))
+                printTab("addi " + reg + ", sp, " + to_string(s_int*4));
+            else {
+                printTab("li " + t0 + ", " + to_string(s_int*4));
+                printTab("add " + reg + ", sp, " + t0);
+            }
+        }
     }
 };
 class _tSTORE: public tiggerAST {
@@ -263,5 +298,14 @@ public:
     string reg; int s_int;
     _tSTORE(string _reg, int _s): reg(_reg), s_int(_s) { assert(isreg(reg)); }
     virtual void Dump() { printTab("store " + reg + " " + to_string(s_int)); }
-    virtual void translate() { printTab("sw " + reg + ", " + to_string(s_int*4) + "(sp)");}
+    virtual void translate() {
+        return ;
+        if (0 && isint10(s_int))
+            printTab("sw " + reg + ", " + to_string(s_int*4) + "(sp)");
+        else {
+            printTab("li " + t0 + ", " + to_string(s_int*4));
+            printTab("add " + t0 + ", " + t0 + ", sp");
+            printTab("sw " + reg + ", 0(" + t0 + ")");
+        }
+    }
 };
