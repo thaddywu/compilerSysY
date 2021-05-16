@@ -266,7 +266,7 @@ public:
             else {
                 printTab("li " + t0 + ", " + to_string(s_int*4));
                 printTab("add " + t0 + ", " + t0 + ", sp");
-                printTab("lw " + reg + ", " +  + "0(" + t0 + ")");
+                printTab("lw " + reg + ", 0(" + t0 + ")");
             }
         }
     }
