@@ -189,7 +189,7 @@ public:
     _tSEEK(string _d, string _s, int _x): d(_d), s(_s), x(to_string(_x)), x_int(_x) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + "[" + x + "]"); }
     virtual void translate() {
-        if (0 && isint12(x_int))
+        if (1 && isint12(x_int))
             printTab("lw " + d + ", " + x + "(" + s + ")");
         else {
             printTab("li " + t0 + ", " + x);
