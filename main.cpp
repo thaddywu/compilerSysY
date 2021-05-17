@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     string sysy_file = file_name + ".sy";
     string eeyore_file = file_name + ".eeyore";
     string tigger_file = file_name + ".tigger";
-    string riscv_file = file_name + ".asm";
+    string riscv_file = "output.S";
     freopen(sysy_file.c_str(), "r", stdin);
 #else
 int main(int argc, char **argv)
