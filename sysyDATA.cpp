@@ -28,8 +28,8 @@ void dataAggr::condense(vector<int> &shape) {
 
 /* =============================================== */
 /* merge                                           */
-/*      - merge nodes of the same depth            */
-/*      - only exactly n nodes                     */
+/*      - new elements are going to be appended    */
+/*      - merge the end                            */
 /* =============================================== */
 void dataAggr::merge(vector<int> &shape) {
     while (!aggr.empty()) {
@@ -38,27 +38,37 @@ void dataAggr::merge(vector<int> &shape) {
             assert(aggr.size() == 1);
             return ;
         }
-        int sz = aggr.size(), n = shape[depth - 1];
-        if (sz < n || aggr[sz-n]->depth != depth) return ;
+        int sz = aggr.size(), k = shape[depth - 1];
+        if (sz < k || aggr[sz-k]->depth != depth) return ;
         condense(shape);
     }
 }
 /* =============================================== */
 /* liftup                                          */
-/*      - extend current array into higher-shape     */
-/*      - remember to merge nodes of the same      */
-/*          depth immediately after liftup once    */
+/*      - merge immediately after condense         */
+/*      - merge until back().depth <= depth        */
 /* =============================================== */
 void dataAggr::liftup(vector<int> &shape, int depth) {
     while (!aggr.empty() && aggr.back()->depth > depth)
         { condense(shape); merge(shape); }
+    merge(shape);
 }
-dataAggr* dataAggr::rework(vector<int> &shape) {
-    /* generate the final node after processing with all siblings, 
-        and return its pointer */
+/* =============================================== */
+/* prune                                           */
+/*      - array -> {array}                         */
+/* =============================================== */
+dataAggr* dataAggr::prune(vector<int> &shape) {
     assert(!aggr.empty());
-    while (aggr[0]->depth != aggr.back()->depth)
+    while (true) {
+        bool condense_flag = false;
+        int depth = aggr.back()->depth;
+        if (aggr.front()->depth != depth) /* elements' depth is not consistant */
+            condense_flag = true;
+        if (aggr.size() > shape[depth]) /* elements' quantity exceeds bound */
+            condense_flag = true;
+        if (!condense_flag) break;
         condense(shape);
+    }
     depth = aggr[0]->depth - 1;
     return this;
 }
@@ -103,7 +113,7 @@ void dataAggr::debug() {
 }
 /* =============================================== */
 /* zero-padding                                    */
-/*      - const var shoule be zero-padded          */
+/*      - explicitly set 0 for unassigned vars     */
 /* =============================================== */
 void zero_padding(dataCell* &root, vector<int> &shape, int depth) {
     if (depth == shape.size()) {
@@ -115,6 +125,7 @@ void zero_padding(dataCell* &root, vector<int> &shape, int depth) {
     if (!root)
         root = (dataCell *)(new dataAggr(depth));
     dataAggr *x = (dataAggr *) root;
+    assert(x->aggr.size() <= shape[depth]);
     for (auto &child: x->aggr)
         zero_padding(child, shape, depth + 1);
     for (int i = x->aggr.size(); i < shape[depth]; i++) {
@@ -122,4 +133,5 @@ void zero_padding(dataCell* &root, vector<int> &shape, int depth) {
         zero_padding(child, shape, depth + 1);
         x->aggr.push_back(child);
     }
+    assert(x->aggr.size() == shape[depth]);
 }

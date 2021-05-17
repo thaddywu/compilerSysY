@@ -24,7 +24,7 @@ public:
     void condense(vector<int> &shape) ;
     void liftup(vector<int> &shape, int depth) ;
     void merge(vector<int> &shape) ;
-    dataAggr* rework(vector<int> &shape) ;
+    dataAggr* prune(vector<int> &shape) ;
     virtual void instantialize() ;
     virtual void initialize(string &eeyore, vector<int> &shape, int addr, bool var) ;
     virtual void debug() ;

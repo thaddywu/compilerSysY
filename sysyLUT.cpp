@@ -12,7 +12,9 @@ using namespace std;
 dataDescript::dataDescript(string _name, vector<int> _shape, _TREE *_node):
 name(_name), shape(_shape), inits(NULL) {
     if (_node == NULL) return ;
-    inits = ((dataAggr *)construct(new dataAggr(-1), _node))->aggr[0];
+    dataAggr *sur_tree = (dataAggr *) construct(new dataAggr(-1), _node);
+        /* {defition}, one closure outside, so as to avoid discussion here */
+    inits = sur_tree->aggr[0];
     while (inits->depth > 0) {
         dataAggr *anc = new dataAggr(inits->depth - 1);
         anc->aggr.push_back(inits);
@@ -37,11 +39,11 @@ int dataDescript::eval(vector<int> &addr) {
 /* ====================================================== */
 /* dataDescript::construct(tree, node)                    */
 /*      - private internal function                       */
-/*      - construct dataDescript from original _TREE type */
+/*      - construct dataAggr from original _TREE          */
 /* ====================================================== */
 dataCell* dataDescript::construct(dataAggr *tree, _TREE *node) {
     assert(node != NULL);
-    dataCell *incr = NULL;
+    dataCell *incr;
     if (node->leaf())
         incr = (dataCell*) new dataLeaf(shape.size(), node->getExpr());
     else
@@ -49,7 +51,7 @@ dataCell* dataDescript::construct(dataAggr *tree, _TREE *node) {
 
     tree->liftup(shape, incr->depth);
     tree->aggr.push_back(incr);
-    return node->sibling ? construct(tree, node->sibling) : tree->rework(shape);
+    return node->sibling ? construct(tree, node->sibling) : tree->prune(shape);
 }
 
 /* ====================================================== */

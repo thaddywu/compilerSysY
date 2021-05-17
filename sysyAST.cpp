@@ -161,10 +161,10 @@ void _DEF_CONST_ARR::initialize() {
     varManager->initialize(name, false, true);
 }
 void _DEF_VAR::initialize() {
-    varManager->initialize(name, true, false);
+    varManager->initialize(name, true, true);
 }
 void _DEF_ARR::initialize() {
-    varManager->initialize(name, false, false);
+    varManager->initialize(name, false, true);
 }
 
 /* ================================================= */
