@@ -284,6 +284,8 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     varManager->deleteEnviron();
 }
 void _FUNC_CALL::translate(string ctn, string brk, bool glb) {
+    assert(name != "starttime" && name != "stoptime");
+    assert(name != "_sysy_starttime" && name != "_sysy_stoptime");
     if (param) pass();
         /* param = NULL in case func() */
     eeyoreStmt(new _eCALL(name));
