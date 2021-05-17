@@ -67,8 +67,20 @@ public:
         printTab(".global " + func);
         printTab(".type " + func + ", @function");
         print(func + ":");
-        printTab("addi sp, sp, -" + to_string(STK));
-        printTab("sw ra, " + to_string(STK-4) + "(sp)");
+        if (isint12(-STK))
+        /* warning: make sure -STK is int12 */
+            printTab("addi sp, sp, " + to_string(-STK));
+        else {
+            printTab("li " + t0 + ", " + to_string(-STK));
+            printTab("add sp, sp, " + t0);
+        }
+        if (isint12(STK-4))
+            printTab("sw ra, " + to_string(STK-4) + "(sp)");
+        else {
+            printTab("li " + t0 + ", " + to_string(STK-4));
+            printTab("add " + t0 + ", " + t0 + ", sp");
+            printTab("sw ra, 0(" + t0 + ")");
+        }
 
         body->translate();
 
@@ -244,8 +256,19 @@ public:
     _tRETURN() {}
     virtual void Dump() { printTab("return"); }
     virtual void translate() {
-        printTab("lw ra, " + to_string(STK-4) + "(sp)");
-        printTab("addi sp, sp, " + to_string(STK));
+        if (isint12(STK-4))
+            printTab("lw ra, " + to_string(STK-4) + "(sp)");
+        else {
+            printTab("li " + t0 + ", " + to_string(STK-4));
+            printTab("add " + t0 + ", " + t0 + ", sp");
+            printTab("lw ra, 0(" + t0 + ")");
+        }
+        if (isint12(STK))
+            printTab("addi sp, sp, " + to_string(STK));
+        else {
+            printTab("li " + t0 + ", " + to_string(STK));
+            printTab("add sp, sp, " + t0);
+        }
         printTab("ret");
     }
 };

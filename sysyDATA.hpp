@@ -20,7 +20,7 @@ public:
 class dataAggr: public dataCell{
 public:
     vector<dataCell*> aggr;
-    dataAggr(int _depth): dataCell(_depth) {}
+    dataAggr(int _depth): dataCell(_depth) { assert(aggr.empty()); }
     void condense(vector<int> &shape) ;
     void liftup(vector<int> &shape, int depth) ;
     void merge(vector<int> &shape) ;
