@@ -154,17 +154,19 @@ void _DEF_CONST_ARR::instantialize() {
 /*      - initialize when construction               */
 /*      - global var ought to be initialized in main */
 /* ================================================= */
-void _DEF_CONST_VAR::initialize() {
+void _DEF_CONST_VAR::initialize(bool glb) {
     varManager->initialize(name, true, true);
 }
-void _DEF_CONST_ARR::initialize() {
+void _DEF_CONST_ARR::initialize(bool glb) {
     varManager->initialize(name, false, true);
 }
-void _DEF_VAR::initialize() {
-    varManager->initialize(name, true, true);
+void _DEF_VAR::initialize(bool glb) {
+    bool zero_pad = glb || (inits != NULL);
+    varManager->initialize(name, true, zero_pad);
 }
-void _DEF_ARR::initialize() {
-    varManager->initialize(name, false, true);
+void _DEF_ARR::initialize(bool glb) {
+    bool zero_pad = glb || (inits != NULL);
+    varManager->initialize(name, false, zero_pad);
 }
 
 /* ================================================= */
@@ -266,7 +268,7 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     if (name == "main") {
         /* initialization of global var */
         for (auto glb_var : globalInitList)
-            glb_var->initialize();
+            glb_var->initialize(true);
     }
     assert(body != NULL);
     body->translate(ctn, brk, false);
@@ -292,7 +294,7 @@ void _DEF_VAR::translate(string ctn, string brk, bool glb) {
     varManager->insert(dd);
     instantialize();
     if (!glb)
-        initialize();
+        initialize(glb);
     else /* delay global variables' initialization, do it in main */
         globalInitList.push_back(this);
 }
@@ -308,7 +310,7 @@ void _DEF_ARR::translate(string ctn, string brk, bool glb) {
     varManager->insert(dd);
     instantialize();
     if (!glb)
-        initialize();
+        initialize(glb);
     else
         globalInitList.push_back(this);
 }

@@ -135,11 +135,9 @@ void _eSEEK::translate() {
         if (a_reg)
             tiggerStmt(new _tSEEK(a_reg->reg_name, reserved_reg1, 0));
         else {
-            
             tiggerStmt(new _tSEEK(reserved_reg2, reserved_reg1, 0));
             regManager->store_reg(reserved_reg2, a->getName());
         }
-
     }
     else {
         int t_addr = regManager->getreaddr(t);
