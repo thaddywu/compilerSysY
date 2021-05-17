@@ -133,6 +133,8 @@ FuncManager::FuncManager() {
     table["putint"] = univar;
     table["putch"] = univar;
     table["putarray"] = mix;
+    table["_sysy_starttime"] = univar;
+    table["_sysy_stoptime"] = univar;
 }
 /* ====================================================== */
 /* FuncManager::insert(name, param                       */

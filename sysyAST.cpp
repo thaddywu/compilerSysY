@@ -170,8 +170,8 @@ void _DEF_ARR::initialize(bool glb) {
 }
 
 /* ================================================= */
-/* translate                                          */
-/*      -  translate AST, and do the conversion.      */
+/* translate                                         */
+/*      -  translate AST, and do the conversion.     */
 /*      - ctn: continue to where                     */
 /*      - brk: break to where                        */
 /*      - glb: in global environment?                */
@@ -284,8 +284,6 @@ void _FUNC::translate(string ctn, string brk, bool glb) {
     varManager->deleteEnviron();
 }
 void _FUNC_CALL::translate(string ctn, string brk, bool glb) {
-    assert(name != "starttime" && name != "stoptime");
-    assert(name != "_sysy_starttime" && name != "_sysy_stoptime");
     if (param) pass();
         /* param = NULL in case func() */
     eeyoreStmt(new _eCALL(name));
@@ -322,4 +320,21 @@ void _PARAM_ARR::translate(string ctn, string brk, bool glb) {
         /* addr = NULL in case name[] */
     dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
     varManager->insert(dd, true);
+}
+
+/* ================================================= */
+/* _FUNC_CALL::_FUNC_CALL                            */
+/*      - support for stoptime & starttime           */
+/* ================================================= */
+_FUNC_CALL::_FUNC_CALL(string _name, sysyAST *_param): 
+        name(_name), param(_param) {
+    /* stoptime & starttime; */
+    if (_name == "starttime") {
+        name = "_sysy_starttime";
+        param = (sysyAST *) new _CALL_LIST(new _INTEGER(yylineno), NULL);
+    }
+    if (_name == "stoptime") {
+        name = "_sysy_stoptime";
+        param = (sysyAST *) new _CALL_LIST(new _INTEGER(yylineno), NULL);
+    }
 }

@@ -242,7 +242,7 @@ public:
 class _FUNC_CALL: public _EXPR {
 public:
     string name; sysyAST *param;
-    _FUNC_CALL(string _name, sysyAST *_param): name(_name), param(_param) {}
+    _FUNC_CALL(string _name, sysyAST *_param);
     virtual eeyoreAST* atomize() ;
     virtual void translate(string ctn, string brk, bool glb);
     virtual void pass() ;
