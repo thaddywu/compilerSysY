@@ -34,10 +34,7 @@ void dataAggr::condense(vector<int> &shape) {
 void dataAggr::merge(vector<int> &shape) {
     while (!aggr.empty()) {
         int depth = aggr.back()->depth;
-        if (depth == 0) {
-            assert(aggr.size() == 1);
-            return ;
-        }
+        assert(depth > 0);
         int sz = aggr.size(), k = shape[depth - 1];
         if (sz < k || aggr[sz-k]->depth != depth) return ;
         condense(shape);
@@ -62,9 +59,10 @@ dataAggr* dataAggr::prune(vector<int> &shape) {
     while (true) {
         bool condense_flag = false;
         int depth = aggr.back()->depth;
+        assert(depth > 0);
         if (aggr.front()->depth != depth) /* elements' depth is not consistant */
             condense_flag = true;
-        if (aggr.size() > shape[depth]) /* elements' quantity exceeds bound */
+        if (aggr.size() > shape[depth -1]) /* elements' quantity exceeds bound */
             condense_flag = true;
         if (!condense_flag) break;
         condense(shape);

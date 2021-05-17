@@ -427,6 +427,7 @@ public:
     virtual bool leaf() { assert(false); }
     virtual sysyAST* getExpr() { assert(false); }
     virtual _TREE* getChild() { assert(false); }
+    virtual _TREE* getSibling() { return sibling; }
     virtual void debug(int ws = 0) {}
 };
 class _TREE_NODE: public _TREE {

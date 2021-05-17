@@ -12,9 +12,12 @@ using namespace std;
 dataDescript::dataDescript(string _name, vector<int> _shape, _TREE *_node):
 name(_name), shape(_shape), inits(NULL) {
     if (_node == NULL) return ;
-    dataAggr *sur_tree = (dataAggr *) construct(new dataAggr(-1), _node);
-        /* {defition}, one closure outside, so as to avoid discussion here */
-    inits = sur_tree->aggr[0];
+    if (_node->leaf())
+        inits = (dataCell *) new dataLeaf(shape.size(), _node->getExpr());
+    else {
+        assert(_node->getSibling() == NULL);
+        inits = construct(new dataAggr(-1), _node->getChild());
+    }
     while (inits->depth > 0) {
         dataAggr *anc = new dataAggr(inits->depth - 1);
         anc->aggr.push_back(inits);
