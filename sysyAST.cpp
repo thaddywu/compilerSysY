@@ -155,17 +155,19 @@ void _DEF_CONST_ARR::instantialize() {
 /*      - global var ought to be initialized in main */
 /* ================================================= */
 void _DEF_CONST_VAR::initialize(bool glb) {
+    assert(inits != NULL);
     varManager->initialize(name, true, true);
 }
 void _DEF_CONST_ARR::initialize(bool glb) {
+    assert(inits != NULL);
     varManager->initialize(name, false, true);
 }
 void _DEF_VAR::initialize(bool glb) {
-    bool zero_pad = glb || (inits != NULL);
+    bool zero_pad = !glb && (inits != NULL);
     varManager->initialize(name, true, zero_pad);
 }
 void _DEF_ARR::initialize(bool glb) {
-    bool zero_pad = glb || (inits != NULL);
+    bool zero_pad = !glb && (inits != NULL);
     varManager->initialize(name, false, zero_pad);
 }
 
