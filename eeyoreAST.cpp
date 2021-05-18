@@ -34,6 +34,7 @@ void _eDEFVAR::translate() {
     tiggerDecl(new _tGLBVAR(_var));
 }
 void _eDEFVAR::try_allocate() {
+    /* only local vars could enter this function */
     regManager->setlocal(var, 4, true);
     regManager->try_allocate(var);
 }
@@ -43,9 +44,10 @@ void _eDEFARR::translate() {
     tiggerDecl(new _tGLBARR(_var, size));
 }
 void _eDEFARR::try_allocate() {
+    /* only global vars could enter this function */
     regManager->setlocal(var, size << 2, false);
-    // regManager->try_allocate(var);
-    /* potential optimization here: local array's start address could be stored in register */
+    regManager->try_allocate(var, true);
+    /* potential optimization here: warmup could be delayed */
 }
 void _eDIRECT::translate() {
     /* a = t, a:var, t:var,int*/

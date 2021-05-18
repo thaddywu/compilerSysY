@@ -104,11 +104,6 @@ public:
             Param appears before function call,
             so some register storation is done before */
             store("a" + to_string(i));
-        for (int i = 0; i < Reg_s; i++)
-        /* because of the structure of eeyore Program,
-            Param appears before function call,
-            so some register storation is done before */
-            store("s" + to_string(i));
     }
     void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
@@ -121,20 +116,16 @@ public:
             reg_ptr["a" + to_string(i)]->available = true;
         }
         /* warning: reset register's available flag */
-        for (int i = 0; i < Reg_s; i++) {
-            restore("s" + to_string(i), skip);
-            reg_ptr["s" + to_string(i)]->available = true;
-        }
     }
     void callee_store() {
         /* in charge of storation of registers %sx */
-        //for (int i = 0; i < Reg_s_all; i++)
-        //    tiggerStmt(new _tSTORE("s" + to_string(i), i));
+        for (int i = 0; i < Reg_s; i++)
+            store("s" + to_string(i));
     }
     void callee_restore() {
         /* in charge of restoration of registers %sx */
-        //for (int i = 0; i < Reg_s_all; i++)
-        //    tiggerStmt(new _tLOAD(i, "s" + to_string(i)));
+        for (int i = 0; i < Reg_s; i++)
+            restore("s" + to_string(i));
     }
     void new_environ() {
         next_vacant_reg = 0;
@@ -142,7 +133,7 @@ public:
             registers[i]->new_environ();
         /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
-        stack_size = (Reg_s_all) << 2;
+        stack_size = (Reg_s) << 2;
     }
     void must_allocate(string var, string reg_name) {
         Register *reg = reg_ptr[reg_name];
@@ -151,7 +142,7 @@ public:
         reg->allocated_var = var;
         alloc_reg[var] = reg;
     }
-    void try_allocate(string var) {
+    void try_allocate(string var, bool warmup = false) {
         while (next_vacant_reg < Reg_N && registers[next_vacant_reg]->allocated)
             next_vacant_reg ++;
         if (next_vacant_reg >= Reg_N) { alloc_reg[var] = NULL; return ;}
@@ -161,5 +152,7 @@ public:
         reg->allocated = true;
         reg->allocated_var = var;
         alloc_reg[var] = reg;
+        if (warmup)
+            restore_reg(var, reg->reg_name);
     }
 };
