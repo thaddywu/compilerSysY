@@ -89,11 +89,16 @@ void dataAggr::initialize(string &eeyore, vector<int> &shape, int addr, bool var
 }
 void dataLeaf::initialize(string &eeyore, vector<int> &shape, int addr, bool var) {
     if (expr == NULL) return ;
-    eeyoreAST *t = expr->atomize();
-    if (var)
-        eeyoreStmt(new _eDIRECT(new _eVAR(eeyore), t));
-    else
-        eeyoreStmt(new _eSAVE(eeyore, new _eNUM(addr * 4), t));
+    if (var) {
+        eeyoreAST *lval = new _eVAR(eeyore);
+        eeyoreAST *rval = expr->atomize(lval);
+        if (lval != rval) /* optimization here */
+            eeyoreStmt(new _eDIRECT(lval, rval));
+    }
+    else {
+        eeyoreAST *rval = expr->atomize(NULL);
+        eeyoreStmt(new _eSAVE(eeyore, new _eNUM(addr * 4), rval));
+    }
 }
 /* =============================================== */
 /* debug                                           */

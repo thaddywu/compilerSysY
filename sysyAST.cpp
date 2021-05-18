@@ -24,52 +24,52 @@ int _ARRAY_ITEM::eval() {
 /*      - including function call & array item       */
 /*      - AND/ OR is special                         */
 /* ================================================= */
-eeyoreAST* _UNARY_OP::atomize() {
-    eeyoreAST* aop = op->atomize();
-    eeyoreAST* t = new _eVAR(varManager->newt());
+eeyoreAST* _UNARY_OP::atomize(eeyoreAST* target) {
+    eeyoreAST* aop = op->atomize(NULL);
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     eeyoreStmt(new _eUNARY(t, symbol(), aop));
     return t;
 }
-eeyoreAST* _BINARY_OP::atomize() {
-    eeyoreAST* alop = lop->atomize();
-    eeyoreAST* arop = rop->atomize();
-    eeyoreAST* t = new _eVAR(varManager->newt());
+eeyoreAST* _BINARY_OP::atomize(eeyoreAST* target) {
+    eeyoreAST* alop = lop->atomize(NULL);
+    eeyoreAST* arop = rop->atomize(NULL);
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     eeyoreStmt(new _eBINARY(t, alop, symbol(), arop));
     return t;
 }
-eeyoreAST* _AND::atomize() {
-    eeyoreAST* t = new _eVAR(varManager->newt());
+eeyoreAST* _AND::atomize(eeyoreAST* target) {
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     eeyoreStmt(new _eDIRECT(t, new _eNUM(0)));
-    eeyoreAST* alop = lop->atomize();
+    eeyoreAST* alop = lop->atomize(NULL);
     string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(alop, "==", new _eNUM(0), cp));
-    eeyoreAST* arop = rop->atomize();
+    eeyoreAST* arop = rop->atomize(NULL);
     eeyoreStmt(new _eIFGOTO(arop, "==", new _eNUM(0), cp));
     eeyoreStmt(new _eDIRECT(t, new _eNUM(1)));
     eeyoreStmt(new _eLABEL(cp));
     return t;
 }
-eeyoreAST* _OR::atomize() {
-    eeyoreAST* t = new _eVAR(varManager->newt());
+eeyoreAST* _OR::atomize(eeyoreAST* target) {
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     eeyoreStmt(new _eDIRECT(t, new _eNUM(1)));
-    eeyoreAST* alop = lop->atomize();
+    eeyoreAST* alop = lop->atomize(NULL);
     string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(alop, "!=", new _eNUM(0), cp));
-    eeyoreAST* arop = rop->atomize();
+    eeyoreAST* arop = rop->atomize(NULL);
     eeyoreStmt(new _eIFGOTO(arop, "!=", new _eNUM(0), cp));
     eeyoreStmt(new _eDIRECT(t, new _eNUM(0)));
     eeyoreStmt(new _eLABEL(cp));
     return t;
 }
-eeyoreAST* _ADDR_LIST::atomize(string name) {
+eeyoreAST* _ADDR_LIST::atomize(string name, eeyoreAST* target) {
     vector<int> &shape = varManager->getshape(name);
     assert(head != NULL);
-    eeyoreAST* ret = head->atomize();
+    eeyoreAST* ret = head->atomize(NULL);
     _ADDR_LIST *cur = (_ADDR_LIST *)tail;
     for (int k = 1; k < shape.size(); k++)
     if (cur) {
         assert(cur->head);
-        eeyoreAST* nxt = cur->head->atomize();
+        eeyoreAST* nxt = cur->head->atomize(NULL);
         eeyoreAST* t1 = new _eVAR(varManager->newt());
         eeyoreAST* t2 = new _eVAR(varManager->newt());
 
@@ -84,27 +84,27 @@ eeyoreAST* _ADDR_LIST::atomize(string name) {
         ret = t1;
     }
     assert(cur == NULL);
-    eeyoreAST* t = new _eVAR(varManager->newt());
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     eeyoreStmt(new _eBINARY(t, ret, "*", new _eNUM(4)));
     return t;
 }
-eeyoreAST* _ARRAY_ITEM::atomize() {
+eeyoreAST* _ARRAY_ITEM::atomize(eeyoreAST* target) {
     /* potential optimization for constant array */
-    eeyoreAST* t = new _eVAR(varManager->newt());
-    eeyoreAST* lval = param->atomize(name);
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
+    eeyoreAST* lval = param->atomize(name, NULL);
     eeyoreStmt(new _eSEEK(t, varManager->getEeyore(name), lval));
     return t;
 }
-eeyoreAST* _FUNC_CALL::atomize() {
-    eeyoreAST* t = new _eVAR(varManager->newt());
+eeyoreAST* _FUNC_CALL::atomize(eeyoreAST* target) {
+    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
     if (param) pass();
     eeyoreStmt(new _eFUNCRET(t, name));
     return t;
 }
-eeyoreAST* _VAR::atomize() {
+eeyoreAST* _VAR::atomize(eeyoreAST* target) {
     return new _eVAR(varManager->getEeyore(name)); /* atomize name */
 }
-eeyoreAST* _INTEGER::atomize() {
+eeyoreAST* _INTEGER::atomize(eeyoreAST* target) {
     return new _eNUM(num);
 }
 
@@ -121,12 +121,12 @@ void _FUNC_CALL::pass() {
     for (auto isvar: isvars) {
         assert(cur->head != NULL);
         if (isvar || cur->head->isvar())
-            call_list.push_back(cur->head->atomize());
+            call_list.push_back(cur->head->atomize(NULL));
         else {
             /* ought to compute addr */
             _ARRAY_ITEM *ai = (_ARRAY_ITEM *) (cur->head);
             eeyoreAST* t = new _eVAR(varManager->newt());
-            eeyoreAST* addr = ai->param->atomize(ai->name);
+            eeyoreAST* addr = ai->param->atomize(ai->name, NULL);
                 /* ai->name, name must be passed!!
                     no definition on _ADDR_LIST->atomize(void) */
             eeyoreStmt(new _eBINARY(t, new _eVAR(ai->name), "+", addr));
@@ -194,7 +194,7 @@ void _STMT_SEQ::translate(string ctn, string brk, bool glb) {
     if (tail != NULL) tail->translate(ctn, brk, glb);
 }
 void _IF::translate(string ctn, string brk, bool glb) {
-    eeyoreAST* c = cond->atomize();
+    eeyoreAST* c = cond->atomize(NULL);
     string cp = varManager->newl();
     eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp));
     body->translate(ctn, brk, glb);
@@ -203,7 +203,7 @@ void _IF::translate(string ctn, string brk, bool glb) {
 void _IF_ELSE::translate(string ctn, string brk, bool glb) {
     string cp1 = varManager->newl();
     string cp2 = varManager->newl();
-    eeyoreAST* c = cond->atomize();
+    eeyoreAST* c = cond->atomize(NULL);
     eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp1));
     body->translate(ctn, brk, glb);
     eeyoreStmt(new _eGOTO(cp2));
@@ -216,7 +216,7 @@ void _WHILE::translate(string ctn, string brk, bool glb) {
     string cp2 = varManager->newl();
     eeyoreStmt(new _eLABEL(cp1));
         /* must set label first, then atomize cond */
-    eeyoreAST* c = cond->atomize();
+    eeyoreAST* c = cond->atomize(NULL);
     eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp2));
     body->translate(cp1, cp2, glb);
     eeyoreStmt(new _eGOTO(cp1));
@@ -226,7 +226,7 @@ void _RETURN_VOID::translate(string ctn, string brk, bool glb) {
     eeyoreStmt(new _eRETVOID());
 }
 void _RETURN_EXPR::translate(string ctn, string brk, bool glb) {
-    eeyoreAST* t = expr->atomize();
+    eeyoreAST* t = expr->atomize(NULL);
     eeyoreStmt(new _eRET(t));
 }
 void _CONTINUE::translate(string ctn, string brk, bool glb) {
@@ -236,14 +236,17 @@ void _BREAK::translate(string ctn, string brk, bool glb) {
     eeyoreStmt(new _eGOTO(brk));
 }
 void _ASSIGN::translate(string ctn, string brk, bool glb) {
-    eeyoreAST* rval = rop->atomize();
     if (lop->isvar()) {
         _VAR *var = (_VAR *)lop;
-        eeyoreStmt(new _eDIRECT(new _eVAR(varManager->getEeyore(var->name)), rval));
+        eeyoreAST* lval = new _eVAR(varManager->getEeyore(var->name));
+        eeyoreAST* rval = rop->atomize(lval);
+        if (lval != rval) /* optimization here: avoid redundant pass */
+            eeyoreStmt(new _eDIRECT(lval, rval));
     }
     else {
+        eeyoreAST* rval = rop->atomize(NULL);
         _ARRAY_ITEM *ai = (_ARRAY_ITEM *)lop;
-        eeyoreAST* param = ai->param->atomize(ai->name);
+        eeyoreAST* param = ai->param->atomize(ai->name, NULL);
             /* remember to write ->atomize(name) !!! */
         eeyoreStmt(new _eSAVE(varManager->getEeyore(ai->name), param, rval));
     }

@@ -14,9 +14,9 @@ public:
         // _EXPR::eval return its integer value, 
     virtual int eval() { assert(false); }
         // _EXPR::atomize return its representation which could appear in the right of assignment. special case : true || array[-1] should not incur error
-    virtual eeyoreAST* atomize() { assert(false); }
+    virtual eeyoreAST* atomize(eeyoreAST* target) { assert(false); }
         // For _ADDR_LIST, corresponding function name is passed
-    virtual eeyoreAST* atomize(string name) { assert(false); }
+    virtual eeyoreAST* atomize(string name, eeyoreAST* target) { assert(false); }
         // symbol: For expr, return its operator
     virtual string symbol() { assert(false); }
         // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
@@ -124,13 +124,13 @@ class _UNARY_OP: public _EXPR {
 public:
     sysyAST *op;
     _UNARY_OP(sysyAST *_op): op(_op) {}
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
 };
 class _BINARY_OP: public _EXPR {
 public:
     sysyAST *lop, *rop;
     _BINARY_OP(sysyAST *_lop, sysyAST *_rop): lop(_lop), rop(_rop) {}
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
 };
 class _NEG: public _UNARY_OP {
 public:
@@ -179,14 +179,14 @@ public:
     _AND(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() && rop->eval(); }
     virtual string symbol() { return "&&"; }
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
 };
 class _OR: public _BINARY_OP {
 public:
     _OR(sysyAST *_lop, sysyAST *_rop): _BINARY_OP(_lop, _rop) {}
     virtual int eval() { return lop->eval() || rop->eval(); }
     virtual string symbol() { return "||"; }
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
 };
 class _LT: public _BINARY_OP {
 public:
@@ -229,21 +229,21 @@ public:
     int num;
     _INTEGER(int _num): num(_num) {}
     virtual int eval() { return num; }
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
 };
 class _VAR: public _EXPR {
 public:
     string name;
     _VAR(string _name): name(_name) {}
     virtual int eval();
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
     virtual int isvar() { return 1; }
 };
 class _FUNC_CALL: public _EXPR {
 public:
     string name; sysyAST *param;
     _FUNC_CALL(string _name, sysyAST *_param);
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
     virtual void translate(string ctn, string brk, bool glb);
     virtual void pass() ;
 };
@@ -252,7 +252,7 @@ public:
     string name; sysyAST *param;
     _ARRAY_ITEM(string _name, sysyAST *_param): name(_name), param(_param) {}
     virtual int eval();
-    virtual eeyoreAST* atomize() ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) ;
     virtual int isvar() { return 0; }
 };
 
@@ -276,14 +276,14 @@ public:
         if (head) v.push_back(head->eval());
         if (tail) tail->vectorize(v);
     }
-    virtual eeyoreAST* atomize(string name) ;
-    virtual eeyoreAST* atomize() { assert(false); }
+    virtual eeyoreAST* atomize(string name, eeyoreAST* target) ;
+    virtual eeyoreAST* atomize(eeyoreAST* target) { assert(false); }
 };
 class _PARAM_LIST: public _LIST {
 public:
     _PARAM_LIST(sysyAST *_head, sysyAST *_tail): _LIST(_head, _tail) {}
     virtual void translate(string ctn, string brk, bool glb);
-    virtual eeyoreAST* atomize() { assert(false); }
+    virtual eeyoreAST* atomize(eeyoreAST* target) { assert(false); }
 };
 class _STMT_SEQ: public _LIST {
 public:
