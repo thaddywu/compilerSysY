@@ -132,6 +132,8 @@ void _eFUNC::optimize() {
     for (int i = 0; i < n; i++) {
         reach[i].reset();
         if (def[i].empty()) continue;
+        if (regManager->isglobal(def[i])) continue;
+        /* global vars def-use condition is much more complicated */
 
         memset(visited, false, n);
         if (!_analyse_reach(def[i], i, reach[i], i, true)) {
