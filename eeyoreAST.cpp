@@ -47,7 +47,8 @@ void _eDEFARR::translate() {
 void _eDEFARR::try_allocate() {
     /* only local vars could enter this function */
     regManager->setlocal(var, size << 2, false);
-    regManager->try_allocate(var, true);
+    // regManager->try_allocate(var, true);
+    // Error here : warmup is before register restoration
     /* potential optimization here: warmup could be delayed */
 }
 void _eDIRECT::translate() {
@@ -233,7 +234,7 @@ void _eFUNCRET::translate() {
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
         /* skip restore a_reg, this step is necessray.
             otherwise, value before update will overwrite the right value. */
-        regManager->store_reg(a_reg->reg_name, a->getName());
+        // regManager->store_reg(a_reg->reg_name, a->getName()); 
         /* warning: if global var is allowed to be stored in register,
             write-back may be needed in this scenario */
     }
@@ -260,8 +261,13 @@ void _ePARAM::translate() {
     string reg_name = "a" + to_string(regManager->param_cnt++);
     regManager->store(reg_name);
     /* potential optimization here: param is luckily just in %ai */
-    if (t_reg && t_reg->available) /* warning */
-        tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
+    if (t_reg) /* warning */ {
+        if (t_reg->available)
+            tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
+        else
+            tiggerStmt(new _tLOAD(t_reg->reg_id, reg_name));
+        /* here %ax is already replaced by the parameter, its real value is in stack */
+    }
     else if (t->isnum())
         tiggerStmt(new _tDIRECT(reg_name, t->getInt()));
     else

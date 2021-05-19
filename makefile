@@ -15,6 +15,6 @@ run:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output
 git:
-	rm *.eeyore *.tigger *.sy output output.S
-	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
-	rm *.out *.in *.ans
+	rm *.eeyore *.tigger *.sy output output.S \
+	sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler \
+	*.out *.in *.ans
