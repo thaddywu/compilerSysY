@@ -35,6 +35,7 @@ public:
     bool compatible_local(bitset<maxlines> _active) {
         if (monopolized) return false;
         if ((active & _active).any()) return false;
+        if (used) return false;
         active |= _active;
         return used = true;
     }
@@ -108,7 +109,7 @@ public:
         Register *reg = var->alloc_reg;
         if (!var->isvar()) return ; /* no need to restore the start address of any array */
         assert(reg == NULL);
-        if (var->isvar()) {
+        if (var->isglobal()) {
             /* no STORE VAR REG in RISC-V */
             tiggerStmt(new _tLOADADDR(var->getTiggerName(), reserved_reg3));
             tiggerStmt(new _tSAVE(reserved_reg3, 0, reg_name));
@@ -141,10 +142,14 @@ public:
     void store(string reg_name, bool caller) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
+        if (reg->used)
+            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        /*
         if (caller && reg->active[currentLine])
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         if (!caller && reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+            */
     }
     void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
@@ -154,10 +159,13 @@ public:
         /* if previously being occupied by param,
             now it is recovered */
         if (reg == skip) return ;
+        if (reg->used)
+            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        /*
         if (caller && reg->active[currentLine])
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (!caller && reg->used)
-            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));*/
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
@@ -195,14 +203,15 @@ public:
         stack_size = Reg_N << 2;
     }
     void preload(string var_name) {
+        cerr << "preload" << endl;
         Variable *var = vars[var_name];
         Register *reg = var->alloc_reg;
         if (reg == NULL) return ; /* this var is not gonna be stored in register */
         if (var->isvar()) return ; /* no need to read address for var */
         if (var->isglobal())
-            tiggerStmt(new _tLOADADDR(var_name, reg->reg_name));
+            tiggerStmt(new _tLOADADDR(var->getTiggerName(), reg->reg_name));
         else
-            tiggerStmt(new _tLOADADDR(var->getReaddr(), reg->reg_name));
+            tiggerStmt(new _tLOADADDR(var->getReaddr() >> 2, reg->reg_name));
     }
     void must_allocate(string var_name, string reg_name) {
         Register *reg = reg_ptr[reg_name];
