@@ -20,8 +20,8 @@ int _ARRAY_ITEM::eval() {
 
 /* ================================================= */
 /* atomize                                           */
-/*      - reduce to var                              */
-/*      - including function call & array item       */
+/*      - target is the defualt target               */
+/*      - if target is NULL, temporary'll var be used*/
 /*      - AND/ OR is special                         */
 /* ================================================= */
 eeyoreAST* _UNARY_OP::atomize(eeyoreAST* target) {

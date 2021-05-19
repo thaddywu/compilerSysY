@@ -34,7 +34,6 @@ int main(int argc, char **argv)
 #ifdef LOCALTEST
     freopen(eeyore_file.c_str(), "w", stdout);
     eeyoreRoot->Dump();
-    freopen("optimize.eeyore", "w", stdout);
     eeyoreRoot->translate();
     freopen(tigger_file.c_str(), "w", stdout);
     tiggerRoot->Dump();

@@ -18,7 +18,8 @@ public:
     virtual void translate() { assert(false); } // translate AST of eeyoreAST into AST of tigger
     virtual bool isnum() { assert(false); } // for _ATOM, return true if it is an integer number
     virtual bool isdef() { return false; } // for convenience, "return false" ..
-    virtual void try_allocate() { assert(false); }
+    virtual void localDecl() { assert(false); }
+    virtual void globalDecl() { assert(false); }
     
     /* here below, are functions for optimization */
     virtual void optimize() { assert(false); }
@@ -61,10 +62,12 @@ class _eDEFVAR: public eeyoreAST {
 public:
     string var;
     _eDEFVAR(string _var): var(_var) {}
+    virtual string getName() { return var; }
     virtual void Dump() { printTab("var " + var); }
     virtual bool isdef() { return true; }
-    virtual void translate() ;
-    virtual void try_allocate() ;
+    
+    virtual void localDecl() ;
+    virtual void globalDecl() ;
 
     virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
     virtual void _analyse_cf(int line) ;
@@ -74,10 +77,12 @@ class _eDEFARR: public eeyoreAST {
 public:
     string var; int size; // without * 4
     _eDEFARR(string _var, int _size): var(_var), size(_size) {}
+    virtual string getName() { return var; }
     virtual void Dump() { printTab("var " + to_string(size * 4) + " " + var); }
     virtual bool isdef() { return true; }
-    virtual void translate() ;
-    virtual void try_allocate() ;
+    
+    virtual void localDecl() ;
+    virtual void globalDecl() ;
 
     virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
     virtual void _analyse_cf(int line) ;
@@ -226,4 +231,6 @@ public:
     _eSEQ(vector<eeyoreAST *> _seq): seq(_seq) {}
     virtual void Dump() { for (auto stmt: seq) stmt->Dump(); }
     virtual void translate() ;
+    
+    virtual void optimize() ;
 };

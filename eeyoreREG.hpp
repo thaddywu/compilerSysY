@@ -5,41 +5,81 @@
 #endif
 using namespace std;
 
+#define maxlines 1000
+extern int currentLine ; 
 extern void tiggerStmt(tiggerAST *x);
 /* RegManager is in charge of allocation of registers,
 and it is also responsible for var name record */
 class Register {
     /* %tx %ax caller-save, %sx callee-save */
 public:
-    Register(string _name, int _id): reg_name(_name), reg_id(_id), global_var("") { available = true; }
-    
-    string reg_name;
-    int reg_id;
-    bool allocated; 
-    string global_var; /* if this register is allocated to local vars, global_var is empty */
-    bool available;
+    Register(string _name, int _id): reg_name(_name), reg_id(_id) {}
+    /* static attribute */
+    string reg_name; int reg_id;
 
-    void new_environ() { if (global_var.empty()) allocated = false; assert(available); }
+    /* dynamic attribute           */
+    /* active: allocated now       */
+    /* used: ever allocated        */
+    /* occupied: func-call used    */
+    /* monopolized: used by global */
+    bool occupied, monopolized, used;
+    bitset<maxlines> active;
+
+    void clear() { if (!monopolized) {active.reset(); used = false;} }
+    bool compatible_global() {
+        if (reg_name[0] == 'a') return false;
+        /* %ax can't be allocated to global vars */
+        if (used) return false;
+        return monopolized = used = true;
+    }
+    bool compatible_local(bitset<maxlines> _active) {
+        if (monopolized) return false;
+        if ((active & _active).any()) return false;
+        active |= _active;
+        return used = true;
+    }
+};
+class Variable {
+private:
+    bool global, var, param;
+    string eeyore_name;
+    string tigger_name;
+    int relative_addr;
+public:
+    Variable(bool _global, bool _var, bool _param, string _eeyore_name, string _tigger_name, int _relative_addr):
+        global(_global), var(_var), param(_param), eeyore_name(_eeyore_name), tigger_name(_tigger_name), relative_addr(_relative_addr) {}
+    bool isglobal() { return global; }
+    bool isvar() { return var; }
+    bool isparam() { return param; }
+    string getTiggerName() { return tigger_name; }
+    int getReaddr() { return relative_addr; }
+
+    Register *alloc_reg;
+    bitset<maxlines> active;
 };
 
 class RegManager {
 public:
-    map<string, bool> _global; //mapping: global var/array -> if is var
-    map<string, bool> _isvar;
-    map<string, string> _name; //mapping: eeyore global var -> tigger global var
-    map<string, int> readdr; //mapping: local var/array -> relative address on stack (with * 4)
+    map<string, Variable*> vars;
 
-    int next_vacant_reg, param_cnt, stack_size, global_cnt;
+    int param_cnt, stack_size, global_cnt;
 
-    string setglobal(string s, bool isvar) { _global[s] = true; _isvar[s] = isvar; return _name[s] = "v" + to_string(global_cnt++); }
-    bool isglobal(string s) { return _global.find(s) != _global.end() ? _global[s] : false; }
-    void setlocal(string s, int sz, bool isvar) { readdr[s] = stack_size; _isvar[s] = isvar; stack_size += sz; }
-    bool isvar(string s) { return _isvar[s]; }
-    int getreaddr(string s) { assert(!isglobal(s)); return readdr[s]; } /* returned value is the address with * 4 */
-    string tigger(string s) { assert(isglobal(s)); return _name[s]; }
-    bool isparam(string s) { return s[0] == 'p'; }
+    string newGlobal(string s, bool isvar) {
+        string tigger_name = "v" + to_string(global_cnt++);
+        vars[s] = new Variable(true, isvar, false, s, tigger_name, -1);
+        return tigger_name;
+    }
+    void newLocal(string s, int sz, bool isvar) {
+        vars[s] = new Variable(false, isvar, s[0] == 'p', s, "local_var", stack_size);
+        stack_size += sz;
+    }
+    bool isglobal(string s) { return vars[s]->isglobal(); }
+    bool isvar(string s) { return vars[s]->isvar(); }
+    int getReaddr(string s) { return vars[s]->getReaddr(); } /* returned value is the address with * 4 */
+    string tigger(string s) { return vars[s]->getTiggerName(); }
+    bool isparam(string s) { return vars[s]->isparam(); }
+    Register *getAlloc(string s) { return vars.find(s) != vars.end() ? vars[s]->alloc_reg : NULL; }
     
-    map<string, Register*> alloc_reg;
     map<string, Register*> reg_ptr; //mapping: register_name -> register
     Register *registers[Reg_N];
     
@@ -57,44 +97,61 @@ public:
         for (int i = 0; i < Reg_N; i++)
             reg_ptr[registers[i]->reg_name] = registers[i];
     }
-    void store_reg(string reg, string var) {
+    void store_reg(string reg_name, string var_name) {
+        /* ============================= */
+        /* address: do nothing           */
+        /* var: assure it's not permanent*/
+        /* ============================= */
         /* store register in heap / stack, depending on the type of variables */
-        if (!isvar(var)) return ; /* no need to restore the start address of any array */
-        if (isglobal(var)) {
+        assert(vars.find(var_name) != vars.end());
+        Variable *var = vars[var_name];
+        Register *reg = var->alloc_reg;
+        if (!var->isvar()) return ; /* no need to restore the start address of any array */
+        assert(reg == NULL);
+        if (var->isvar()) {
             /* no STORE VAR REG in RISC-V */
-            tiggerStmt(new _tLOADADDR(tigger(var), reserved_reg3));
-            tiggerStmt(new _tSAVE(reserved_reg3, 0, reg));
+            tiggerStmt(new _tLOADADDR(var->getTiggerName(), reserved_reg3));
+            tiggerStmt(new _tSAVE(reserved_reg3, 0, reg_name));
         }
         else
-            tiggerStmt(new _tSTORE(reg, getreaddr(var) >> 2));
+            tiggerStmt(new _tSTORE(reg_name, var->getReaddr() >> 2));
     }
-    void restore_reg(string var, string reg) {
+    void restore_reg(string var_name, string reg_name) {
+        /* ============================= */
+        /* all: assure it's not permanent*/
+        /* ============================= */
         /* restore register from heap / stack, depending on the type of variables */
-        if (isglobal(var)) {
-            if (isvar(var))
-                tiggerStmt(new _tLOAD(tigger(var), reg));
+        assert(vars.find(var_name) != vars.end());
+        Variable *var = vars[var_name];
+        Register *reg = var->alloc_reg;
+        assert(reg == NULL);
+        if (var->isglobal()) {
+            if (var->isvar())
+                tiggerStmt(new _tLOAD(var->getTiggerName(), reg_name));
             else
-                tiggerStmt(new _tLOADADDR(tigger(var), reg));
+                tiggerStmt(new _tLOADADDR(var->getTiggerName(), reg_name));
         }
         else {
-            if (isvar(var))
-                tiggerStmt(new _tLOAD(getreaddr(var) >> 2, reg));
+            if (var->isvar())
+                tiggerStmt(new _tLOAD(var->getReaddr() >> 2, reg_name));
             else
-                tiggerStmt(new _tLOADADDR(getreaddr(var) >> 2, reg));
+                tiggerStmt(new _tLOADADDR(var->getReaddr() >> 2, reg_name));
         }
     }
     void store(string reg_name) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->allocated)
+        if (reg->active[currentLine])
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
     void restore(string reg_name, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
 
-        reg->available = true;
-        if (reg->allocated && reg != skip)
+        reg->occupied = false;
+        /* if previously being occupied by param,
+            now it is recovered */
+        if (reg->active[currentLine] && reg != skip)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
     }
     void caller_store() {
@@ -126,34 +183,40 @@ public:
             restore("s" + to_string(i));
     }
     void new_environ() {
-        next_vacant_reg = 0;
         for (int i = 0; i < Reg_N; i++)
-            registers[i]->new_environ();
+            registers[i]->clear();
         /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
         stack_size = Reg_N << 2;
     }
-    void must_allocate(string var, string reg_name) {
-        Register *reg = reg_ptr[reg_name];
-        assert(!reg->allocated);
-        reg->allocated = true;
-        assert(!isglobal(var));
-        alloc_reg[var] = reg;
+    void preload(string var_name) {
+        Variable *var = vars[var_name];
+        Register *reg = var->alloc_reg;
+        if (reg == NULL) return ; /* this var is not gonna be stored in register */
+        if (var->isvar()) return ; /* no need to read address for var */
+        if (var->isglobal())
+            tiggerStmt(new _tLOADADDR(var_name, reg->reg_name));
+        else
+            tiggerStmt(new _tLOADADDR(var->getReaddr(), reg->reg_name));
     }
-    void try_allocate(string var, bool warmup = false) {
-        while (next_vacant_reg < Reg_N && registers[next_vacant_reg]->allocated)
-            next_vacant_reg ++;
-        if (next_vacant_reg >= Reg_N) { alloc_reg[var] = NULL; return ;}
-        /* alloc_reg[var] may not be empty,
-            bacause there's no explicit clean for alloc_reg when quit a function */
-        Register *reg = registers[next_vacant_reg++];
-        if (isglobal(var) && reg->reg_name[0] == 'a')
-            { alloc_reg[var] = NULL; return ; } /* global vars could not be restored in %ax */
-        reg->allocated = true;
-        if (isglobal(var)) reg->global_var = var;
-        if (isglobal(var)) assert(false);
-        alloc_reg[var] = reg;
-        if (warmup)
-            restore_reg(var, reg->reg_name);
+    void must_allocate(string var_name, string reg_name) {
+        Register *reg = reg_ptr[reg_name];
+        Variable *var = vars[var_name];
+        assert(reg->compatible_local(var->active));
+        var->alloc_reg = reg;
+    }
+    void try_allocate(string var_name) {
+        Variable *var = vars[var_name];
+        var->alloc_reg = NULL;
+        if (var->isglobal()) {
+            for (int i = 0; i < Reg_N; i++)
+                if (registers[i]->compatible_global())
+                    {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
+        }
+        else {
+            for (int i = 0; i < Reg_N; i++)
+                if (registers[i]->compatible_local(var->active))
+                    {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
+        }
     }
 };

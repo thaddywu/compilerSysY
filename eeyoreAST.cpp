@@ -8,7 +8,7 @@ using namespace std;
 string load_into_register(eeyoreAST *var, string default_reg) {
     /* If the given variable is already in registers, return the register name.
     Otherwise, load the var into the default register*/
-    Register *var_reg = regManager->alloc_reg[var->getName()];
+    Register *var_reg = regManager->getAlloc(var->getName());
     if (var_reg != NULL) return var_reg->reg_name;
 
     if (var->isnum())
@@ -20,7 +20,7 @@ string load_into_register(eeyoreAST *var, string default_reg) {
 string load_into_register_nonum(string var, string default_reg) {
     /* If the given variable is already in registers, return the register name.
     Otherwise, load the var into the default register*/
-    Register *var_reg = regManager->alloc_reg[var];
+    Register *var_reg = regManager->getAlloc(var);
     if (var_reg != NULL) return var_reg->reg_name;
 
     regManager->restore_reg(var, default_reg);
@@ -28,33 +28,39 @@ string load_into_register_nonum(string var, string default_reg) {
 }
 /* essentially, this cpp file is the implementation of eeyore AST's translation. */
 
-void _eDEFVAR::translate() {
+/* ================================================= */
+/* decl                                              */
+/*      - declare variables & arrays                 */
+/*      - reg allocation implemented in ::optimize   */
+/* ================================================= */
+void _eDEFVAR::globalDecl() {
     /* only global vars could enter this function */
-    string _var = regManager->setglobal(var, true);
+    string _var = regManager->newGlobal(var, true);
     tiggerDecl(new _tGLBVAR(_var));
-    // regManager->try_allocate(var);
 }
-void _eDEFVAR::try_allocate() {
-    /* only local vars could enter this function */
-    regManager->setlocal(var, 4, true);
-    regManager->try_allocate(var);
-}
-void _eDEFARR::translate() {
+void _eDEFARR::globalDecl() {
     /* only global vars could enter this function */
-    string _var = regManager->setglobal(var, false);
+    string _var = regManager->newGlobal(var, false);
     tiggerDecl(new _tGLBARR(_var, size));
 }
-void _eDEFARR::try_allocate() {
+void _eDEFVAR::localDecl() {
     /* only local vars could enter this function */
-    regManager->setlocal(var, size << 2, false);
-    // regManager->try_allocate(var, true);
-    // Error here : warmup is before register restoration
-    /* potential optimization here: warmup could be delayed */
+    regManager->newLocal(var, 4, true);
 }
+void _eDEFARR::localDecl() {
+    /* only local vars could enter this function */
+    regManager->newLocal(var, size << 2, false);
+}
+
+/* ================================================= */
+/* translate                                         */
+/*      - translate to tigger AST                    */
+/*      - optimized version for _eSEQ & _eFUNC       */
+/* ================================================= */
 void _eDIRECT::translate() {
     /* a = t, a:var, t:var,int*/
-    Register *a_reg = regManager->alloc_reg[a->getName()];
-    Register *t_reg = regManager->alloc_reg[t->getName()];
+    Register *a_reg = regManager->getAlloc(a->getName());
+    Register *t_reg = regManager->getAlloc(t->getName());
     if (a_reg && t_reg)
         tiggerStmt(new _tDIRECT(a_reg->reg_name, t_reg->reg_name));
     else if (a_reg && !t_reg) {
@@ -75,8 +81,8 @@ void _eDIRECT::translate() {
 }
 void _eUNARY::translate() {
     /* a = op t, a:var, t:var,int*/
-    Register *a_reg = regManager->alloc_reg[a->getName()];
-    Register *t_reg = regManager->alloc_reg[t->getName()];
+    Register *a_reg = regManager->getAlloc(a->getName());
+    Register *t_reg = regManager->getAlloc(t->getName());
     if (a_reg && t_reg)
         tiggerStmt(new _tUNARY(a_reg->reg_name, op, t_reg->reg_name));
     else if (a_reg && !t_reg) {
@@ -101,9 +107,9 @@ void _eUNARY::translate() {
 }
 void _eBINARY::translate() {
     /* a = t1 op t2, a:var, t1:var,int, t2:var,int */
-    Register *a_reg = regManager->alloc_reg[a->getName()];
-    Register *t1_reg = regManager->alloc_reg[t1->getName()];
-    Register *t2_reg = regManager->alloc_reg[t2->getName()];
+    Register *a_reg = regManager->getAlloc(a->getName());
+    Register *t1_reg = regManager->getAlloc(t1->getName());
+    Register *t2_reg = regManager->getAlloc(t2->getName());
     if (t1->isnum() && t2->isnum()) {
         if (a_reg)
             tiggerStmt(new _tDIRECT(a_reg->reg_name, binary_result(t1->getInt(), op, t2->getInt())));
@@ -126,9 +132,9 @@ void _eBINARY::translate() {
 }
 void _eSEEK::translate() {
     /* a = t[x], a:var, t:address, x:var,int */
-    Register *a_reg = regManager->alloc_reg[a->getName()];
-    Register *t_reg = regManager->alloc_reg[t];
-    Register *x_reg = regManager->alloc_reg[x->getName()];
+    Register *a_reg = regManager->getAlloc(a->getName());
+    Register *t_reg = regManager->getAlloc(t);
+    Register *x_reg = regManager->getAlloc(x->getName());
     if (regManager->isglobal(t)) {
         string t_reg_name = load_into_register_nonum(t, reserved_reg1);
         string x_reg_name = load_into_register(x, reserved_reg2);
@@ -144,7 +150,7 @@ void _eSEEK::translate() {
         }
     }
     else {
-        int t_addr = regManager->getreaddr(t);
+        int t_addr = regManager->getReaddr(t);
         /* warning: t could be the param passed by outside function */
         if (x->isnum() && !regManager->isparam(t)) {
             if (a_reg)
@@ -180,9 +186,9 @@ void _eSEEK::translate() {
 }
 void _eSAVE::translate() {
     /* a[x] = t, a:addr, t:addr,int,var, x:var,int */
-    Register *a_reg = regManager->alloc_reg[a];
-    Register *t_reg = regManager->alloc_reg[t->getName()];
-    Register *x_reg = regManager->alloc_reg[x->getName()];
+    Register *a_reg = regManager->getAlloc(a);
+    Register *t_reg = regManager->getAlloc(t->getName());
+    Register *x_reg = regManager->getAlloc(x->getName());
     if (regManager->isglobal(a)) {
         string a_reg_name = load_into_register_nonum(a, reserved_reg1);
         /* potential optimization here: t is an integer */
@@ -198,7 +204,7 @@ void _eSAVE::translate() {
         }
     }
     else {
-        int a_addr = regManager->getreaddr(a);
+        int a_addr = regManager->getReaddr(a);
         if (x->isnum() && !regManager->isparam(a)) {
             string t_reg_name = load_into_register(t, reserved_reg1);
             tiggerStmt(new _tSTORE(t_reg_name, (a_addr + x->getInt()) >> 2));
@@ -229,7 +235,7 @@ void _eFUNCRET::translate() {
 
     /* a = call f_func */
     tiggerStmt(new _tCALL(func));
-    Register *a_reg = regManager->alloc_reg[a->getName()];
+    Register *a_reg = regManager->getAlloc(a->getName());
     if (a_reg) {
         tiggerStmt(new _tDIRECT(a_reg->reg_name, "a0"));
         /* skip restore a_reg, this step is necessray.
@@ -257,15 +263,15 @@ void _eCALL::translate() {
     regManager->param_cnt = 0;
 }
 void _ePARAM::translate() {
-    Register *t_reg = regManager->alloc_reg[t->getName()];
+    Register *t_reg = regManager->getAlloc(t->getName());
     string reg_name = "a" + to_string(regManager->param_cnt++);
     regManager->store(reg_name);
     /* potential optimization here: param is luckily just in %ai */
     if (t_reg) /* warning */ {
-        if (t_reg->available)
-            tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
-        else
+        if (t_reg->occupied)
             tiggerStmt(new _tLOAD(t_reg->reg_id, reg_name));
+        else
+            tiggerStmt(new _tDIRECT(reg_name, t_reg->reg_name));
         /* here %ax is already replaced by the parameter, its real value is in stack */
     }
     else if (t->isnum())
@@ -273,7 +279,7 @@ void _ePARAM::translate() {
     else
         regManager->restore_reg(t->getName(), reg_name);
 
-    regManager->reg_ptr[reg_name]->available = false;
+    regManager->reg_ptr[reg_name]->occupied = true;
     /* if a0 is overwritten,
         value needs to be load back from stack */
 }
@@ -296,39 +302,8 @@ void _eGOTO::translate() {
 void _eLABEL::translate() {
     tiggerStmt(new _tLABEL(l));
 }
-void _eSEQ::translate() {
-    /* every function's body(_eSEQ) can't enter this function */
-    for (auto stmt: seq)
-        stmt->translate();
-    tiggerRoot = new _tSEQ(tiggerList);
-}
-void _eFUNC::translate() {
-    // optimize();
-    /* optimization all in eeyoreOPT.cpp */
-
-    _tFUNC *tfunc = new _tFUNC(func, arity);
-    regManager->new_environ();
-    /* param is always in register */
-    for (int i = 0; i < arity; i++) {
-        regManager->setlocal("p" + to_string(i), 4, true);
-        regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
-    }
-    auto seq = ((_eSEQ *) body)->seq;
-    for (auto stmt: seq)
-        if (stmt->isdef()) stmt->try_allocate();
-    tfunc->mem = regManager->stack_size >> 2;
-    regManager->callee_store();
-    for (auto stmt: seq)
-        if (!stmt->isdef()) stmt->translate();
-    
-    /* function structure:
-        func [arity] [mem] body */
-    tfunc->body = new _tSEQ(tiggerStmtList);
-    tiggerStmtList.clear();
-    tiggerList.push_back(tfunc);
-}
 void _eRET::translate() {
-    Register *t_reg = regManager->alloc_reg[t->getName()];
+    Register *t_reg = regManager->getAlloc(t->getName());
     if (t_reg)
         tiggerStmt(new _tDIRECT("a0", t_reg->reg_name));
     else if (t->isnum())
@@ -343,3 +318,5 @@ void _eRETVOID::translate() {
     regManager->callee_restore();
     tiggerStmt(new _tRETURN());
 }
+void _eSEQ::translate() { optimize(); }
+void _eFUNC::translate() { optimize(); }

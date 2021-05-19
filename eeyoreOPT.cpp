@@ -1,8 +1,11 @@
+#include <bits/stdc++.h>
 #ifndef defs_hpp
 #include "defs.hpp"
 #define defs_hpp
 #endif
 using namespace std;
+
+int currentLine;
 
 void _eDEFVAR::_analyse_def_use(string &def, string &use1, string &use2) {}
 void _eDEFARR::_analyse_def_use(string &def, string &use1, string &use2) {}
@@ -29,20 +32,15 @@ void _eRET::_analyse_def_use(string &def, string &use1, string &use2)
     { if (!t->isnum()) use1 = t->getName(); }
 void _eCALL::_analyse_def_use(string &def, string &use1, string &use2) {}
 
-#define maxlines 1000
 typedef enum {
     DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
     FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID
 }typeAST;
-typedef enum {
-    VAR, ARR, NUM
-}typeATOM;
 typeAST type[maxlines];
 map<string, int> label;
-map<string, typeATOM> local;
 bool nxt[maxlines]; string jmp[maxlines];
-void _eDEFVAR::_analyse_cf(int line) { nxt[line] = true; type[line] = DEFARR; local[var] = VAR; }
-void _eDEFARR::_analyse_cf(int line) { nxt[line] = true; type[line] = DEFARR; local[var] = ARR; }
+void _eDEFVAR::_analyse_cf(int line) { nxt[line] = true; type[line] = DEFVAR; }
+void _eDEFARR::_analyse_cf(int line) { nxt[line] = true; type[line] = DEFARR; }
 void _eDIRECT::_analyse_cf(int line) { nxt[line] = true; type[line] = DIRECT; }
 void _eUNARY::_analyse_cf(int line) { nxt[line] = true; type[line] = UNARY; }
 void _eBINARY::_analyse_cf(int line) { nxt[line] = true; type[line] = BINARY; }
@@ -57,55 +55,128 @@ void _eRETVOID::_analyse_cf(int line) { nxt[line] = false; type[line] = RETVOID;
 void _eRET::_analyse_cf(int line) { nxt[line] = false; type[line] = RET; }
 void _eCALL::_analyse_cf(int line) { nxt[line] = true; type[line] = CALL; }
 
-vector<eeyoreAST *> seq, opt_seq;
+vector<eeyoreAST *> seq;
+vector<string> var_list; 
+int n;
 string def[maxlines], use1[maxlines], use2[maxlines];
 bitset<maxlines> reach[maxlines];
 bool reserved[maxlines];
-int n;
 
 bool visited[maxlines];
-bool _analyse_reach(const string &var, int pos, int start, bool warmup) {
-    if (visited[pos]) return reach[start][pos];
+bool _analyse_reach(string &var, int pos, bitset<maxlines> &reach, int def_pos, bool def_start) {
+    if (visited[pos]) return reach[pos];
     bool used = false; visited[pos] = true;
-    if (!warmup) {
+    if (!def_start) {
         if (use1[pos] == var) used = true;
         if (use2[pos] == var) used = true;
-        if (def[pos] == var) return reach[start][pos] = used;
+        if (def[pos] == var) return reach[pos] = used;
     }
     if (nxt[pos] && pos + 1 < n)
-        used |= _analyse_reach(var, pos + 1, start, false);
+        used |= _analyse_reach(var, pos + 1, reach, def_pos, false);
     if (!jmp[pos].empty())
-        used |= _analyse_reach(var, label[jmp[pos]], start, false);
-    return reach[start][pos] = used;
+        used |= _analyse_reach(var, label[jmp[pos]], reach, def_pos, false);
+    return reach[pos] = used;
+}
+
+bool cmp(string var1, string var2) {
+    return regManager->vars[var1]->active.count() > regManager->vars[var2]->active.count();
 }
 void _eFUNC::optimize() {
-    seq = ((_eSEQ *) body)->seq; n = seq.size();
-    memset(reserved, true, n);
-    cout << func << " " << arity << " " << n << endl;
-    /* inner procedural control flow analysis */
-    label.clear(); local.clear();
+    seq = ((_eSEQ *) body)->seq;
+    n = seq.size();
+    assert(n < maxlines);
+    _tFUNC *tfunc = new _tFUNC(func, arity);
+    regManager->new_environ();
+
+    /* ================ */
+    /*  param decl      */
+    /* ================ */
+    var_list.clear();
+    for (int i = 0; i < arity; i++) {
+        regManager->newLocal("p" + to_string(i), 4, true);
+        // var_list.push_back("p" + to_string(i));
+    }
+    for (auto decl: seq)
+        if (decl->isdef()) { decl->localDecl(); var_list.push_back(decl->getName()); }
+    tfunc->mem = regManager->stack_size >> 2;
+    /* ======================== */
+    /*  control-flow graph      */
+    /* ======================== */
+    memset(reserved, true, n); /* unnecessary to clear map-table label */
     for (int i = 0; i < n; i++) {
         jmp[i].clear(); nxt[i] = false;
         seq[i]->_analyse_cf(i);
     }
-
+    /* ======================== */
+    /*  def-use analysis        */
+    /* ======================== */
     for (int i = 0; i < n; i++) {
         def[i].clear(); use1[i].clear(); use2[i].clear();
         seq[i]->_analyse_def_use(def[i], use1[i], use2[i]); 
     }
+    /* ======================== */
+    /*  reachability analysis   */
+    /* ======================== */
+    for (auto var_name: var_list) {
+        Variable *var = regManager->vars[var_name];
+        var->active.reset();
+        memset(visited, false, n);
+        _analyse_reach(var_name, 0, var->active, -1, true);
+        /* -1 stands for declaration */
+    }
     for (int i = 0; i < n; i++) {
         reach[i].reset();
         if (def[i].empty()) continue;
-        if (local.find(def[i]) == local.end()) continue; /* skip global */
-        memset(visited, false, n);
-        if (!_analyse_reach(def[i], i, i, true))
-            reserved[i] = false;
-    }
-    for (int i = 0; i < n; i++)
-        { printf("%3d:\t", i); seq[i]->Dump(); printf("... [%s] def:%s use1:%s use2:%s [nxt%d] [jmp:%s]\n", reserved[i] ? "true":"false", def[i].c_str(), use1[i].c_str(), use2[i].c_str(), (int)nxt[i], jmp[i].c_str()); }
 
-    opt_seq.clear();
+        memset(visited, false, n);
+        if (!_analyse_reach(def[i], i, reach[i], i, true)) {
+            if (type[i] == FUNCRET)
+                seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
+                /* though the returned value is not used, function call could have side effects */
+            else
+                reserved[i] = false;
+        }
+        Variable *var = regManager->vars[def[i]];
+        var->active |= reach[i];
+    }
+
+    /* ======================== */
+    /*  register allocation     */
+    /* ======================== */
+    
+    for (int i = 0; i < arity; i++)
+        regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
+    /* param is always in register */
+    sort(var_list.begin(), var_list.end());
+    for (auto var_name: var_list)
+        regManager->try_allocate(var_name);
+
+    /* optimization above */
+    /* ================== */
+    /* translate below    */
+    
+    regManager->callee_store();
+
+    for (auto decl: seq)
+        if (decl->isdef()) regManager->preload(decl->getName());
     for (int i = 0; i < n; i++)
-        if (reserved[i]) opt_seq.push_back(seq[i]);
-    ((_eSEQ *) body)->seq = opt_seq;
+        if (reserved[i] && !seq[i]->isdef()) seq[i]->translate();
+    
+    /* debug  cout << func << " " << arity << " " << n << endl;
+    for (int i = 0; i < n; i++)
+        { printf("%3d:\t", i); seq[i]->Dump(); printf("... [%s] def:%s use1:%s use2:%s [nxt%d] [jmp:%s]\n", reserved[i] ? "true":"false", def[i].c_str(), use1[i].c_str(), use2[i].c_str(), (int)nxt[i], jmp[i].c_str()); }*/
+
+    /* function structure:
+        func [arity] [mem] body */
+    tfunc->body = new _tSEQ(tiggerStmtList);
+    tiggerStmtList.clear();
+    tiggerList.push_back(tfunc);
+}
+
+void _eSEQ::optimize() {
+    for (auto decl: seq)
+        if (decl->isdef()) decl->globalDecl();
+    for (auto func: seq)
+        if (!func->isdef()) func->translate();
+    tiggerRoot = new _tSEQ(tiggerList);
 }
