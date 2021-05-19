@@ -35,7 +35,6 @@ public:
     bool compatible_local(bitset<maxlines> _active) {
         if (monopolized) return false;
         if ((active & _active).any()) return false;
-        if (used) return false;
         active |= _active;
         return used = true;
     }
