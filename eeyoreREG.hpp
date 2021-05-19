@@ -138,49 +138,54 @@ public:
                 tiggerStmt(new _tLOADADDR(var->getReaddr() >> 2, reg_name));
         }
     }
-    void store(string reg_name) {
+    void store(string reg_name, bool caller) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->active[currentLine])
+        if (caller && reg->active[currentLine])
+            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        if (!caller && reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
-    void restore(string reg_name, Register *skip = NULL) {
+    void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
 
         reg->occupied = false;
         /* if previously being occupied by param,
             now it is recovered */
-        if (reg->active[currentLine] && reg != skip)
+        if (reg == skip) return ;
+        if (caller && reg->active[currentLine])
+            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        if (!caller && reg->used)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
         for (int i = 0; i < Reg_t; i++)
-            store("t" + to_string(i));
+            store("t" + to_string(i), true);
         for (int i = param_cnt; i < Reg_a; i++)
         /* because of the structure of eeyore Program,
             Param appears before function call,
             so some register storation is done before */
-            store("a" + to_string(i));
+            store("a" + to_string(i), true);
     }
     void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
         for (int i = 0; i < Reg_t; i++)
-            restore("t" + to_string(i), skip);
+            restore("t" + to_string(i), true, skip);
         for (int i = 0; i < Reg_a; i++)
-            restore("a" + to_string(i), skip);
+            restore("a" + to_string(i), true, skip);
         /* warning: reset register's available flag */
     }
     void callee_store() {
         /* in charge of storation of registers %sx */
         for (int i = 0; i < Reg_s; i++)
-            store("s" + to_string(i));
+            store("s" + to_string(i), false);
     }
     void callee_restore() {
         /* in charge of restoration of registers %sx */
         for (int i = 0; i < Reg_s; i++)
-            restore("s" + to_string(i));
+            restore("s" + to_string(i), false);
     }
     void new_environ() {
         for (int i = 0; i < Reg_N; i++)

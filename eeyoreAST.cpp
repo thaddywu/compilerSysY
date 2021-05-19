@@ -265,7 +265,7 @@ void _eCALL::translate() {
 void _ePARAM::translate() {
     Register *t_reg = regManager->getAlloc(t->getName());
     string reg_name = "a" + to_string(regManager->param_cnt++);
-    regManager->store(reg_name);
+    regManager->store(reg_name, true);
     /* potential optimization here: param is luckily just in %ai */
     if (t_reg) /* warning */ {
         if (t_reg->occupied)

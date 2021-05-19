@@ -159,8 +159,9 @@ void _eFUNC::optimize() {
 
     for (auto decl: seq)
         if (decl->isdef()) regManager->preload(decl->getName());
-    for (int i = 0; i < n; i++)
-        if (reserved[i] && !seq[i]->isdef()) seq[i]->translate();
+    for (currentLine = 0; currentLine < n; currentLine++)
+        if (reserved[currentLine] && !seq[currentLine]->isdef())
+            seq[currentLine]->translate();
     
     /* debug  cout << func << " " << arity << " " << n << endl;
     for (int i = 0; i < n; i++)
