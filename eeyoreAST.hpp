@@ -19,6 +19,11 @@ public:
     virtual bool isnum() { assert(false); } // for _ATOM, return true if it is an integer number
     virtual bool isdef() { return false; } // for convenience, "return false" ..
     virtual void try_allocate() { assert(false); }
+    
+    /* here below, are functions for optimization */
+    virtual void optimize() { assert(false); }
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) { assert(false); }
+    virtual void _analyse_cf(int line) { assert(false); }
 };
 
 /*
@@ -60,6 +65,10 @@ public:
     virtual bool isdef() { return true; }
     virtual void translate() ;
     virtual void try_allocate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
+
 };
 class _eDEFARR: public eeyoreAST {
 public:
@@ -69,6 +78,9 @@ public:
     virtual bool isdef() { return true; }
     virtual void translate() ;
     virtual void try_allocate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eDIRECT: public eeyoreAST {
 public:
@@ -76,6 +88,9 @@ public:
     _eDIRECT(eeyoreAST *_a, eeyoreAST *_t): a(_a), t(_t) {}
     virtual void Dump() { printTab(a->getName() + " = " + t->getName()); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eUNARY: public eeyoreAST {
 public:
@@ -83,6 +98,9 @@ public:
     _eUNARY(eeyoreAST *_a, string _op, eeyoreAST *_t): a(_a), op(_op), t(_t) {}
     virtual void Dump() { printTab(a->getName() + " = " + op + t->getName()); }
     virtual void translate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eBINARY: public eeyoreAST {
 public:
@@ -90,6 +108,9 @@ public:
     _eBINARY(eeyoreAST *_a, eeyoreAST *_t1, string _op, eeyoreAST *_t2): a(_a), t1(_t1), op(_op), t2(_t2) {}
     virtual void Dump() { printTab(a->getName() + " = " + t1->getName() + " " + op + " " + t2->getName()); }
     virtual void translate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eSEEK: public eeyoreAST {
 public:
@@ -97,6 +118,9 @@ public:
     _eSEEK(eeyoreAST *_a, string _t, eeyoreAST *_x): a(_a), t(_t), x(_x) {}
     virtual void Dump() { printTab(a->getName() + " = " + t + "[" + x->getName() + "]"); }
     virtual void translate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eSAVE: public eeyoreAST {
 public:
@@ -104,6 +128,9 @@ public:
     _eSAVE(string _a, eeyoreAST *_x, eeyoreAST *_t): a(_a), x(_x), t(_t) {}
     virtual void Dump() { printTab(a + "[" + x->getName() + "] = " + t->getName()); }
     virtual void translate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eFUNCRET: public eeyoreAST {
 public:
@@ -111,6 +138,9 @@ public:
     _eFUNCRET(eeyoreAST *_a, string _func): a(_a), func(_func) {}
     virtual void Dump() { printTab(a->getName() + " = call f_" + func); }
     virtual void translate() ;
+    virtual void _analyse_cf(int line) ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
 };
 class _eIFGOTO: public eeyoreAST {
 public:
@@ -118,6 +148,9 @@ public:
     _eIFGOTO(eeyoreAST *_t1, string _op, eeyoreAST *_t2, string _l): t1(_t1), op(_op), t2(_t2), l(_l) {}
     virtual void Dump() { printTab("if " + t1->getName() + " " + op + " " + t2->getName() + " goto " + l); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eGOTO: public eeyoreAST {
 public:
@@ -125,6 +158,9 @@ public:
     _eGOTO(string _l): l(_l) {}
     virtual void Dump() { printTab("goto " + l); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _ePARAM: public eeyoreAST {
 public:
@@ -132,6 +168,9 @@ public:
     _ePARAM(eeyoreAST *_t): t(_t) {}
     virtual void Dump() { printTab("param " + t->getName()); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eLABEL: public eeyoreAST {
 public:
@@ -139,12 +178,18 @@ public:
     _eLABEL(string _l): l(_l) {}
     virtual void Dump() { print(l + ":"); }
     virtual void translate() ;
+
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eRETVOID: public eeyoreAST {
 public:
     _eRETVOID() {}
     virtual void Dump() { printTab("return"); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eRET: public eeyoreAST {
 public:
@@ -152,6 +197,9 @@ public:
     _eRET(eeyoreAST *_t): t(_t) {}
     virtual void Dump() { printTab("return " + t->getName()); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eFUNC: public eeyoreAST {
 public:
@@ -159,6 +207,8 @@ public:
     _eFUNC(string _func, int _arity, eeyoreAST *_body): func(_func), arity(_arity), body(_body) {}
     virtual void Dump() { print("f_" + func + " [" + to_string(arity) + "]"); body->Dump(); print("end f_" + func); }
     virtual void translate() ;
+
+    virtual void optimize() ;
 };
 class _eCALL: public eeyoreAST {
 public:
@@ -166,6 +216,9 @@ public:
     _eCALL(string _func): func(_func) {}
     virtual void Dump() { printTab("call f_" + func); }
     virtual void translate() ;
+    
+    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_cf(int line) ;
 };
 class _eSEQ: public eeyoreAST {
 public:

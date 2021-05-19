@@ -32,6 +32,7 @@ void _eDEFVAR::translate() {
     /* only global vars could enter this function */
     string _var = regManager->setglobal(var, true);
     tiggerDecl(new _tGLBVAR(_var));
+    // regManager->try_allocate(var);
 }
 void _eDEFVAR::try_allocate() {
     /* only local vars could enter this function */
@@ -44,7 +45,7 @@ void _eDEFARR::translate() {
     tiggerDecl(new _tGLBARR(_var, size));
 }
 void _eDEFARR::try_allocate() {
-    /* only global vars could enter this function */
+    /* only local vars could enter this function */
     regManager->setlocal(var, size << 2, false);
     regManager->try_allocate(var, true);
     /* potential optimization here: warmup could be delayed */
@@ -221,6 +222,7 @@ void _eSAVE::translate() {
     }
 }
 void _eFUNCRET::translate() {
+
     regManager->caller_store();
     /* before call */
 
@@ -295,6 +297,9 @@ void _eSEQ::translate() {
     tiggerRoot = new _tSEQ(tiggerList);
 }
 void _eFUNC::translate() {
+    // optimize();
+    /* optimization all in eeyoreOPT.cpp */
+
     _tFUNC *tfunc = new _tFUNC(func, arity);
     regManager->new_environ();
     /* param is always in register */

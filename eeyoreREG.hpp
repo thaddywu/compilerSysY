@@ -9,6 +9,7 @@ extern void tiggerStmt(tiggerAST *x);
 /* RegManager is in charge of allocation of registers,
 and it is also responsible for var name record */
 class Register {
+    /* %tx %ax caller-save, %sx callee-save */
 public:
     Register(string _name): reg_name(_name) { available = true; }
     
@@ -47,12 +48,14 @@ public:
     // bool isalternative(string s) { return reg_ptr.find(s) == reg_ptr.end(); }
     /* s11 & s10 is reserved for global address & number respectively, can not be allocated */
     RegManager() {
+        int register_cnt = 0;
         for (int i = 0; i < Reg_t; i++)
-            registers[i] = new Register("t" + to_string(i));
-        for (int i = 0; i < Reg_s; i++)
-            registers[i + Reg_t] = new Register("s" + to_string(i));
+            registers[register_cnt++] = new Register("t" + to_string(i));
         for (int i = 0; i < Reg_a; i++)
-            registers[i + Reg_t + Reg_s] = new Register("a" + to_string(Reg_a - i - 1));
+            registers[register_cnt++] = new Register("a" + to_string(Reg_a - i - 1));
+        for (int i = 0; i < Reg_s; i++)
+            registers[register_cnt++] = new Register("s" + to_string(i));
+        assert(register_cnt == Reg_N); 
         
         for (int i = 0; i < Reg_N; i++)
             reg_ptr[registers[i]->reg_name] = registers[i];
@@ -130,6 +133,7 @@ public:
     void new_environ() {
         next_vacant_reg = 0;
         for (int i = 0; i < Reg_N; i++)
+        if (registers[i]->allocated && !isglobal(registers[i]->allocated_var))
             registers[i]->new_environ();
         /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
@@ -149,6 +153,8 @@ public:
         /* alloc_reg[var] may not be empty,
             bacause there's no explicit clean for alloc_reg when quit a function */
         Register *reg = registers[next_vacant_reg++];
+        if (isglobal(var) && reg->reg_name[0] == 'a')
+            { alloc_reg[var] = NULL; return ; } /* global vars could not be restored in %ax */
         reg->allocated = true;
         reg->allocated_var = var;
         alloc_reg[var] = reg;
