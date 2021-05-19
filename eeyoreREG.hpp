@@ -203,7 +203,6 @@ public:
         stack_size = Reg_N << 2;
     }
     void preload(string var_name) {
-        cerr << "preload" << endl;
         Variable *var = vars[var_name];
         Register *reg = var->alloc_reg;
         if (reg == NULL) return ; /* this var is not gonna be stored in register */
@@ -222,6 +221,7 @@ public:
     void try_allocate(string var_name) {
         Variable *var = vars[var_name];
         var->alloc_reg = NULL;
+        return ;
         if (var->isglobal()) {
             for (int i = 0; i < Reg_N; i++)
                 if (registers[i]->compatible_global())
