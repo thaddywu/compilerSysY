@@ -82,6 +82,7 @@ bool cmp(string var1, string var2) {
     return regManager->vars[var1]->active.count() > regManager->vars[var2]->active.count();
 }
 void _eFUNC::optimize() {
+    cerr << func << endl;
     seq = ((_eSEQ *) body)->seq;
     n = seq.size();
     assert(n < maxlines);
@@ -91,6 +92,7 @@ void _eFUNC::optimize() {
     /* ================ */
     /*  param decl      */
     /* ================ */
+    cerr << "param decl" << endl;
     var_list.clear();
     for (int i = 0; i < arity; i++) {
         regManager->newLocal("p" + to_string(i), 4, true);
@@ -102,6 +104,7 @@ void _eFUNC::optimize() {
     /* ======================== */
     /*  control-flow graph      */
     /* ======================== */
+    cerr << "control flow" << endl;
     memset(reserved, true, n); /* unnecessary to clear map-table label */
     for (int i = 0; i < n; i++) {
         jmp[i].clear(); nxt[i] = false;
@@ -110,6 +113,7 @@ void _eFUNC::optimize() {
     /* ======================== */
     /*  def-use analysis        */
     /* ======================== */
+    cerr << "def-use analysis" << endl;
     for (int i = 0; i < n; i++) {
         def[i].clear(); use1[i].clear(); use2[i].clear();
         seq[i]->_analyse_def_use(def[i], use1[i], use2[i]); 
@@ -117,6 +121,7 @@ void _eFUNC::optimize() {
     /* ======================== */
     /*  reachability analysis   */
     /* ======================== */
+    cerr << "reachability analysis" << endl;
     for (auto var_name: var_list) {
         Variable *var = regManager->vars[var_name];
         var->active.reset();
@@ -143,7 +148,7 @@ void _eFUNC::optimize() {
     /* ======================== */
     /*  register allocation     */
     /* ======================== */
-    
+    cerr << "register allocation" << endl;
     for (int i = 0; i < arity; i++)
         regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
     /* param is always in register */
@@ -154,14 +159,17 @@ void _eFUNC::optimize() {
     /* optimization above */
     /* ================== */
     /* translate below    */
+    cerr << "translate" << endl;
     
     regManager->callee_store();
 
-    for (auto decl: seq)
-        if (decl->isdef()) regManager->preload(decl->getName());
+    for (auto var_name: var_list)
+        regManager->preload(var_name);
+    cerr << "preload ends" << endl;
     for (currentLine = 0; currentLine < n; currentLine++)
         if (reserved[currentLine] && !seq[currentLine]->isdef())
-            seq[currentLine]->translate();
+            {cerr << currentLine << " " << type[currentLine] << endl; seq[currentLine]->translate();}
+    cerr << "translate ends" << endl;
     
     /* debug  cout << func << " " << arity << " " << n << endl;
     for (int i = 0; i < n; i++)

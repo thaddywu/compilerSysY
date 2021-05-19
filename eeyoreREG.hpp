@@ -48,7 +48,7 @@ private:
     int relative_addr;
 public:
     Variable(bool _global, bool _var, bool _param, string _eeyore_name, string _tigger_name, int _relative_addr):
-        global(_global), var(_var), param(_param), eeyore_name(_eeyore_name), tigger_name(_tigger_name), relative_addr(_relative_addr) {}
+        global(_global), var(_var), param(_param), eeyore_name(_eeyore_name), tigger_name(_tigger_name), relative_addr(_relative_addr) { alloc_reg = NULL; }
     bool isglobal() { return global; }
     bool isvar() { return var; }
     bool isparam() { return param; }
