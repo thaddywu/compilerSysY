@@ -11,17 +11,15 @@ and it is also responsible for var name record */
 class Register {
     /* %tx %ax caller-save, %sx callee-save */
 public:
-    Register(string _name): reg_name(_name) { available = true; }
+    Register(string _name, int _id): reg_name(_name), reg_id(_id), global_var("") { available = true; }
     
     string reg_name;
-    bool allocated;
+    int reg_id;
+    bool allocated; 
+    string global_var; /* if this register is allocated to local vars, global_var is empty */
     bool available;
-    string allocated_var;
 
-    bool contain(string s) {
-        return allocated && allocated_var == s;
-    }
-    void new_environ() { allocated = false; assert(available); }
+    void new_environ() { if (global_var.empty()) allocated = false; assert(available); }
 };
 
 class RegManager {
@@ -49,12 +47,12 @@ public:
     /* s11 & s10 is reserved for global address & number respectively, can not be allocated */
     RegManager() {
         int register_cnt = 0;
-        for (int i = 0; i < Reg_t; i++)
-            registers[register_cnt++] = new Register("t" + to_string(i));
-        for (int i = 0; i < Reg_a; i++)
-            registers[register_cnt++] = new Register("a" + to_string(Reg_a - i - 1));
-        for (int i = 0; i < Reg_s; i++)
-            registers[register_cnt++] = new Register("s" + to_string(i));
+        for (int i = 0; i < Reg_t; i++, register_cnt++)
+            registers[register_cnt] = new Register("t" + to_string(i), register_cnt);
+        for (int i = 0; i < Reg_a; i++, register_cnt++)
+            registers[register_cnt] = new Register("a" + to_string(Reg_a - i - 1), register_cnt);
+        for (int i = 0; i < Reg_s; i++, register_cnt++)
+            registers[register_cnt] = new Register("s" + to_string(i), register_cnt);
         assert(register_cnt == Reg_N); 
         
         for (int i = 0; i < Reg_N; i++)
@@ -89,14 +87,18 @@ public:
     void store(string reg_name) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->allocated)
-            store_reg(reg_name, reg->allocated_var);
+        if (reg->allocated) {
+            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+            reg->available = true;
+        }
     }
     void restore(string reg_name, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->allocated && reg != skip)
-            restore_reg(reg->allocated_var, reg_name);
+        if (reg->allocated && reg != skip) {
+            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+            reg->available = true;
+        }
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
@@ -110,14 +112,10 @@ public:
     }
     void caller_restore(Register *skip = NULL) {
         /* in charge of restoration of registers %tx %ax */
-        for (int i = 0; i < Reg_t; i++) {
+        for (int i = 0; i < Reg_t; i++)
             restore("t" + to_string(i), skip);
-            reg_ptr["t" + to_string(i)]->available = true;
-        }
-        for (int i = 0; i < Reg_a; i++) {
+        for (int i = 0; i < Reg_a; i++)
             restore("a" + to_string(i), skip);
-            reg_ptr["a" + to_string(i)]->available = true;
-        }
         /* warning: reset register's available flag */
     }
     void callee_store() {
@@ -133,17 +131,16 @@ public:
     void new_environ() {
         next_vacant_reg = 0;
         for (int i = 0; i < Reg_N; i++)
-        if (registers[i]->allocated && !isglobal(registers[i]->allocated_var))
             registers[i]->new_environ();
         /* warning: alloc_reg.clean() is not called*/
         /* bottom of the stack is reserved for callee-registers */
-        stack_size = (Reg_s) << 2;
+        stack_size = Reg_N << 2;
     }
     void must_allocate(string var, string reg_name) {
         Register *reg = reg_ptr[reg_name];
         assert(!reg->allocated);
         reg->allocated = true;
-        reg->allocated_var = var;
+        assert(!isglobal(var));
         alloc_reg[var] = reg;
     }
     void try_allocate(string var, bool warmup = false) {
@@ -156,7 +153,8 @@ public:
         if (isglobal(var) && reg->reg_name[0] == 'a')
             { alloc_reg[var] = NULL; return ; } /* global vars could not be restored in %ax */
         reg->allocated = true;
-        reg->allocated_var = var;
+        if (isglobal(var)) reg->global_var = var;
+        if (isglobal(var)) assert(false);
         alloc_reg[var] = reg;
         if (warmup)
             restore_reg(var, reg->reg_name);

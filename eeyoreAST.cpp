@@ -269,7 +269,7 @@ void _ePARAM::translate() {
 
     regManager->reg_ptr[reg_name]->available = false;
     /* if a0 is overwritten,
-        value needs to be load from stack */
+        value needs to be load back from stack */
 }
 void _eIFGOTO::translate() {
     assert(t2->getName() == "0" && (op == "!=" || op == "=="));
@@ -297,7 +297,7 @@ void _eSEQ::translate() {
     tiggerRoot = new _tSEQ(tiggerList);
 }
 void _eFUNC::translate() {
-    // optimize();
+    optimize();
     /* optimization all in eeyoreOPT.cpp */
 
     _tFUNC *tfunc = new _tFUNC(func, arity);
