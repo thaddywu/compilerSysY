@@ -1,0 +1,2 @@
+qemu-riscv32-static output
+cc output.S -o output -L/root -lsysy -static

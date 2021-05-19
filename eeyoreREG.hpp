@@ -87,18 +87,16 @@ public:
     void store(string reg_name) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->allocated) {
+        if (reg->allocated)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-            reg->available = true;
-        }
     }
     void restore(string reg_name, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->allocated && reg != skip) {
+
+        reg->available = true;
+        if (reg->allocated && reg != skip)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-            reg->available = true;
-        }
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
