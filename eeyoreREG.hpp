@@ -220,7 +220,6 @@ public:
     void try_allocate(string var_name) {
         Variable *var = vars[var_name];
         var->alloc_reg = NULL;
-        return ;
         if (var->isglobal()) {
             for (int i = 0; i < Reg_N; i++)
                 if (registers[i]->compatible_global())
