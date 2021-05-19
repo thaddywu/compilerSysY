@@ -47,10 +47,10 @@ public:
     /* s11 & s10 is reserved for global address & number respectively, can not be allocated */
     RegManager() {
         int register_cnt = 0;
-        for (int i = 0; i < Reg_t; i++, register_cnt++)
-            registers[register_cnt] = new Register("t" + to_string(i), register_cnt);
         for (int i = 0; i < Reg_a; i++, register_cnt++)
             registers[register_cnt] = new Register("a" + to_string(Reg_a - i - 1), register_cnt);
+        for (int i = 0; i < Reg_t; i++, register_cnt++)
+            registers[register_cnt] = new Register("t" + to_string(i), register_cnt);
         for (int i = 0; i < Reg_s; i++, register_cnt++)
             registers[register_cnt] = new Register("s" + to_string(i), register_cnt);
         assert(register_cnt == Reg_N); 

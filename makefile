@@ -17,3 +17,4 @@ run:
 git:
 	rm *.eeyore *.tigger *.sy output output.S
 	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
+	rm *.out *.in *.ans
