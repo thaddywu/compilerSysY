@@ -297,7 +297,7 @@ void _eSEQ::translate() {
     tiggerRoot = new _tSEQ(tiggerList);
 }
 void _eFUNC::translate() {
-    optimize();
+    // optimize();
     /* optimization all in eeyoreOPT.cpp */
 
     _tFUNC *tfunc = new _tFUNC(func, arity);
