@@ -225,4 +225,7 @@ public:
                     {var->alloc_reg = registers[i]; /*cerr << var_name << " was allocated to " << registers[i]->reg_name << endl;*/ return ; }
         }
     }
+    void try_backup() {
+        
+    }
 };
