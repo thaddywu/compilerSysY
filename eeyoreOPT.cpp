@@ -156,8 +156,8 @@ void _eFUNC::optimize() {
         regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
     /* param is always in register */
     sort(var_list.begin(), var_list.end(), cmp);
-    for (auto var_name: var_list)
-        regManager->try_allocate(var_name);
+    //for (auto var_name: var_list)
+    //    regManager->try_allocate(var_name);
 
     /* optimization above */
     /* ================== */
