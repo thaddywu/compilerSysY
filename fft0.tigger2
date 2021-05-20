@@ -1,0 +1,524 @@
+v0 = 0
+v1 = 0
+v2 = 0
+v3 = malloc 8388608
+v4 = malloc 8388608
+v5 = malloc 8388608
+v6 = malloc 8388608
+f_multiply [2] [35]
+	store s3 3
+	store s4 4
+	s11 = 0
+	s3 = a1 == s11
+	if s3 == x0 goto l0
+	a0 = 0
+	load 3 s3
+	load 4 s4
+	return
+l0:
+	s11 = 1
+	s3 = a1 == s11
+	if s3 == x0 goto l1
+	s3 = a0 % s0
+	a0 = s3
+	load 3 s3
+	load 4 s4
+	return
+l1:
+	s11 = 2
+	s3 = a1 / s11
+	store a0 22
+	a0 = a0
+	store a1 21
+	a1 = s3
+	call f_multiply
+	s4 = a0
+	load 22 a0
+	load 21 a1
+	s3 = s4 + s4
+	s4 = s3 % s0
+	s11 = 2
+	s3 = a1 % s11
+	s11 = 1
+	s3 = s3 == s11
+	if s3 == x0 goto l2
+	s3 = s4 + a0
+	s3 = s3 % s0
+	a0 = s3
+	load 3 s3
+	load 4 s4
+	return
+	goto l3
+l2:
+	a0 = s4
+	load 3 s3
+	load 4 s4
+	return
+l3:
+end f_multiply
+f_power [2] [31]
+	store s3 3
+	store s4 4
+	s11 = 0
+	s3 = a1 == s11
+	if s3 == x0 goto l4
+	a0 = 1
+	load 3 s3
+	load 4 s4
+	return
+l4:
+	s11 = 2
+	s3 = a1 / s11
+	store a0 22
+	a0 = a0
+	store a1 21
+	a1 = s3
+	call f_power
+	s4 = a0
+	load 22 a0
+	load 21 a1
+	store a0 22
+	a0 = s4
+	store a1 21
+	a1 = s4
+	call f_multiply
+	s4 = a0
+	load 22 a0
+	load 21 a1
+	s11 = 2
+	s3 = a1 % s11
+	s11 = 1
+	s3 = s3 == s11
+	if s3 == x0 goto l5
+	store a0 22
+	a0 = s4
+	load 22 a1
+	call f_multiply
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	a0 = s3
+	load 3 s3
+	load 4 s4
+	return
+	goto l6
+l5:
+	a0 = s4
+	load 3 s3
+	load 4 s4
+	return
+l6:
+end f_power
+f_memmove [4] [33]
+	store s3 3
+	store s4 4
+	store s5 5
+	s5 = 0
+l7:
+	s3 = s5 < a3
+	if s3 == x0 goto l8
+	s11 = 4
+	s3 = s5 * s11
+	s9 = a2 + s3
+	s4 = s9[0]
+	s3 = a1 + s5
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s9[0] = s4
+	s11 = 1
+	s5 = s5 + s11
+	goto l7
+l8:
+	a0 = s5
+	load 3 s3
+	load 4 s4
+	load 5 s5
+	return
+end f_memmove
+f_fft [4] [74]
+	store s3 3
+	store s4 4
+	store s5 5
+	store s6 6
+	store s7 7
+	s11 = 1
+	s3 = a2 == s11
+	if s3 == x0 goto l9
+	a0 = 1
+	load 3 s3
+	load 4 s4
+	load 5 s5
+	load 6 s6
+	load 7 s7
+	return
+l9:
+	t0 = 0
+l10:
+	s3 = t0 < a2
+	if s3 == x0 goto l11
+	s11 = 2
+	s3 = t0 % s11
+	s11 = 0
+	s3 = s3 == s11
+	if s3 == x0 goto l12
+	s3 = t0 + a1
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s4 = s9[0]
+	s11 = 2
+	s3 = t0 / s11
+	s11 = 4
+	s3 = s3 * s11
+	loadaddr v3 s9
+	s9 = s9 + s3
+	s9[0] = s4
+	goto l13
+l12:
+	s3 = t0 + a1
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s5 = s9[0]
+	s11 = 2
+	s4 = a2 / s11
+	s11 = 2
+	s3 = t0 / s11
+	s3 = s4 + s3
+	s11 = 4
+	s3 = s3 * s11
+	loadaddr v3 s9
+	s9 = s9 + s3
+	s9[0] = s5
+l13:
+	s11 = 1
+	t0 = t0 + s11
+	goto l10
+l11:
+	store a0 22
+	a0 = a0
+	store a1 21
+	a1 = a1
+	store a2 20
+	loadaddr v3 a2
+	store a3 19
+	load 20 a3
+	call f_memmove
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s11 = 2
+	s4 = a2 / s11
+	store a0 22
+	a0 = a3
+	store a1 21
+	a1 = a3
+	store a2 20
+	store a3 19
+	call f_multiply
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	store a0 22
+	a0 = a0
+	store a1 21
+	a1 = a1
+	store a2 20
+	a2 = s4
+	store a3 19
+	a3 = s3
+	call f_fft
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s11 = 2
+	s3 = a2 / s11
+	s4 = a1 + s3
+	s11 = 2
+	s5 = a2 / s11
+	store a0 22
+	a0 = a3
+	store a1 21
+	a1 = a3
+	store a2 20
+	store a3 19
+	call f_multiply
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	store a0 22
+	a0 = a0
+	store a1 21
+	a1 = s4
+	store a2 20
+	a2 = s5
+	store a3 19
+	a3 = s3
+	call f_fft
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	t0 = 0
+	s7 = 1
+l14:
+	s11 = 2
+	s3 = a2 / s11
+	s3 = t0 < s3
+	if s3 == x0 goto l15
+	s3 = a1 + t0
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s6 = s9[0]
+	s4 = a1 + t0
+	s11 = 2
+	s3 = a2 / s11
+	s3 = s4 + s3
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s5 = s9[0]
+	a0 = s7
+	store a1 21
+	a1 = s5
+	store t0 8
+	store a2 20
+	store a3 19
+	call f_multiply
+	s3 = a0
+	load 8 t0
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s3 = s6 + s3
+	s4 = s3 % s0
+	s3 = a1 + t0
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s9[0] = s4
+	a0 = s7
+	store a1 21
+	a1 = s5
+	store t0 8
+	store a2 20
+	store a3 19
+	call f_multiply
+	s3 = a0
+	load 8 t0
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s3 = s6 - s3
+	s3 = s3 + s0
+	s5 = s3 % s0
+	s4 = a1 + t0
+	s11 = 2
+	s3 = a2 / s11
+	s3 = s4 + s3
+	s11 = 4
+	s3 = s3 * s11
+	s9 = a0 + s3
+	s9[0] = s5
+	a0 = s7
+	store a1 21
+	a1 = a3
+	store t0 8
+	store a2 20
+	store a3 19
+	call f_multiply
+	s7 = a0
+	load 8 t0
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s11 = 1
+	t0 = t0 + s11
+	goto l14
+l15:
+	a0 = 0
+	load 3 s3
+	load 4 s4
+	load 5 s5
+	load 6 s6
+	load 7 s7
+	return
+end f_fft
+f_main [0] [56]
+	store s3 3
+	store s4 4
+	store s5 5
+	store s6 6
+	store s7 7
+	s0 = 998244353
+	s2 = 2097152
+	loadaddr v4 a0
+	call f_getarray
+	s7 = a0
+	load 22 a0
+	loadaddr v5 a0
+	call f_getarray
+	s6 = a0
+	load 22 a0
+	a0 = 60
+	call f__sysy_starttime
+	load 22 a0
+	s1 = 1
+l16:
+	s3 = s7 + s6
+	s11 = 1
+	s3 = s3 - s11
+	s3 = s1 < s3
+	if s3 == x0 goto l17
+	s11 = 2
+	s1 = s1 * s11
+	goto l16
+l17:
+	s11 = 1
+	s3 = s0 - s11
+	s3 = s3 / s1
+	a0 = 3
+	a1 = s3
+	call f_power
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	loadaddr v4 a0
+	a1 = 0
+	a2 = s1
+	a3 = s3
+	call f_fft
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s11 = 1
+	s3 = s0 - s11
+	s3 = s3 / s1
+	a0 = 3
+	a1 = s3
+	call f_power
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	loadaddr v5 a0
+	a1 = 0
+	a2 = s1
+	a3 = s3
+	call f_fft
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s5 = 0
+l18:
+	s3 = s5 < s1
+	if s3 == x0 goto l19
+	s11 = 4
+	s3 = s5 * s11
+	loadaddr v4 s9
+	s9 = s9 + s3
+	s4 = s9[0]
+	s11 = 4
+	s3 = s5 * s11
+	loadaddr v5 s9
+	s9 = s9 + s3
+	s3 = s9[0]
+	a0 = s4
+	a1 = s3
+	call f_multiply
+	s4 = a0
+	load 22 a0
+	load 21 a1
+	s11 = 4
+	s3 = s5 * s11
+	loadaddr v4 s9
+	s9 = s9 + s3
+	s9[0] = s4
+	s11 = 1
+	s5 = s5 + s11
+	goto l18
+l19:
+	s11 = 1
+	s4 = s0 - s11
+	s11 = 1
+	s3 = s0 - s11
+	s3 = s3 / s1
+	s3 = s4 - s3
+	a0 = 3
+	a1 = s3
+	call f_power
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	loadaddr v4 a0
+	a1 = 0
+	a2 = s1
+	a3 = s3
+	call f_fft
+	load 22 a0
+	load 21 a1
+	load 20 a2
+	load 19 a3
+	s5 = 0
+l20:
+	s3 = s5 < s1
+	if s3 == x0 goto l21
+	s11 = 4
+	s3 = s5 * s11
+	loadaddr v4 s9
+	s9 = s9 + s3
+	s4 = s9[0]
+	s11 = 2
+	s3 = s0 - s11
+	a0 = s1
+	a1 = s3
+	call f_power
+	s3 = a0
+	load 22 a0
+	load 21 a1
+	a0 = s4
+	a1 = s3
+	call f_multiply
+	s4 = a0
+	load 22 a0
+	load 21 a1
+	s11 = 4
+	s3 = s5 * s11
+	loadaddr v4 s9
+	s9 = s9 + s3
+	s9[0] = s4
+	s11 = 1
+	s5 = s5 + s11
+	goto l20
+l21:
+	a0 = 79
+	call f__sysy_stoptime
+	load 22 a0
+	s3 = s7 + s6
+	s11 = 1
+	s3 = s3 - s11
+	a0 = s3
+	loadaddr v4 a1
+	call f_putarray
+	load 22 a0
+	load 21 a1
+	a0 = 0
+	load 3 s3
+	load 4 s4
+	load 5 s5
+	load 6 s6
+	load 7 s7
+	return
+end f_main

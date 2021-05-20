@@ -14,7 +14,7 @@ class Register {
     /* %tx %ax caller-save, %sx callee-save */
 public:
     Register(string _name, int _id): reg_name(_name), reg_id(_id)
-        { occupied = monopolized = used = false; active.reset(); }
+        { occupied = monopolized = used = _backup = false; active.reset(); }
     /* static attribute */
     string reg_name; int reg_id;
 
@@ -23,8 +23,11 @@ public:
     /* used: ever allocated        */
     /* occupied: func-call used    */
     /* monopolized: used by global */
+    /* backup: backup register %sx */
+    /* _backup: used as backup     */
     bool occupied, monopolized, used;
     bitset<maxlines> active;
+    Register *backup; bool _backup;
 
     void clear() { if (!monopolized) {active.reset(); used = false;} }
     bool compatible_global() {
@@ -39,6 +42,16 @@ public:
         if ((active & _active).any()) return false;
         active |= _active;
         return used = true;
+    }
+    bool compatible_backup() {
+        if (reg_name[0] == 'a') return false;
+        if (reg_name[0] == 't') return false;
+        if (!used) return false;
+        if (monopolized) return false;
+        if (_backup) return false;
+        if (active[currentLine]) return false;
+        cerr << reg_name << " is used as backup" << endl;
+        return _backup = true;
     }
 };
 class Variable {
@@ -88,12 +101,12 @@ public:
     /* s11 & s10 & s9 & s8 are all reserved for global address & number respectively, can not be allocated */
     RegManager() {
         int register_cnt = 0;
+        for (int i = 0; i < Reg_s; i++, register_cnt++)
+            registers[register_cnt] = new Register("s" + to_string(i), register_cnt);
         for (int i = 0; i < Reg_t; i++, register_cnt++)
             registers[register_cnt] = new Register("t" + to_string(i), register_cnt);
         for (int i = 0; i < Reg_a; i++, register_cnt++)
             registers[register_cnt] = new Register("a" + to_string(Reg_a - i - 1), register_cnt);
-        for (int i = 0; i < Reg_s; i++, register_cnt++)
-            registers[register_cnt] = new Register("s" + to_string(i), register_cnt);
         assert(register_cnt == Reg_N); 
         
         for (int i = 0; i < Reg_N; i++)
@@ -146,9 +159,15 @@ public:
         assert(!reg->monopolized || !caller);
         if (reg->monopolized) return ;
         
-        if (caller && (reg->active[currentLine] || reg->occupied))
-            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-        if (!caller && reg->used)
+        if (caller && !reg->active[currentLine] && !reg->occupied) return;
+        if (!caller && !reg->used) return;
+
+        assert(reg->backup == NULL);
+        if (caller && reg_name != "a0")
+            reg->backup = try_backup();
+        if (reg->backup != NULL)
+            tiggerStmt(new _tDIRECT( reg->backup->reg_name, reg_name));
+        else
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
     void restore(string reg_name, bool caller, Register *skip = NULL) {
@@ -159,12 +178,22 @@ public:
 
         bool occupied = reg->occupied;
         reg->occupied = false;
+        Register *backup = reg->backup;
+        reg->backup = NULL;
+        if (backup) {
+            backup->_backup = false; /* release */
+            cerr << "release " << backup->reg_name << endl;
+        }
         /* previously occpied by param */
         if (reg == skip) return ;
-        if (caller && (reg->active[currentLine] || occupied))
+
+        if (caller && !reg->active[currentLine] && !occupied) return;
+        if (!caller && !reg->used) return;
+        if (backup != NULL)
+            tiggerStmt(new _tDIRECT(reg_name, backup->reg_name));
+        else
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-        if (!caller && reg->used)
-            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
@@ -230,5 +259,12 @@ public:
                 if (registers[i]->compatible_local(var->active))
                     {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
         }
+    }
+    Register *try_backup() {
+        for (int i = 0; i < Reg_s; i++) {
+            Register *reg = reg_ptr["s" + to_string(i)];
+            if (reg->compatible_backup()) return reg;
+        }
+        return NULL;
     }
 };
