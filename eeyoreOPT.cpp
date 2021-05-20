@@ -57,6 +57,7 @@ void _eCALL::_analyse_cf(int line) { nxt[line] = true; type[line] = CALL; }
 
 vector<eeyoreAST *> seq;
 vector<string> var_list; 
+vector<string> global_var_list {};
 int n;
 string def[maxlines], use1[maxlines], use2[maxlines];
 bool reserved[maxlines];
@@ -173,6 +174,10 @@ void _eFUNC::optimize() {
 
     for (auto var_name: var_list)
         regManager->preload(var_name);
+    if (func == "main") {
+        for (auto var_name: global_var_list)
+            regManager->preload(var_name);
+    }
     cerr << "preload ends" << endl;
     
     /* unused definitions must be eliminated. */
@@ -198,8 +203,11 @@ void _eFUNC::optimize() {
 void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
-    //for (auto decl: seq)
-    //    if (decl->isdef()) regManager->try_allocate(decl->getName());
+    /*for (auto decl: seq)
+        if (decl->isdef()) {
+            regManager->try_allocate(decl->getName());
+            global_var_list.push_back(decl->getName());
+        }*/
     for (auto func: seq)
         if (!func->isdef()) func->translate();
     tiggerRoot = new _tSEQ(tiggerList);

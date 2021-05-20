@@ -141,13 +141,13 @@ public:
     void store(string reg_name, bool caller) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        if (reg->used)
-            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        //if (reg->used)
+        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         
-        //if (caller && reg->active[currentLine])
-        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-        //if (!caller && reg->used)
-        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        if (caller && reg->active[currentLine])
+            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        if (!caller && reg->used)
+            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
     void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
@@ -157,12 +157,12 @@ public:
         /* if previously being occupied by param,
             now it is recovered */
         if (reg == skip) return ;
-        if (reg->used)
+        //if (reg->used)
+        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        if (caller && reg->active[currentLine])
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-        //if (caller && reg->active[currentLine])
-        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-        //if (!caller && reg->used)
-        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        if (!caller && reg->used)
+            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
