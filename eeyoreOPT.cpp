@@ -198,8 +198,8 @@ void _eFUNC::optimize() {
 void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
-    for (auto decl: seq)
-        if (decl->isdef()) regManager->try_allocate(decl->getName());
+    //for (auto decl: seq)
+    //    if (decl->isdef()) regManager->try_allocate(decl->getName());
     for (auto func: seq)
         if (!func->isdef()) func->translate();
     tiggerRoot = new _tSEQ(tiggerList);
