@@ -142,7 +142,7 @@ public:
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
         
-        if (caller && (reg->active[currentLine] || reg->occupied))
+        if (caller && (reg->active[currentLine] || reg->occupied || reg->monopolized))
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         if (!caller && reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
@@ -155,7 +155,7 @@ public:
         reg->occupied = false;
         /* previously occpied by param */
         if (reg == skip) return ;
-        if (caller && (reg->active[currentLine] || occupied))
+        if (caller && (reg->active[currentLine] || occupied || reg->monopolized))
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (!caller && reg->used)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
