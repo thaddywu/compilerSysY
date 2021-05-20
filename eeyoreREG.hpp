@@ -13,7 +13,8 @@ and it is also responsible for var name record */
 class Register {
     /* %tx %ax caller-save, %sx callee-save */
 public:
-    Register(string _name, int _id): reg_name(_name), reg_id(_id) {}
+    Register(string _name, int _id): reg_name(_name), reg_id(_id)
+        { occupied = monopolized = used = false; active.reset(); }
     /* static attribute */
     string reg_name; int reg_id;
 
@@ -142,7 +143,7 @@ public:
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
         
-        if (caller && (reg->active[currentLine] || reg->occupied || reg->monopolized))
+        if (caller && (reg->active[currentLine] || reg->occupied || reg->monopolized || true))
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         if (!caller && reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
@@ -155,7 +156,7 @@ public:
         reg->occupied = false;
         /* previously occpied by param */
         if (reg == skip) return ;
-        if (caller && (reg->active[currentLine] || occupied || reg->monopolized))
+        if (caller && (reg->active[currentLine] || occupied || reg->monopolized || true))
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (!caller && reg->used)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
