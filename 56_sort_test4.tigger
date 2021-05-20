@@ -1,0 +1,153 @@
+v0 = 0
+f_select_sort [2] [43]
+	t0 = 0
+l0:
+	s11 = 1
+	t1 = a1 - s11
+	t1 = t0 < t1
+	if t1 == x0 goto l1
+	t2 = t0
+	s11 = 1
+	t1 = t0 + s11
+l2:
+	t3 = t1 < a1
+	if t3 == x0 goto l3
+	s11 = 4
+	t3 = t2 * s11
+	s9 = a0 + t3
+	t3 = s9[0]
+	s11 = 4
+	t4 = t1 * s11
+	s9 = a0 + t4
+	t4 = s9[0]
+	t3 = t3 > t4
+	if t3 == x0 goto l4
+	t2 = t1
+l4:
+	s11 = 1
+	t1 = t1 + s11
+	goto l2
+l3:
+	t1 = t2 != t0
+	if t1 == x0 goto l5
+	s11 = 4
+	t1 = t2 * s11
+	s9 = a0 + t1
+	t1 = s9[0]
+	s11 = 4
+	t3 = t0 * s11
+	s9 = a0 + t3
+	t3 = s9[0]
+	s11 = 4
+	t2 = t2 * s11
+	s9 = a0 + t2
+	s9[0] = t3
+	s11 = 4
+	t2 = t0 * s11
+	s9 = a0 + t2
+	s9[0] = t1
+l5:
+	s11 = 1
+	t0 = t0 + s11
+	goto l0
+l1:
+	a0 = 0
+	return
+end f_select_sort
+f_main [0] [47]
+	loadaddr 23 t0
+	s9 = 10
+	loadaddr v0 s11
+	s11[0] = s9
+	t1 = 0
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 4
+	s9[0] = s10
+	t1 = 4
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 3
+	s9[0] = s10
+	t1 = 8
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 9
+	s9[0] = s10
+	t1 = 12
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 2
+	s9[0] = s10
+	t1 = 16
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 0
+	s9[0] = s10
+	t1 = 20
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 1
+	s9[0] = s10
+	t1 = 24
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 6
+	s9[0] = s10
+	t1 = 28
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 5
+	s9[0] = s10
+	t1 = 32
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 7
+	s9[0] = s10
+	t1 = 36
+	loadaddr 23 s10
+	s9 = s10 + t1
+	s10 = 8
+	s9[0] = s10
+	a0 = t0
+	load v0 a1
+	store t0 0
+	store t1 1
+	call f_select_sort
+	t0 = a0
+	load 1 t1
+	load v0 a0
+	store t0 0
+	store t1 1
+	call f_putint
+	load 0 t0
+	load 1 t1
+l6:
+	load v0 s11
+	t1 = t0 < s11
+	if t1 == x0 goto l7
+	s11 = 4
+	t1 = t0 * s11
+	loadaddr 23 s10
+	s9 = s10 + t1
+	t1 = s9[0]
+	a0 = t1
+	store t0 0
+	store t1 1
+	call f_putint
+	load 0 t0
+	load 1 t1
+	t1 = 10
+	a0 = t1
+	store t0 0
+	store t1 1
+	call f_putch
+	load 0 t0
+	load 1 t1
+	s11 = 1
+	t0 = t0 + s11
+	goto l6
+l7:
+	a0 = 0
+	return
+end f_main

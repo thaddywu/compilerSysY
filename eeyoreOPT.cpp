@@ -80,9 +80,14 @@ void _analyse_reach(string var_name) {
             que.push(i), reach[i] = true;
     while (!que.empty()) {
         int i = que.front(); que.pop();
-        for (auto j: adj[i])
-            if (!reach[j] && def[j] != var_name)
-                {reach[j] = true; que.push(j);}
+        for (auto j: adj[i]) {
+            if (def[j] != var_name) {
+                if (!reach[j])
+                    {reach[j] = true; que.push(j);}
+            }
+            else
+                reserved[j] = true;
+        }
     }
 }
 
@@ -113,7 +118,7 @@ void _eFUNC::optimize() {
     /*  control-flow graph      */
     /* ======================== */
     cerr << "control flow" << endl;
-    memset(reserved, true, n); /* unnecessary to clear map-table label */
+    memset(reserved, false, n); /* unnecessary to clear map-table label */
     for (int i = 0; i < n; i++) {
         jmp[i].clear(); nxt[i] = false;
         seq[i]->_analyse_cf(i);
@@ -130,21 +135,24 @@ void _eFUNC::optimize() {
     /*  reachability analysis   */
     /* ======================== */
     cerr << "reachability analysis" << endl;
+    memset(reserved, false, n);
     _analyse_reach_construct();
     for (auto var_name: var_list)
         _analyse_reach(var_name);
     for (int i = 0; i < arity; i++)
         _analyse_reach("p" + to_string(i));
     for (int i = 0; i < n; i++)
-    if (!def[i].empty()){
-        /* global vars def-use condition is much more complicated */
+    if (!reserved[i]) {
+        if (def[i].empty()) {reserved[i] = true; continue; }
         Variable *var = regManager->vars[def[i]];
-        if (!var->isglobal() && var->active.none()) {
-            if (type[i] == FUNCRET)
-                seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
-                /* though the returned value is not used, function call could have side effects */
-            else
-                reserved[i] = false;
+        if (var->isglobal()) {reserved[i] = true; continue; }
+        cerr << i << " " << def[i] << "====\n";
+        /* global vars def-use condition is much more complicated */
+        if (type[i] == FUNCRET) {
+            seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
+            reserved[i] = true;
+            /* though the returned value is not used,
+                function call could have side effects */
         }
     }
 
@@ -169,6 +177,9 @@ void _eFUNC::optimize() {
     for (auto var_name: var_list)
         regManager->preload(var_name);
     cerr << "preload ends" << endl;
+    
+    /* optimization can't be commented!!
+        some not used definitions must be elliminated. */
     for (currentLine = 0; currentLine < n; currentLine++)
         if (reserved[currentLine] && !seq[currentLine]->isdef())
             {cerr << currentLine << " " << type[currentLine] << endl; seq[currentLine]->translate();}
@@ -179,8 +190,8 @@ void _eFUNC::optimize() {
     for (int i = 0; i < n; i++)
         {
             printf("%3d:\t", i); seq[i]->Dump(); printf("... [%s] def:%s use1:%s use2:%s [nxt%d] [jmp:%s]\n", reserved[i] ? "true":"false", def[i].c_str(), use1[i].c_str(), use2[i].c_str(), (int)nxt[i], jmp[i].c_str());
-        }*/
-
+        }
+*/
     /* function structure:
         func [arity] [mem] body */
     tfunc->body = new _tSEQ(tiggerStmtList);
@@ -191,6 +202,8 @@ void _eFUNC::optimize() {
 void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
+    //for (auto decl: seq)
+    //    if (decl->isdef()) regManager->try_allocate(decl->getName());
     for (auto func: seq)
         if (!func->isdef()) func->translate();
     tiggerRoot = new _tSEQ(tiggerList);
