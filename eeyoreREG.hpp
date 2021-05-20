@@ -141,8 +141,6 @@ public:
     void store(string reg_name, bool caller) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
-        //if (reg->used)
-        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         
         if (caller && (reg->active[currentLine] || reg->occupied))
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
@@ -157,8 +155,6 @@ public:
         reg->occupied = false;
         /* previously occpied by param */
         if (reg == skip) return ;
-        //if (reg->used)
-        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (caller && (reg->active[currentLine] || occupied))
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (!caller && reg->used)
