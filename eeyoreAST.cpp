@@ -266,11 +266,9 @@ void _ePARAM::translate() {
     Register *t_reg = regManager->getAlloc(t->getName());
     string reg_name = "a" + to_string(regManager->param_cnt++);
     
-        cerr << "param.." << reg_name << " " << t->getName() << endl;
     regManager->store(reg_name, true);
     /* potential optimization here: param is luckily just in %ai */
     if (t_reg) /* warning */ {
-        cerr << " .." << t_reg->reg_name << " " << t_reg->occupied << endl;
         if (t_reg->occupied)
             tiggerStmt(new _tLOAD(t_reg->reg_id, reg_name));
         else

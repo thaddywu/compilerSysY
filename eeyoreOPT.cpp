@@ -146,7 +146,6 @@ void _eFUNC::optimize() {
         if (def[i].empty()) {reserved[i] = true; continue; }
         Variable *var = regManager->vars[def[i]];
         if (var->isglobal()) {reserved[i] = true; continue; }
-        cerr << i << " " << def[i] << "====\n";
         /* global vars def-use condition is much more complicated */
         if (type[i] == FUNCRET) {
             seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
@@ -163,7 +162,7 @@ void _eFUNC::optimize() {
     for (int i = 0; i < arity; i++)
         regManager->must_allocate("p" + to_string(i), "a" + to_string(i));
     /* param is always in register */
-    sort(var_list.begin(), var_list.end());
+    sort(var_list.begin(), var_list.end(), cmp);
     for (auto var_name: var_list)
         regManager->try_allocate(var_name);
 
@@ -178,8 +177,7 @@ void _eFUNC::optimize() {
         regManager->preload(var_name);
     cerr << "preload ends" << endl;
     
-    /* optimization can't be commented!!
-        some not used definitions must be elliminated. */
+    /* unused definitions must be eliminated. */
     for (currentLine = 0; currentLine < n; currentLine++)
         if (reserved[currentLine] && !seq[currentLine]->isdef())
             {cerr << currentLine << " " << type[currentLine] << endl; seq[currentLine]->translate();}

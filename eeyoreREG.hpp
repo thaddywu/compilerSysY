@@ -143,12 +143,11 @@ public:
         assert(reg != NULL);
         if (reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-        /*
-        if (caller && reg->active[currentLine])
-            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-        if (!caller && reg->used)
-            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
-            */
+        
+        //if (caller && reg->active[currentLine])
+        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        //if (!caller && reg->used)
+        //    tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
     void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
@@ -160,11 +159,10 @@ public:
         if (reg == skip) return ;
         if (reg->used)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-        /*
-        if (caller && reg->active[currentLine])
-            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
-        if (!caller && reg->used)
-            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));*/
+        //if (caller && reg->active[currentLine])
+        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        //if (!caller && reg->used)
+        //    tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
     }
     void caller_store() {
         /* in charge of storation of registers %tx %ax */
