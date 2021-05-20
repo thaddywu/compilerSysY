@@ -14,7 +14,7 @@ class Register {
     /* %tx %ax caller-save, %sx callee-save */
 public:
     Register(string _name, int _id): reg_name(_name), reg_id(_id)
-        { occupied = monopolized = used = _backup = false; active.reset(); }
+        { occupied = monopolized = used = false; active.reset(); }
     /* static attribute */
     string reg_name; int reg_id;
 
@@ -27,7 +27,6 @@ public:
     /* _backup: used as backup     */
     bool occupied, monopolized, used;
     bitset<maxlines> active;
-    Register *backup; bool _backup;
 
     void clear() { if (!monopolized) {active.reset(); used = false;} }
     bool compatible_global() {
@@ -42,16 +41,6 @@ public:
         if ((active & _active).any()) return false;
         active |= _active;
         return used = true;
-    }
-    bool compatible_backup() {
-        if (reg_name[0] == 'a') return false;
-        if (reg_name[0] == 't') return false;
-        if (!used) return false;
-        if (monopolized) return false;
-        if (_backup) return false;
-        if (active[currentLine]) return false;
-        cerr << reg_name << " is used as backup" << endl;
-        return _backup = true;
     }
 };
 class Variable {
@@ -162,13 +151,7 @@ public:
         if (caller && !reg->active[currentLine] && !reg->occupied) return;
         if (!caller && !reg->used) return;
 
-        assert(reg->backup == NULL);
-        if (caller && reg_name != "a0")
-            reg->backup = try_backup();
-        if (reg->backup != NULL)
-            tiggerStmt(new _tDIRECT( reg->backup->reg_name, reg_name));
-        else
-            tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
+        tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
     }
     void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
@@ -178,21 +161,12 @@ public:
 
         bool occupied = reg->occupied;
         reg->occupied = false;
-        Register *backup = reg->backup;
-        reg->backup = NULL;
-        if (backup) {
-            backup->_backup = false; /* release */
-            cerr << "release " << backup->reg_name << endl;
-        }
         /* previously occpied by param */
         if (reg == skip) return ;
 
         if (caller && !reg->active[currentLine] && !occupied) return;
         if (!caller && !reg->used) return;
-        if (backup != NULL)
-            tiggerStmt(new _tDIRECT(reg_name, backup->reg_name));
-        else
-            tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
+        tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         
     }
     void caller_store() {
@@ -259,12 +233,5 @@ public:
                 if (registers[i]->compatible_local(var->active))
                     {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
         }
-    }
-    Register *try_backup() {
-        for (int i = 0; i < Reg_s; i++) {
-            Register *reg = reg_ptr["s" + to_string(i)];
-            if (reg->compatible_backup()) return reg;
-        }
-        return NULL;
     }
 };
