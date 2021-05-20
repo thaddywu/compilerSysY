@@ -34,8 +34,8 @@ int main(int argc, char **argv)
 #ifdef LOCALTEST
     freopen(eeyore_file.c_str(), "w", stdout);
     eeyoreRoot->Dump();
-    eeyoreRoot->translate();
     freopen(tigger_file.c_str(), "w", stdout);
+    eeyoreRoot->translate();
     tiggerRoot->Dump();
     freopen(riscv_file.c_str(), "w", stdout);
     tiggerRoot->translate();

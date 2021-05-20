@@ -59,23 +59,31 @@ vector<eeyoreAST *> seq;
 vector<string> var_list; 
 int n;
 string def[maxlines], use1[maxlines], use2[maxlines];
-bitset<maxlines> reach[maxlines];
 bool reserved[maxlines];
 
-bool visited[maxlines];
-bool _analyse_reach(string &var, int pos, bitset<maxlines> &reach, int def_pos, bool def_start) {
-    if (visited[pos]) return reach[pos];
-    bool used = false; visited[pos] = true;
-    if (!def_start) {
-        if (use1[pos] == var) used = true;
-        if (use2[pos] == var) used = true;
-        if (def[pos] == var) return reach[pos] = used;
+vector<int> adj[maxlines];
+queue<int> que;
+
+void _analyse_reach_construct() {
+    for (int i = 0; i < n; i++) adj[i].clear();
+    for (int i = 0; i < n; i++) {
+        if (nxt[i] && i + 1 < n) adj[i + 1].push_back(i);
+        if (!jmp[i].empty()) adj[label[jmp[i]]].push_back(i);
     }
-    if (nxt[pos] && pos + 1 < n)
-        used |= _analyse_reach(var, pos + 1, reach, def_pos, false);
-    if (!jmp[pos].empty())
-        used |= _analyse_reach(var, label[jmp[pos]], reach, def_pos, false);
-    return reach[pos] = used;
+}
+void _analyse_reach(string var_name) {
+    /* var ought to be local */
+    bitset<maxlines> &reach = regManager->vars[var_name]->active;
+    reach.reset(); assert(que.empty());
+    for (int i = 0; i < n; i++)
+        if (use1[i] == var_name || use2[i] == var_name)
+            que.push(i), reach[i] = true;
+    while (!que.empty()) {
+        int i = que.front(); que.pop();
+        for (auto j: adj[i])
+            if (!reach[j] && def[j] != var_name)
+                {reach[j] = true; que.push(j);}
+    }
 }
 
 bool cmp(string var1, string var2) {
@@ -122,29 +130,22 @@ void _eFUNC::optimize() {
     /*  reachability analysis   */
     /* ======================== */
     cerr << "reachability analysis" << endl;
-    for (auto var_name: var_list) {
-        Variable *var = regManager->vars[var_name];
-        var->active.reset();
-        memset(visited, false, n);
-        _analyse_reach(var_name, 0, var->active, -1, true);
-        /* -1 stands for declaration */
-    }
-    for (int i = 0; i < n; i++) {
-        reach[i].reset();
-        if (def[i].empty()) continue;
-        if (regManager->isglobal(def[i])) continue;
+    _analyse_reach_construct();
+    for (auto var_name: var_list)
+        _analyse_reach(var_name);
+    for (int i = 0; i < arity; i++)
+        _analyse_reach("p" + to_string(i));
+    for (int i = 0; i < n; i++)
+    if (!def[i].empty()){
         /* global vars def-use condition is much more complicated */
-
-        memset(visited, false, n);
-        if (!_analyse_reach(def[i], i, reach[i], i, true)) {
+        Variable *var = regManager->vars[def[i]];
+        if (!var->isglobal() && var->active.none()) {
             if (type[i] == FUNCRET)
                 seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
                 /* though the returned value is not used, function call could have side effects */
             else
                 reserved[i] = false;
         }
-        Variable *var = regManager->vars[def[i]];
-        var->active |= reach[i];
     }
 
     /* ======================== */
@@ -173,9 +174,12 @@ void _eFUNC::optimize() {
             {cerr << currentLine << " " << type[currentLine] << endl; seq[currentLine]->translate();}
     cerr << "translate ends" << endl;
     
-    /* debug  cout << func << " " << arity << " " << n << endl;
+    /*
+    cout << func << " " << arity << " " << n << endl;
     for (int i = 0; i < n; i++)
-        { printf("%3d:\t", i); seq[i]->Dump(); printf("... [%s] def:%s use1:%s use2:%s [nxt%d] [jmp:%s]\n", reserved[i] ? "true":"false", def[i].c_str(), use1[i].c_str(), use2[i].c_str(), (int)nxt[i], jmp[i].c_str()); }*/
+        {
+            printf("%3d:\t", i); seq[i]->Dump(); printf("... [%s] def:%s use1:%s use2:%s [nxt%d] [jmp:%s]\n", reserved[i] ? "true":"false", def[i].c_str(), use1[i].c_str(), use2[i].c_str(), (int)nxt[i], jmp[i].c_str());
+        }*/
 
     /* function structure:
         func [arity] [mem] body */
