@@ -92,7 +92,7 @@ void _analyse_reach(string var_name) {
 }
 
 bool cmp(string var1, string var2) {
-    return regManager->vars[var1]->active.count() > regManager->vars[var2]->active.count();
+    return regManager->vars[var1]->active.count() < regManager->vars[var2]->active.count();
 }
 void _eFUNC::optimize() {
     cerr << func << endl;
@@ -107,10 +107,8 @@ void _eFUNC::optimize() {
     /* ================ */
     cerr << "param decl" << endl;
     var_list.clear();
-    for (int i = 0; i < arity; i++) {
+    for (int i = 0; i < arity; i++)
         regManager->newLocal("p" + to_string(i), 4, true);
-        // var_list.push_back("p" + to_string(i));
-    }
     for (auto decl: seq)
         if (decl->isdef()) { decl->localDecl(); var_list.push_back(decl->getName()); }
     tfunc->mem = regManager->stack_size >> 2;
@@ -200,8 +198,8 @@ void _eFUNC::optimize() {
 void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
-    //for (auto decl: seq)
-    //    if (decl->isdef()) regManager->try_allocate(decl->getName());
+    for (auto decl: seq)
+        if (decl->isdef()) regManager->try_allocate(decl->getName());
     for (auto func: seq)
         if (!func->isdef()) func->translate();
     tiggerRoot = new _tSEQ(tiggerList);
