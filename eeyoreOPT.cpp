@@ -188,7 +188,7 @@ void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
     for (auto decl: seq)
-        if (decl->isdef() && regManager->isvar(decl->getName())) {
+        if (decl->isdef()) {
             regManager->try_allocate(decl->getName());
             global_var_list.push_back(decl->getName());
         }

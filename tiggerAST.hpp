@@ -101,7 +101,7 @@ public:
     _tDIRECT(string _d, string _s): d(_d), s(_s) { assert(isreg(d)); }
     virtual void Dump() { printTab(d + " = " + s); }
     virtual void translate() {
-        if (d == s) {cerr << d << " " << s << endl; return ;}
+        if (d == s) return ;
         if (isreg(s))
             printTab("mv " + d + ", " + s);
         else

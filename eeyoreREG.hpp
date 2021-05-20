@@ -29,7 +29,8 @@ public:
     void clear() { if (!monopolized) {active.reset(); used = false;} }
     bool compatible_global() {
         if (reg_name[0] == 'a') return false;
-        /* %ax can't be allocated to global vars */
+        if (reg_name[0] == 't') return false;
+        /* %ax %tx can't be allocated to global vars */
         if (used) return false;
         return monopolized = used = true;
     }
@@ -142,8 +143,10 @@ public:
     void store(string reg_name, bool caller) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
+        assert(!reg->monopolized || !caller);
+        if (reg->monopolized) return ;
         
-        if (caller && (reg->active[currentLine] || reg->occupied || reg->monopolized || true))
+        if (caller && (reg->active[currentLine] || reg->occupied))
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
         if (!caller && reg->used)
             tiggerStmt(new _tSTORE(reg_name, reg->reg_id));
@@ -151,12 +154,14 @@ public:
     void restore(string reg_name, bool caller, Register *skip = NULL) {
         Register *reg = reg_ptr[reg_name];
         assert(reg != NULL);
+        assert(!reg->monopolized || !caller);
+        if (reg->monopolized) return ;
 
         bool occupied = reg->occupied;
         reg->occupied = false;
         /* previously occpied by param */
         if (reg == skip) return ;
-        if (caller && (reg->active[currentLine] || occupied || reg->monopolized || true))
+        if (caller && (reg->active[currentLine] || occupied))
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         if (!caller && reg->used)
             tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
