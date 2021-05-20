@@ -217,12 +217,12 @@ public:
         if (var->isglobal()) {
             for (int i = 0; i < Reg_N; i++)
                 if (registers[i]->compatible_global())
-                    {var->alloc_reg = registers[i]; /*cerr << var_name << " was allocated to " << registers[i]->reg_name << endl;*/ return ; }
+                    {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
         }
         else {
             for (int i = 0; i < Reg_N; i++)
                 if (registers[i]->compatible_local(var->active))
-                    {var->alloc_reg = registers[i]; /*cerr << var_name << " was allocated to " << registers[i]->reg_name << endl;*/ return ; }
+                    {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
         }
     }
 };
