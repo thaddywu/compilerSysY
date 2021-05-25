@@ -119,20 +119,20 @@ void _EXPR::cjump(string l, bool neg) {
 }
 void _UNARY_OP::cjump(string l, bool neg) {
     eeyoreAST* c = op->atomize(NULL);
-    if (symbol() == "!") neg = ~neg;
+    if (symbol() == "!") neg = !neg;
     eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
 }
 void _BINARY_OP::cjump(string l, bool neg) {
-    /*if (islogicop(symbol())) {
+    if (islogicop(symbol())) {
         eeyoreAST* alop = lop->atomize(NULL);
         eeyoreAST* arop = rop->atomize(NULL);
         string _op = neg ? neg_logicop(symbol()) : symbol();
         eeyoreStmt(new _eIFGOTO(alop, _op, arop, l));
     }
-    else {*/
+    else {
         eeyoreAST* c = this->atomize(NULL);
         eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
-    //}
+    }
 }
 
 /* ================================================= */
