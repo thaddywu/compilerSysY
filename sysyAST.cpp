@@ -123,16 +123,16 @@ void _UNARY_OP::cjump(string l, bool neg) {
     eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
 }
 void _BINARY_OP::cjump(string l, bool neg) {
-    if (islogicop(symbol())) {
+    /*if (islogicop(symbol())) {
         eeyoreAST* alop = lop->atomize(NULL);
         eeyoreAST* arop = rop->atomize(NULL);
         string _op = neg ? neg_logicop(symbol()) : symbol();
         eeyoreStmt(new _eIFGOTO(alop, _op, arop, l));
     }
-    else {
+    else {*/
         eeyoreAST* c = this->atomize(NULL);
         eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
-    }
+    //}
 }
 
 /* ================================================= */
@@ -240,7 +240,7 @@ void _WHILE::translate(string ctn, string brk, bool glb) {
     string l1 = varManager->newl();
     string l2 = varManager->newl();
     eeyoreStmt(new _eLABEL(l1));
-        /* must set label first, then atomize cond */
+        /* must set label first, then cjump */
     cond->cjump(l2, true);
     body->translate(l1, l2, glb);
     eeyoreStmt(new _eGOTO(l1));
