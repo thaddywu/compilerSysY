@@ -11,8 +11,10 @@ string load_into_register(eeyoreAST *var, string default_reg) {
     Register *var_reg = regManager->getAlloc(var->getName());
     if (var_reg != NULL) return var_reg->reg_name;
 
-    if (var->isnum())
+    if (var->isnum()) {
+        if (var->getInt() == 0) return "x0";
         tiggerStmt(new _tDIRECT(default_reg, var->getInt()));
+    }
     else
         regManager->restore_reg(var->getName(), default_reg);
     return default_reg;
@@ -285,16 +287,15 @@ void _ePARAM::translate() {
         value needs to be load back from stack */
 }
 void _eIFGOTO::translate() {
-    assert(t2->getName() == "0" && (op == "!=" || op == "=="));
-    /* in the transfomation of sysY->eeyore, t2 is guaranteed as 0 */
-    if (t1->isnum()) {
+    if (t1->isnum() && t2->isnum()) {
         /* if the condition can not be true, this jump instruction is useless */
-        if ((op == "==") == (t1->getName() == t2->getName()))
+        if (binary_result(t1->getInt(), op, t2->getInt()))
             tiggerStmt(new _tGOTO(l));
     }
     else {
-        string t1_reg_name = load_into_register_nonum(t1->getName(), reserved_reg1);
-        tiggerStmt(new _tIFGOTO(t1_reg_name, op, "x0", l));
+        string t1_reg_name = load_into_register(t1, reserved_reg1);
+        string t2_reg_name = load_into_register(t2, reserved_reg2);
+        tiggerStmt(new _tIFGOTO(t1_reg_name, op, t2_reg_name, l));
     }
 }
 void _eGOTO::translate() {

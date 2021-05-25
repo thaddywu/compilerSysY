@@ -62,3 +62,12 @@ int unary_result(string op, int b) {
     if (op == "-") return -b;
     assert(false);
 }
+string neg_logicop(string op) {
+    if (op == "==") return "!=";
+    if (op == "!=") return "==";
+    if (op == "<") return ">=";
+    if (op == ">") return "<=";
+    if (op == "<=") return ">";
+    if (op == ">=") return "<";
+    assert(false);
+}

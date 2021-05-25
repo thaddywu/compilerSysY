@@ -18,6 +18,7 @@ public:
         // For _ADDR_LIST, corresponding function name is passed
     virtual eeyoreAST* atomize(string name, eeyoreAST* target) { assert(false); }
         // symbol: For expr, return its operator
+    virtual void cjump(string l, bool neg) { assert(false); }
     virtual string symbol() { assert(false); }
         // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
     virtual void vectorize(vector<int> &v) { assert(false); }
@@ -118,19 +119,22 @@ public:
 class _EXPR: public sysyAST {
 public:
     _EXPR() {}
-    void translate(string ctn, string brk, bool glb) ;
+    virtual void translate(string ctn, string brk, bool glb) ;
+    virtual void cjump(string l, bool neg) ;
 };
 class _UNARY_OP: public _EXPR {
 public:
     sysyAST *op;
     _UNARY_OP(sysyAST *_op): op(_op) {}
     virtual eeyoreAST* atomize(eeyoreAST* target) ;
+    virtual void cjump(string l, bool neg) ;
 };
 class _BINARY_OP: public _EXPR {
 public:
     sysyAST *lop, *rop;
     _BINARY_OP(sysyAST *_lop, sysyAST *_rop): lop(_lop), rop(_rop) {}
     virtual eeyoreAST* atomize(eeyoreAST* target) ;
+    virtual void cjump(string l, bool neg) ;
 };
 class _NEG: public _UNARY_OP {
 public:

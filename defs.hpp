@@ -58,6 +58,7 @@ extern void printTab(string x) ;
 
 extern int unary_result(string op, int a);
 extern int binary_result(int a, string op, int b);
+extern string neg_logicop(string op);
 
 extern bool isint10(int x) ;
 extern bool isint12(int x) ;

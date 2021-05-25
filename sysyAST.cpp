@@ -109,6 +109,33 @@ eeyoreAST* _INTEGER::atomize(eeyoreAST* target) {
 }
 
 /* ================================================= */
+/* cjump                                             */
+/*      - conditional jump to l                      */
+/*      - neg: jump when condition fails             */
+/* ================================================= */
+void _EXPR::cjump(string l, bool neg) {
+    eeyoreAST* c = this->atomize(NULL);
+    eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
+}
+void _UNARY_OP::cjump(string l, bool neg) {
+    eeyoreAST* c = op->atomize(NULL);
+    if (symbol() == "!") neg = ~neg;
+    eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
+}
+void _BINARY_OP::cjump(string l, bool neg) {
+    if (islogicop(symbol())) {
+        eeyoreAST* alop = lop->atomize(NULL);
+        eeyoreAST* arop = rop->atomize(NULL);
+        string _op = neg ? neg_logicop(symbol()) : symbol();
+        eeyoreStmt(new _eIFGOTO(alop, _op, arop, l));
+    }
+    else {
+        eeyoreAST* c = this->atomize(NULL);
+        eeyoreStmt(new _eIFGOTO(c, neg ? "==" : "!=", new _eNUM(0), l));
+    }
+}
+
+/* ================================================= */
 /* pass                                              */
 /*      - pass var within function call              */
 /*      - using param, closely followed by calling   */
@@ -194,33 +221,30 @@ void _STMT_SEQ::translate(string ctn, string brk, bool glb) {
     if (tail != NULL) tail->translate(ctn, brk, glb);
 }
 void _IF::translate(string ctn, string brk, bool glb) {
-    eeyoreAST* c = cond->atomize(NULL);
-    string cp = varManager->newl();
-    eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp));
+    string l = varManager->newl();
+    cond->cjump(l, true);
     body->translate(ctn, brk, glb);
-    eeyoreStmt(new _eLABEL(cp));
+    eeyoreStmt(new _eLABEL(l));
 }
 void _IF_ELSE::translate(string ctn, string brk, bool glb) {
-    string cp1 = varManager->newl();
-    string cp2 = varManager->newl();
-    eeyoreAST* c = cond->atomize(NULL);
-    eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp1));
+    string l1 = varManager->newl();
+    string l2 = varManager->newl();
+    cond->cjump(l1, true);
     body->translate(ctn, brk, glb);
-    eeyoreStmt(new _eGOTO(cp2));
-    eeyoreStmt(new _eLABEL(cp1));
+    eeyoreStmt(new _eGOTO(l2));
+    eeyoreStmt(new _eLABEL(l1));
     ebody->translate(ctn, brk, glb);
-    eeyoreStmt(new _eLABEL(cp2));
+    eeyoreStmt(new _eLABEL(l2));
 }
 void _WHILE::translate(string ctn, string brk, bool glb) {
-    string cp1 = varManager->newl();
-    string cp2 = varManager->newl();
-    eeyoreStmt(new _eLABEL(cp1));
+    string l1 = varManager->newl();
+    string l2 = varManager->newl();
+    eeyoreStmt(new _eLABEL(l1));
         /* must set label first, then atomize cond */
-    eeyoreAST* c = cond->atomize(NULL);
-    eeyoreStmt(new _eIFGOTO(c, "==", new _eNUM(0), cp2));
-    body->translate(cp1, cp2, glb);
-    eeyoreStmt(new _eGOTO(cp1));
-    eeyoreStmt(new _eLABEL(cp2));
+    cond->cjump(l2, true);
+    body->translate(l1, l2, glb);
+    eeyoreStmt(new _eGOTO(l1));
+    eeyoreStmt(new _eLABEL(l2));
 }
 void _RETURN_VOID::translate(string ctn, string brk, bool glb) {
     eeyoreStmt(new _eRETVOID());
