@@ -122,13 +122,23 @@ void _eBINARY::translate() {
     }
     else {
         string t1_reg_name = load_into_register(t1, reserved_reg2);
-        string t2_reg_name = load_into_register(t2, reserved_reg3);
-        /* potential optimization here: t2 may be an integer(int12) */
-        if (a_reg)
-            tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2_reg_name));
+        if (t2->isnum() && isint12(t2->getInt())) {
+            /* potential optimization here: t2 may be an integer(int12) */
+            if (a_reg)
+                tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2->getInt()));
+            else {
+                tiggerStmt(new _tBINARY(reserved_reg1, t1_reg_name, op, t2->getInt()));
+                regManager->store_reg(reserved_reg1, a->getName());
+            }
+        }
         else {
-            tiggerStmt(new _tBINARY(reserved_reg1, t1_reg_name, op, t2_reg_name));
-            regManager->store_reg(reserved_reg1, a->getName());
+            string t2_reg_name = load_into_register(t2, reserved_reg3);
+            if (a_reg)
+                tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2_reg_name));
+            else {
+                tiggerStmt(new _tBINARY(reserved_reg1, t1_reg_name, op, t2_reg_name));
+                regManager->store_reg(reserved_reg1, a->getName());
+            }
         }
     }
 }
@@ -266,10 +276,10 @@ void _eCALL::translate() {
 }
 void _ePARAM::translate() {
     Register *t_reg = regManager->getAlloc(t->getName());
+    /* optimization here: param is luckily just in %ai */
     string reg_name = "a" + to_string(regManager->param_cnt++);
     
     regManager->store(reg_name, true);
-    /* potential optimization here: param is luckily just in %ai */
     if (t_reg) /* warning */ {
         if (t_reg->occupied)
             tiggerStmt(new _tLOAD(t_reg->reg_id, reg_name));
