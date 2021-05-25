@@ -23,7 +23,7 @@ public:
     
     /* here below, are functions for optimization */
     virtual void optimize() { assert(false); }
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) { assert(false); }
+    virtual void _analyse_def_use(int line) { assert(false); }
     virtual void _analyse_cf(int line) { assert(false); }
 };
 
@@ -69,7 +69,7 @@ public:
     virtual void localDecl() ;
     virtual void globalDecl() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 
 };
@@ -84,7 +84,7 @@ public:
     virtual void localDecl() ;
     virtual void globalDecl() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eDIRECT: public eeyoreAST {
@@ -94,7 +94,7 @@ public:
     virtual void Dump() { printTab(a->getName() + " = " + t->getName()); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eUNARY: public eeyoreAST {
@@ -104,7 +104,7 @@ public:
     virtual void Dump() { printTab(a->getName() + " = " + op + t->getName()); }
     virtual void translate() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eBINARY: public eeyoreAST {
@@ -114,7 +114,7 @@ public:
     virtual void Dump() { printTab(a->getName() + " = " + t1->getName() + " " + op + " " + t2->getName()); }
     virtual void translate() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eSEEK: public eeyoreAST {
@@ -124,7 +124,7 @@ public:
     virtual void Dump() { printTab(a->getName() + " = " + t + "[" + x->getName() + "]"); }
     virtual void translate() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eSAVE: public eeyoreAST {
@@ -134,7 +134,7 @@ public:
     virtual void Dump() { printTab(a + "[" + x->getName() + "] = " + t->getName()); }
     virtual void translate() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eFUNCRET: public eeyoreAST {
@@ -145,7 +145,7 @@ public:
     virtual void translate() ;
     virtual void _analyse_cf(int line) ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
 };
 class _eIFGOTO: public eeyoreAST {
 public:
@@ -154,7 +154,7 @@ public:
     virtual void Dump() { printTab("if " + t1->getName() + " " + op + " " + t2->getName() + " goto " + l); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eGOTO: public eeyoreAST {
@@ -164,7 +164,7 @@ public:
     virtual void Dump() { printTab("goto " + l); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _ePARAM: public eeyoreAST {
@@ -174,7 +174,7 @@ public:
     virtual void Dump() { printTab("param " + t->getName()); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eLABEL: public eeyoreAST {
@@ -184,7 +184,7 @@ public:
     virtual void Dump() { print(l + ":"); }
     virtual void translate() ;
 
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eRETVOID: public eeyoreAST {
@@ -193,7 +193,7 @@ public:
     virtual void Dump() { printTab("return"); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eRET: public eeyoreAST {
@@ -203,7 +203,7 @@ public:
     virtual void Dump() { printTab("return " + t->getName()); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eFUNC: public eeyoreAST {
@@ -222,7 +222,7 @@ public:
     virtual void Dump() { printTab("call f_" + func); }
     virtual void translate() ;
     
-    virtual void _analyse_def_use(string &def, string &use1, string &use2) ;
+    virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
 };
 class _eSEQ: public eeyoreAST {

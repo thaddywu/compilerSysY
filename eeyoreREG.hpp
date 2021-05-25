@@ -229,6 +229,10 @@ public:
                     {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }
         }
         else {
+            /*
+            for (int i = 0; i < Reg_a; i++)
+                if (reg_ptr["a" + to_string(i)]->used && reg_ptr["a" + to_string(i)]->compatible_local(var->active))
+                    {var->alloc_reg = reg_ptr["a" + to_string(i)]; cerr << var_name << " was allocated to " << reg_ptr["a" + to_string(i)]->reg_name << endl; return ; }*/
             for (int i = 0; i < Reg_N; i++)
                 if (registers[i]->compatible_local(var->active))
                     {var->alloc_reg = registers[i]; cerr << var_name << " was allocated to " << registers[i]->reg_name << endl; return ; }

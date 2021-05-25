@@ -7,30 +7,32 @@ using namespace std;
 
 int currentLine;
 
-void _eDEFVAR::_analyse_def_use(string &def, string &use1, string &use2) {}
-void _eDEFARR::_analyse_def_use(string &def, string &use1, string &use2) {}
-void _eDIRECT::_analyse_def_use(string &def, string &use1, string &use2)
-    { def = a->getName(); if (!t->isnum()) use1 = t->getName(); }
-void _eUNARY::_analyse_def_use(string &def, string &use1, string &use2)
-    { def = a->getName(); if (!t->isnum()) use1 = t->getName(); }
-void _eBINARY::_analyse_def_use(string &def, string &use1, string &use2)
-    { def = a->getName(); if (!t1->isnum()) use1 = t1->getName(); if (!t2->isnum()) use2 = t2->getName(); }
-void _eSEEK::_analyse_def_use(string &def, string &use1, string &use2)
-    { def = a->getName(); if (!x->isnum()) use2 = x->getName();}
-void _eSAVE::_analyse_def_use(string &def, string &use1, string &use2)
-    { if (!x->isnum()) use1 = x->getName(); if (!t->isnum()) use2 = t->getName(); }
-void _eFUNCRET::_analyse_def_use(string &def, string &use1, string &use2)
-    { def = a->getName(); }
-void _ePARAM::_analyse_def_use(string &def, string &use1, string &use2)
-    { if (!t->isnum()) use1 = t->getName(); }
-void _eIFGOTO::_analyse_def_use(string &def, string &use1, string &use2)
-    { if (!t1->isnum()) use1 = t1->getName(); if (!t2->isnum()) use2 = t2->getName(); }
-void _eGOTO::_analyse_def_use(string &def, string &use1, string &use2) {}
-void _eLABEL::_analyse_def_use(string &def, string &use1, string &use2) {}
-void _eRETVOID::_analyse_def_use(string &def, string &use1, string &use2) {}
-void _eRET::_analyse_def_use(string &def, string &use1, string &use2)
-    { if (!t->isnum()) use1 = t->getName(); }
-void _eCALL::_analyse_def_use(string &def, string &use1, string &use2) {}
+
+string def[maxlines], use1[maxlines], use2 [maxlines], use3[maxlines];
+void _eDEFVAR::_analyse_def_use(int line) {}
+void _eDEFARR::_analyse_def_use(int line) {}
+void _eDIRECT::_analyse_def_use(int line)
+    { def[line] = a->getName(); if (!t->isnum()) use1[line] = t->getName(); }
+void _eUNARY::_analyse_def_use(int line)
+    { def[line] = a->getName(); if (!t->isnum()) use1[line] = t->getName(); }
+void _eBINARY::_analyse_def_use(int line)
+    { def[line] = a->getName(); if (!t1->isnum()) use1[line] = t1->getName(); if (!t2->isnum()) use2[line] = t2->getName(); }
+void _eSEEK::_analyse_def_use(int line)
+    { def[line] = a->getName(); if (!x->isnum()) use2[line] = x->getName(); use3[line] = t;}
+void _eSAVE::_analyse_def_use(int line)
+    { if (!x->isnum()) use1[line] = x->getName(); if (!t->isnum()) use2[line] = t->getName(); use3[line] = a;}
+void _eFUNCRET::_analyse_def_use(int line)
+    { def[line] = a->getName(); }
+void _ePARAM::_analyse_def_use(int line)
+    { if (!t->isnum()) use1[line] = t->getName(); }
+void _eIFGOTO::_analyse_def_use(int line)
+    { if (!t1->isnum()) use1[line] = t1->getName(); if (!t2->isnum()) use2[line] = t2->getName(); }
+void _eGOTO::_analyse_def_use(int line) {}
+void _eLABEL::_analyse_def_use(int line) {}
+void _eRETVOID::_analyse_def_use(int line) {}
+void _eRET::_analyse_def_use(int line)
+    { if (!t->isnum()) use1[line] = t->getName(); }
+void _eCALL::_analyse_def_use(int line) {}
 
 typedef enum {
     DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
@@ -59,7 +61,6 @@ vector<eeyoreAST *> seq;
 vector<string> var_list; 
 vector<string> global_var_list {};
 int n;
-string def[maxlines], use1[maxlines], use2[maxlines];
 bool reserved[maxlines];
 
 vector<int> adj[maxlines];
@@ -77,7 +78,7 @@ void _analyse_reach(string var_name) {
     bitset<maxlines> &reach = regManager->vars[var_name]->active;
     reach.reset(); assert(que.empty());
     for (int i = 0; i < n; i++)
-        if (use1[i] == var_name || use2[i] == var_name)
+        if (use1[i] == var_name || use2[i] == var_name || use3[i] == var_name)
             que.push(i), reach[i] = true;
     while (!que.empty()) {
         int i = que.front(); que.pop();
@@ -123,8 +124,8 @@ void _eFUNC::optimize() {
     /*  def-use analysis        */
     /* ======================== */
     for (int i = 0; i < n; i++) {
-        def[i].clear(); use1[i].clear(); use2[i].clear();
-        seq[i]->_analyse_def_use(def[i], use1[i], use2[i]); 
+        def[i].clear(); use1[i].clear(); use2[i].clear(); use3[i].clear();
+        seq[i]->_analyse_def_use(i); 
     }
     /* ======================== */
     /*  reachability analysis   */
