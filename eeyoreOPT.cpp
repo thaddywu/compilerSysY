@@ -148,18 +148,17 @@ bool _is_only_source(string var_name, int i, int j) {
     return !reachable[i];
 }
 bool _is_available(int i, int j) {
-    /* return if def[j] is available in line j */    
+    /* line[j] must occurs before line[i] in aby path */    
     memset(reachable, false, n); assert(que.empty());
-    for (auto v: adj[j])
-        if (!reachable[v]) que.push(v), reachable[v] = true;
+    reachable[i] = true; que.push(i);
     while (!que.empty()) {
         int u = que.front(); que.pop();
-        if (def[u] == def[j]) continue;
-        for (auto v: adj[u])
-        if (!reachable[v]) /* forward analysis */
+        if (u == j) continue;
+        for (auto v: adj_rev[u])
+        if (!reachable[v]) /* backward analysis */
             que.push(v), reachable[v] = true;
     }
-    return reachable[i];
+    return !reachable[0];
 }
 bool _is_common_expr(int i, int j) {
     if (i == j) return false; /* same line */
@@ -192,20 +191,6 @@ bool _is_common_expr(int i, int j) {
     if (!_is_only_source(use1[j], i, j)) return false;
     if (!_is_only_source(use2[j], i, j)) return false;
     if (!_is_only_source(use3[j], i, j)) return false;
-
-    if (i < j) return false;
-    for (int k = j; k <= i; k++) {
-        //if (type[k] == FUNCRET) return false;
-        //if (type[k] == CALL) return false;
-        //if (type[k] == LABEL) return false;
-        //if (type[k] == RET) return false;
-        //if (type[k] == RETVOID) return false;
-        //if (type[k] == PARAM) return false;
-        //if (type[k] == IFGOTO) return false;
-        //if (type[k] == GOTO) return false;
-    //DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
-    //FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID,
-    }
 
     return true;
 }
