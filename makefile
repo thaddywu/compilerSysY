@@ -11,16 +11,24 @@ sysy.tab.cpp: sysy.y sysyAST.hpp sysyLUT.hpp sysyDATA.hpp
 	bison -d -Wconflicts-sr -Wconflicts-rr -o sysy.tab.cpp sysy.y
 clean:
 	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
-fft:
+fft: compiler
+	cp ../test-case/fft0.sy fft0.sy
 	./compiler fft0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
-	qemu-riscv32-static output <fft0.in >fft0.out
-	diff fft0.out fft0.ans
-mm:
+	qemu-riscv32-static output <../test-case/fft0.in >../test-case/fft0.out
+	diff ../test-case/fft0.out ../test-case/fft0.ans
+mm: compiler
+	cp ../test-case/01_mm1.sy 01_mm1.sy
 	./compiler 01_mm1
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
-	qemu-riscv32-static output <01_mm1.in >01_mm1.out
-	diff 01_mm1.out 01_mm1.ans
+	qemu-riscv32-static output <../test-case/01_mm1.in >../test-case/01_mm1.out
+	diff ../test-case/01_mm1.out ../test-case/01_mm1.ans
+bitset: compiler
+	cp ../test-case/00_bitset1.sy 00_bitset1.sy
+	./compiler 00_bitset1
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/00_bitset1.in >../test-case/00_bitset1.out
+	diff ../test-case/00_bitset1.out ../test-case/00_bitset1.ans
 run:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output
