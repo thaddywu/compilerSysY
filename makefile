@@ -11,37 +11,37 @@ sysy.tab.cpp: sysy.y sysyAST.hpp sysyLUT.hpp sysyDATA.hpp
 	bison -d -Wconflicts-sr -Wconflicts-rr -o sysy.tab.cpp sysy.y
 clean:
 	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
-fft: compiler
+fft:
 	cp ../test-case/fft0.sy fft0.sy
 	./compiler fft0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/fft0.in >../test-case/fft0.out
 	diff ../test-case/fft0.out ../test-case/fft0.ans
-mm: compiler
+mm:
 	cp ../test-case/01_mm1.sy 01_mm1.sy
 	./compiler 01_mm1
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/01_mm1.in >../test-case/01_mm1.out
 	diff ../test-case/01_mm1.out ../test-case/01_mm1.ans
-bitset: compiler
+bitset:
 	cp ../test-case/00_bitset1.sy 00_bitset1.sy
 	./compiler 00_bitset1
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/00_bitset1.in >../test-case/00_bitset1.out
 	diff ../test-case/00_bitset1.out ../test-case/00_bitset1.ans
-conv: compiler
+conv:
 	cp ../test-case/conv1.sy conv1.sy
 	./compiler conv1
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/conv1.in >../test-case/conv1.out
 	diff ../test-case/conv1.out ../test-case/conv1.ans
-transpose: compiler
+transpose:
 	cp ../test-case/transpose0.sy transpose0.sy
 	./compiler transpose0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/transpose0.in >../test-case/transpose0.out
 	diff ../test-case/transpose0.out ../test-case/transpose0.ans
-spmv: compiler
+spmv:
 	cp ../test-case/04_spmv1.sy 04_spmv1.sy
 	./compiler 04_spmv1
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static

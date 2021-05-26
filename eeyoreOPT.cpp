@@ -114,9 +114,9 @@ bool _is_const(string var_name) {
     if (var_name[0] >= '0' && var_name[0] <= '9') return true;
     return false;
 }
-bool _is_global(string var_name) {
+bool _is_sensitive(string var_name) {
     if (_is_const(var_name)) return false;
-    return regManager->isglobal(var_name);
+    return regManager->isglobal(var_name) && regManager->isvar(var_name);
 }
 bool _is_param(string var_name) {
     return !_is_const(var_name) && var_name[0] == 'p';
@@ -171,10 +171,10 @@ bool _is_common_expr(int i, int j) {
     if (def[j] == use2[j]) return false;
     if (def[j] == use3[j]) return false;
         /* guarantee def is different from every use in line j */
-    if (_is_global(def[j])) return false;
-    if (_is_global(use1[i])) return false;
-    if (_is_global(use2[i])) return false;
-    if (_is_global(use3[i])) return false;
+    if (_is_sensitive(def[j])) return false;
+    if (_is_sensitive(use1[i])) return false;
+    if (_is_sensitive(use2[i])) return false;
+    if (_is_sensitive(use3[i])) return false;
 
     bool consistent = false;
     if (type[i] == UNARY) {
@@ -257,7 +257,7 @@ void _eFUNC::optimize() {
     for (int i = 0; i < n; i++) _refresh(i);
     _control_graph();
 
-#define _analysis_level 1
+#define _analysis_level 10
     int _analysis_iter = 0;
 analysis:
     /* ======================== */
