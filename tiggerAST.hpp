@@ -19,6 +19,8 @@ extern bool isreg(string x) ;
 extern bool islogicop(string x) ;
 extern bool isint10(int x) ;
 extern bool isint12(int x) ;
+extern bool is2power(int x) ;
+extern int get2log(int x) ;
 
 extern int STK ;
 
@@ -128,14 +130,12 @@ public:
     virtual void Dump() { printTab(d + " = " + s + " " + op + " " + t); }
     virtual void translate() {
         if (!isreg(t)) {
-            if (op == "*" && t_int == 2) 
-                { printTab("slli " + d + ", " + s + ", 1"); return ; }
-            if (op == "*" && t_int == 4) 
-                { printTab("slli " + d + ", " + s + ", 2"); return ; }
-            if (op == "/" && t_int == 2) 
-                { printTab("srai " + d + ", " + s + ", 1"); return ; }
-            if (op == "\%" && t_int == 2) 
-                { printTab("andi " + d + ", " + s + ", 1"); return ; }
+            if (op == "*" && is2power(t_int)) 
+                { printTab("slli " + d + ", " + s + ", " + to_string(get2log(t_int))); return ; }
+            if (op == "/" && is2power(t_int)) 
+                { printTab("srai " + d + ", " + s + ", " + to_string(get2log(t_int))); return ; }
+            if (op == "\%" && isint12(t_int) && is2power(t_int))
+                { printTab("andi " + d + ", " + s + ", " + to_string(get2log(t_int) - 1)); return ; }
             if ((op == "+" || op == "-") && t_int == 0) 
                 { if (d != s) printTab("mv " + d + ", " + s); return ; }
             if (op == "*" && t_int == 0) 

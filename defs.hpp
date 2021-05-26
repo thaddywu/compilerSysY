@@ -63,4 +63,7 @@ extern string neg_logicop(string op);
 extern bool isint10(int x) ;
 extern bool isint12(int x) ;
 
+extern bool is2power(int x) ;
+extern int get2log(int x) ;
+
 extern int STK ;

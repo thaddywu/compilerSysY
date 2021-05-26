@@ -12,9 +12,15 @@ sysy.tab.cpp: sysy.y sysyAST.hpp sysyLUT.hpp sysyDATA.hpp
 clean:
 	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
 fft:
+	./compiler fft0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <fft0.in >fft0.out
 	diff fft0.out fft0.ans
+mm:
+	./compiler 01_mm1
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <01_mm1.in >01_mm1.out
+	diff 01_mm1.out 01_mm1.ans
 git:
 	rm *.eeyore *.tigger *.sy output output.S \
 	sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler \

@@ -41,6 +41,9 @@ bool islogicop(string x) { return x == "!=" || x == "==" || x == "<" || x == ">"
 bool isint10(int x) { return x >= -512 && x < 512; }
 bool isint12(int x) { return x >= -2048 && x < 2048; }
 
+bool is2power(int x) {return x > 0 && (x & -x) == x;}
+int get2log(int x) {return x > 1 ? get2log(x >> 1) + 1 : 0 ;}
+
 int binary_result(int a, string op, int b) {
     if (op == "+") return a + b;
     if (op == "-") return a - b;
