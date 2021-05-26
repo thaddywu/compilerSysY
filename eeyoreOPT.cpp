@@ -195,10 +195,12 @@ bool _is_common_expr(int i, int j) {
 
     if (i < j) return false;
     for (int k = j; k <= i; k++) {
+        //if (type[k] == FUNCRET) return false;
+        //if (type[k] == CALL) return false;
         if (type[k] == LABEL) return false;
-        if (type[k] == RET) return false;
-        if (type[k] == RETVOID) return false;
-        if (type[k] == PARAM) return false;
+        //if (type[k] == RET) return false;
+        //if (type[k] == RETVOID) return false;
+        //if (type[k] == PARAM) return false;
         if (type[k] == IFGOTO) return false;
         if (type[k] == GOTO) return false;
     //DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
