@@ -35,7 +35,8 @@ void _eCALL::_analyse_def_use(int line) {}
 
 typedef enum {
     DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
-    FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID
+    FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID,
+    DEAD
 }typeAST;
 typeAST type[maxlines];
 map<string, int> label;
@@ -67,7 +68,7 @@ vector<int> adj_rev[maxlines];
 queue<int> que;
 
 void _refresh(int line) {
-    nxt[line] = false; jmp[line].clear();
+    nxt[line] = false; jmp[line].clear(); type[line] = DEAD;
     use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
     if (seq[line]) 
         { seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line); }
@@ -82,7 +83,7 @@ void _control_graph() {
     for (int i = 0; i < n; i++)
     for (auto j: adj[i]) adj_rev[j].push_back(i);
 }
-void _analyse_reach(string var_name) {
+void _analyse_liveness(string var_name) {
     /* var ought to be local */
     assert(!regManager->isglobal(var_name));
     bitset<maxlines> &active = regManager->vars[var_name]->active;
@@ -185,12 +186,12 @@ bool _is_common_expr(int i, int j) {
         consistent = (ei->op == ej->op);
     }
     if (!consistent) return false;
-    cerr << i << " " << j << endl;
     if (!_is_available(i, j)) return false;
     if (!_is_only_source(def[j], i, j)) return false;
     if (!_is_only_source(use1[j], i, j)) return false;
     if (!_is_only_source(use2[j], i, j)) return false;
     if (!_is_only_source(use3[j], i, j)) return false;
+
     return true;
 }
 void _common_expr_reduction(int i, int j) {
@@ -214,7 +215,6 @@ void _common_expr_reduction(int i, int j) {
     } 
 }
 void _analyse_common_expr(int i) {
-    cerr << i << endl;
     if (seq[i] == NULL) return ;
     for (int j = 0; j < n; j++)
     if (_is_common_expr(i, j)) {
@@ -263,7 +263,6 @@ analysis:
     /* ======================== */
     /*  common expr analysis    */
     /* ======================== */
-    cerr << func << endl;
     for (int i = 0; i < n; i++)
         if (seq[i]) _analyse_common_expr(i);
     /* ======================== */
@@ -273,13 +272,13 @@ analysis:
     //    if (seq[i]) _analyse_pass_self(i);
     
     /* ======================== */
-    /*  reachability analysis   */
+    /*  liveness analysis       */
     /* ======================== */
     memset(reserved, false, n);
     for (auto var_name: var_list)
-        _analyse_reach(var_name);
+        _analyse_liveness(var_name);
     for (int i = 0; i < arity; i++)
-        _analyse_reach("p" + to_string(i));
+        _analyse_liveness("p" + to_string(i));
     for (int i = 0; i < n; i++)
     if (!reserved[i]) {
         if (seq[i] == NULL) continue;
