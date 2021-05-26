@@ -67,7 +67,8 @@ vector<int> adj_rev[maxlines];
 queue<int> que;
 
 void _refresh(int line) {
-    nxt[line] = false; jmp[line].clear(); use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
+    nxt[line] = false; jmp[line].clear();
+    use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
     if (seq[line]) 
         { seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line); }
 }
@@ -146,12 +147,6 @@ bool _is_dominated(string var_name, int i, int j) {
         }
     }
     return !reachable[i];
-
-    // def = var reach its succeeding nodes
-    // def != var pass it to next
-    // use.. line j dones not pass its use
-
-    // only line j's def reach line i ?
 }
 bool _is_available(int i, int j) {
     /* return if def[j] is available in line j */    
@@ -194,6 +189,7 @@ void _analyse_common_expr(int i) {
     if (seq[i] == NULL) return ;
     for (int j = 0; j < n; j++)
     if (seq[j] && _is_common_expr(i, j)) {
+        return ;
         if (!_is_available(i, j)) continue;
         if (!_is_dominated(def[j], i, j)) continue;
         if (!_is_dominated(use1[i], i, j)) continue;
