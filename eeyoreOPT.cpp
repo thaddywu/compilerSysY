@@ -123,7 +123,7 @@ bool _is_param(string var_name) {
 }
 
 bool reachable[maxlines];
-bool _is_only_source(string var_name, int i, int j) {
+bool _is_only_source(string var_name, int x, int o) {
     if (_is_const(var_name)) return true;
         
     memset(reachable, false, n); assert(que.empty());
@@ -133,85 +133,99 @@ bool _is_only_source(string var_name, int i, int j) {
             que.push(0), reachable[0] = true;
     }
     for (int u = 0; u < n; u++)
-    if (def[u] == var_name && u != j) {
+    if (def[u] == var_name && u != o) {
         for (auto v: adj[u])
             if (!reachable[v]) que.push(v), reachable[v] = true;
     }
     while (!que.empty()) {
         int u = que.front(); que.pop();
-        if (u == j) continue;
+        if (u == o) continue;
         if (def[u] == var_name) continue;
         for (auto v: adj[u])
         if (!reachable[v]) /* forward analysis */
             que.push(v), reachable[v] = true;
     }
-    return !reachable[i];
+    return !reachable[x];
 }
-bool _is_available(int i, int j) {
+bool _is_available(int x, int o) {
     /* line[j] must occurs before line[i] in aby path */    
     memset(reachable, false, n); assert(que.empty());
-    reachable[i] = true; que.push(i);
+    reachable[x] = true; que.push(x);
     while (!que.empty()) {
         int u = que.front(); que.pop();
-        if (u == j) continue;
+        if (u == o) continue;
         for (auto v: adj_rev[u])
         if (!reachable[v]) /* backward analysis */
             que.push(v), reachable[v] = true;
     }
     return !reachable[0];
 }
-bool _is_common_expr(int i, int j) {
-    if (i == j) return false; /* same line */
-    if (seq[j] == NULL) return false;
-    if (type[i] != type[j]) return false;
-    if (use1[i] != use1[j]) return false;
-    if (use2[i] != use2[j]) return false;
-    if (use3[i] != use3[j]) return false;
-    if (def[j] == use1[j]) return false;
-    if (def[j] == use2[j]) return false;
-    if (def[j] == use3[j]) return false;
+bool _is_clean(string arr_name, int x, int o) {
+    /* check if this array is contaminated during the data-path */
+    return false;
+    assert(!arr_name.empty());
+}
+bool _is_common_expr(int x, int o) {
+    if (x == o) return false; /* same line */
+    if (seq[o] == NULL) return false;
+    if (type[x] != type[o]) return false;
+    if (use1[x] != use1[o]) return false;
+    if (use2[x] != use2[o]) return false;
+    if (use3[x] != use3[o]) return false;
+    if (def[o] == use1[o]) return false;
+    if (def[o] == use2[o]) return false;
+    if (def[o] == use3[o]) return false;
         /* guarantee def is different from every use in line j */
-    if (_is_sensitive(def[j])) return false;
-    if (_is_sensitive(use1[i])) return false;
-    if (_is_sensitive(use2[i])) return false;
-    if (_is_sensitive(use3[i])) return false;
+    if (_is_sensitive(def[o])) return false;
+    if (_is_sensitive(use1[o])) return false;
+    if (_is_sensitive(use2[o])) return false;
+    if (_is_sensitive(use3[o])) return false;
 
     bool consistent = false;
-    if (type[i] == UNARY) {
-        _eUNARY *ei = (_eUNARY *)seq[i], *ej = (_eUNARY *)seq[j];
-        consistent = (ei->op == ej->op);
+    if (type[o] == UNARY) {
+        _eUNARY *ex = (_eUNARY *)seq[x], *eo = (_eUNARY *)seq[o];
+        consistent = (ex->op == eo->op);
     }
-    if (type[i] == BINARY) {
-        _eBINARY *ei = (_eBINARY *)seq[i], *ej = (_eBINARY *)seq[j];
-        consistent = (ei->op == ej->op);
+    if (type[o] == BINARY) {
+        _eBINARY *ex = (_eBINARY *)seq[x], *eo = (_eBINARY *)seq[o];
+        consistent = (ex->op == eo->op);
+    }
+    if (type[o] == SEEK) {
+        consistent = true;
     }
     if (!consistent) return false;
-    if (!_is_available(i, j)) return false;
-    if (!_is_only_source(def[j], i, j)) return false;
-    if (!_is_only_source(use1[j], i, j)) return false;
-    if (!_is_only_source(use2[j], i, j)) return false;
-    if (!_is_only_source(use3[j], i, j)) return false;
+    if (!_is_available(x, o)) return false;
+    if (!_is_only_source(def[o], x, o)) return false;
+    if (!_is_only_source(use1[o], x, o)) return false;
+    if (!_is_only_source(use2[o], x, o)) return false;
+    if (!_is_only_source(use3[o], x, o)) return false;
+    if (type[o] == SEEK && !_is_clean(use3[o], x, o)) return false;
 
     return true;
 }
-void _common_expr_reduction(int i, int j) {
-    /* line j: a = b + c */
-    /* line i: x = b + c */
-    /*-> line i: x = a */
-    assert(i != j);
-    if (type[i] == UNARY) {
-        _eUNARY *ei = (_eUNARY *)seq[i], *ej = (_eUNARY *)seq[j];
-        if (ei->op == ej->op) {
-            seq[i] = new _eDIRECT(ei->a, ej->a);
-            _refresh(i); return ;
+void _common_expr_reduction(int x, int o) {
+    /* line o: a = b + c */
+    /* line x: x = b + c */
+    /*-> line x: x = a */
+    assert(x != o);
+    if (type[o] == UNARY) {
+        _eUNARY *ex = (_eUNARY *)seq[x], *eo = (_eUNARY *)seq[o];
+        if (ex->op == eo->op) {
+            seq[x] = new _eDIRECT(ex->a, eo->a);
+            _refresh(x); return ;
         }
     }
-    if (type[i] == BINARY) {
-        _eBINARY *ei = (_eBINARY *)seq[i], *ej = (_eBINARY *)seq[j];
-        if (ei->op == ej->op) {
-            seq[i] = new _eDIRECT(ei->a, ej->a);
-            _refresh(i); return ;
+    if (type[o] == BINARY) {
+        _eBINARY *ex = (_eBINARY *)seq[x], *eo = (_eBINARY *)seq[o];
+        if (ex->op == eo->op) {
+            seq[x] = new _eDIRECT(ex->a, eo->a);
+            _refresh(x); return ;
         }
+    } 
+    if (type[o] == SEEK) {
+        _eSEEK *ex = (_eSEEK *)seq[x], *eo = (_eSEEK *)seq[o];
+        seq[x] = new _eDIRECT(ex->a, eo->a);
+        _refresh(x); return ;
     } 
 }
 void _analyse_common_expr(int i) {
@@ -224,8 +238,8 @@ void _analyse_common_expr(int i) {
 }
 void _analyse_pass_self(int i) {
     if (type[i] == DIRECT) {
-        _eDIRECT *ei = (_eDIRECT *)seq[i];
-        if (ei->a->getName() == ei->t->getName())
+        _eDIRECT *ex = (_eDIRECT *)seq[i];
+        if (ex->a->getName() == ex->t->getName())
             {seq[i] = NULL; _refresh(i); return ;}
     }
 }
