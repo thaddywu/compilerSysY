@@ -241,7 +241,7 @@ void _eFUNC::optimize() {
     for (int i = 0; i < n; i++) _refresh(i);
     _control_graph();
 
-#define _analysis_level 5
+#define _analysis_level 1
     int _analysis_iter = 0;
 analysis:
     /* ======================== */
