@@ -69,7 +69,7 @@ queue<int> que;
 void _refresh(int line) {
     nxt[line] = false; use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
     if (seq[line]) 
-        seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line);
+        { seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line); }
 }
 void _control_graph() {
     for (int i = 0; i < n; i++) adj[i].clear();
@@ -255,7 +255,7 @@ analysis:
     /* ======================== */
     for (int i = 0; i < n; i++)
         if (seq[i]) _analyse_pass_self(i);
-
+    
     /* ======================== */
     /*  reachability analysis   */
     /* ======================== */
@@ -279,7 +279,7 @@ analysis:
         }
         seq[i] = NULL; _refresh(i);
     }
-
+    
     if (++_analysis_iter < _analysis_level) goto analysis;
 
     /* ======================== */
