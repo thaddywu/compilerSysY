@@ -162,8 +162,38 @@ bool _is_available(int x, int o) {
 }
 bool _is_clean(string arr_name, int x, int o) {
     /* check if this array is contaminated during the data-path */
-    return false;
     assert(!arr_name.empty());
+    memset(reachable, false, n); assert(que.empty());
+    /* for global vars, any function-call is unsave,
+        for local vars, param arr_name is unsave*/
+    reachable[o] = true;
+    while (!que.empty()) {
+        int u = que.front(); que.pop();
+        for (auto v: adj[u])
+        if (!reachable[v]) /* forward analysis */
+            que.push(v), reachable[v] = true;
+    }
+    assert(reachable[x]);
+    /* x must be accessible by o */
+    for (int i = 0; i < n; i++)
+    if (reachable[i]) {
+        bool dirty = false;
+        switch (type[i]) {
+            case SAVE: dirty = true;
+            case CALL: dirty = true;
+            case FUNCRET: dirty = true;
+            default: dirty = false;
+        }
+        if (dirty) que.push(i);
+        else reachable[i] = false;
+    }
+    while (!que.empty()) {
+        int u = que.front(); que.pop();
+        for (auto v: adj[u])
+        if (!reachable[v]) /* forward analysis */
+            que.push(v), reachable[v] = true;
+    }
+    return !reachable[x];
 }
 bool _is_common_expr(int x, int o) {
     if (x == o) return false; /* same line */
