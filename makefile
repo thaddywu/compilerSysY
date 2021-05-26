@@ -29,6 +29,12 @@ bitset: compiler
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/00_bitset1.in >../test-case/00_bitset1.out
 	diff ../test-case/00_bitset1.out ../test-case/00_bitset1.ans
+conv: compiler
+	cp ../test-case/conv1.sy conv1.sy
+	./compiler conv1
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/conv1.in >../test-case/conv1.out
+	diff ../test-case/conv1.out ../test-case/conv1.ans
 run:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output
@@ -40,3 +46,5 @@ gitlab:
 	echo https://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@github.com/thaddywu/compilerSysY.git
 github:
 	echo https://test:TsZ_quoj3iNzX5S2asrq@gitlab.com/thaddywu/compilerSysY.git
+connect:
+	sudo docker attach $(sudo docker run -dit -P -v /compiler:/compiler riscv-dev-env)

@@ -125,7 +125,8 @@ bool _is_common_expr(int i, int j) {
 bool reachable[maxlines];
 bool _is_dominated(string var_name, int i, int j) {
     if (var_name.empty()) return true;
-    if (var_name[0] != 'T' && var_name[0] != 't' && var_name[0] != 'a') return true;
+    if (var_name[0] >= '0' && var_name[0] <= '9') return true;
+    if (var_name[0] == '-') return true;
     if (regManager->isglobal(var_name)) return false;
         /* integer is constant */
         
@@ -195,9 +196,9 @@ void _analyse_common_expr(int i) {
     if (seq[j] && _is_common_expr(i, j)) {
         if (!_is_available(i, j)) continue;
         if (!_is_dominated(def[j], i, j)) continue;
-        if (!_is_dominated(use1[i], i, j)) continue;
-        if (!_is_dominated(use2[i], i, j)) continue;
-        if (!_is_dominated(use3[i], i, j)) continue;
+        if (!_is_dominated(use1[j], i, j)) continue;
+        if (!_is_dominated(use2[j], i, j)) continue;
+        if (!_is_dominated(use3[j], i, j)) continue;
         cerr << "line." << i << " finds common expr in line." << j << endl;
         _common_expr_reduction(i, j); return ;
     }
@@ -251,8 +252,8 @@ analysis:
     /* ======================== */
     /*  pass-self analysis      */
     /* ======================== */
-    //for (int i = 0; i < n; i++)
-    //    if (seq[i]) _analyse_pass_self(i);
+    for (int i = 0; i < n; i++)
+        if (seq[i]) _analyse_pass_self(i);
     
     /* ======================== */
     /*  reachability analysis   */
