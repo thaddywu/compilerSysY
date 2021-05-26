@@ -135,7 +135,7 @@ public:
             if (op == "/" && is2power(t_int)) 
                 { printTab("srai " + d + ", " + s + ", " + to_string(get2log(t_int))); return ; }
             if (op == "\%" && isint12(t_int) && is2power(t_int))
-                { printTab("andi " + d + ", " + s + ", " + to_string(get2log(t_int) - 1)); return ; }
+                { printTab("andi " + d + ", " + s + ", " + to_string(t_int - 1)); return ; }
             if ((op == "+" || op == "-") && t_int == 0) 
                 { if (d != s) printTab("mv " + d + ", " + s); return ; }
             if (op == "*" && t_int == 0) 
