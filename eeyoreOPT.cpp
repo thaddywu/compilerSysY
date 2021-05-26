@@ -126,7 +126,7 @@ bool reachable[maxlines];
 bool _is_dominated(string var_name, int i, int j) {
     if (var_name.empty()) return true;
     if (var_name[0] >= '0' && var_name[0] <= '9') return true;
-    if (var_name[0] == '-') return true;
+    if (var_name[0] == '-' || var_name[0] == '+') return true;
     if (regManager->isglobal(var_name)) return false;
         /* integer is constant */
         

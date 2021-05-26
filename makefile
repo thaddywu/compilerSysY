@@ -35,6 +35,18 @@ conv: compiler
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/conv1.in >../test-case/conv1.out
 	diff ../test-case/conv1.out ../test-case/conv1.ans
+transpose: compiler
+	cp ../test-case/transpose0.sy transpose0.sy
+	./compiler transpose0
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/transpose0.in >../test-case/transpose0.out
+	diff ../test-case/transpose0.out ../test-case/transpose0.ans
+spmv: compiler
+	cp ../test-case/04_spmv1.sy 04_spmv1.sy
+	./compiler 04_spmv1
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/04_spmv1.in >../test-case/04_spmv1.out
+	diff ../test-case/04_spmv1.out ../test-case/04_spmv1.ans
 run:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output
