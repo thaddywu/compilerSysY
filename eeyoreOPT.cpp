@@ -67,7 +67,7 @@ vector<int> adj_rev[maxlines];
 queue<int> que;
 
 void _refresh(int line) {
-    nxt[line] = false; use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
+    nxt[line] = false; jmp[line].clear(); use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
     if (seq[line]) 
         { seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line); }
 }
@@ -118,7 +118,7 @@ bool _is_common_expr(int i, int j) {
     return false;
 }
 bool reachable[maxlines];
-bool _is_dominated(string var_name, int i, int j, bool excluding_def_in_j) {
+bool _is_dominated(string var_name, int i, int j) {
     if (var_name.empty()) return true;
     if (var_name[0] != 'T' && var_name[0] != 't' && var_name[0] != 'a') return true;
     if (regManager->isglobal(var_name)) return false;
@@ -127,11 +127,11 @@ bool _is_dominated(string var_name, int i, int j, bool excluding_def_in_j) {
     memset(reachable, false, n); assert(que.empty());
     if (var_name[0] == 'p') {
         /* param */
-        que.push(0); reachable[0] = true;
+        if (!reachable[0])
+            que.push(0), reachable[0] = true;
     }
     for (int u = 0; u < n; u++)
-    if (def[u] == var_name) {
-        if (u == j && excluding_def_in_j) continue;
+    if (def[u] == var_name && u != j) {
         for (auto v: adj[u])
             if (!reachable[v]) que.push(v), reachable[v] = true;
     }
@@ -195,10 +195,10 @@ void _analyse_common_expr(int i) {
     for (int j = 0; j < n; j++)
     if (seq[j] && _is_common_expr(i, j)) {
         if (!_is_available(i, j)) continue;
-        if (!_is_dominated(def[j], i, j, true)) continue;
-        if (!_is_dominated(use1[i], i, j, false)) continue;
-        if (!_is_dominated(use2[i], i, j, false)) continue;
-        if (!_is_dominated(use3[i], i, j, false)) continue;
+        if (!_is_dominated(def[j], i, j)) continue;
+        if (!_is_dominated(use1[i], i, j)) continue;
+        if (!_is_dominated(use2[i], i, j)) continue;
+        if (!_is_dominated(use3[i], i, j)) continue;
         cerr << "line." << i << " finds common expr in line." << j << endl;
         _common_expr_reduction(i, j); return ;
     }
