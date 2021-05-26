@@ -220,9 +220,10 @@ bool _is_common_expr(int x, int o) {
         _eBINARY *ex = (_eBINARY *)seq[x], *eo = (_eBINARY *)seq[o];
         consistent = (ex->op == eo->op);
     }
+    /*
     if (type[o] == SEEK) {
         consistent = true;
-    }
+    }*/
     if (!consistent) return false;
     if (!_is_available(x, o)) return false;
     if (!_is_only_source(def[o], x, o)) return false;
@@ -273,6 +274,60 @@ void _analyse_pass_self(int i) {
             {seq[i] = NULL; _refresh(i); return ;}
     }
 }
+int _only_def(string var_name, int x) {
+    int def_pos = -1, def_cnt = 0;
+    if (_is_const(var_name)) return -1;
+    memset(reachable, false, n); assert(que.empty());
+    for (auto v: adj_rev[x])
+        if (!reachable[v]) que.push(v), reachable[v] = true;
+    while (!que.empty()) {
+        int u = que.front(); que.pop();
+            /* backward analysis */
+        if (def[u] != var_name) {
+            for (auto v: adj_rev[u])
+            if (!reachable[v]) /* back_ward analysis */
+                que.push(v), reachable[v] = true;
+        }
+        else
+            { def_pos = u; ++def_cnt; }
+    }
+    return def_cnt != 1 ? -1: def_pos;
+}
+
+void _analyse_direct(eeyoreAST *&x, int line) {
+    string var_name = x->getName();
+    int def_pos = _only_def(var_name, line);
+    if (def_pos == -1) return ;
+    if (type[def_pos] != DIRECT) return ;
+    assert(def_pos != line);
+    _eDIRECT *ed = (_eDIRECT *)seq[def_pos];
+    assert(ed->a->getName() == var_name);
+    x = ed->t; _refresh(line);
+    cerr << "line." << line << " alter " << var_name << " to " << ed->t->getName() << endl;
+}
+void _eDEFVAR::_analyse_direct_pass(int line) {}
+void _eDEFARR::_analyse_direct_pass(int line) {}
+void _eDIRECT::_analyse_direct_pass(int line)
+    { _analyse_direct(t, line); }
+void _eUNARY::_analyse_direct_pass(int line)
+    { _analyse_direct(t, line); }
+void _eBINARY::_analyse_direct_pass(int line)
+    { _analyse_direct(t1, line); _analyse_direct(t2, line); }
+void _eSEEK::_analyse_direct_pass(int line)
+    { _analyse_direct(x, line); }
+void _eSAVE::_analyse_direct_pass(int line)
+    { _analyse_direct(x, line); _analyse_direct(t, line);}
+void _eFUNCRET::_analyse_direct_pass(int line) {}
+void _ePARAM::_analyse_direct_pass(int line)
+    { _analyse_direct(t, line); }
+void _eIFGOTO::_analyse_direct_pass(int line)
+    { _analyse_direct(t1, line); _analyse_direct(t2, line); }
+void _eGOTO::_analyse_direct_pass(int line) {}
+void _eLABEL::_analyse_direct_pass(int line) {}
+void _eRETVOID::_analyse_direct_pass(int line) {}
+void _eRET::_analyse_direct_pass(int line)
+    { _analyse_direct(t, line); }
+void _eCALL::_analyse_direct_pass(int line) {}
 
 void _eFUNC::optimize() {
     cerr << "anaylize function " << func << endl;
@@ -314,6 +369,11 @@ analysis:
     /* ======================== */
     for (int i = 0; i < n; i++)
         if (seq[i]) _analyse_pass_self(i);
+    /* ======================== */
+    /*  direct-pass analysis    */
+    /* ======================== */
+    for (int i = 0; i < n; i++)
+        if (seq[i]) seq[i]->_analyse_direct_pass(i);
     
     /* ======================== */
     /*  liveness analysis       */

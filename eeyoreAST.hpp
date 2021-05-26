@@ -25,6 +25,7 @@ public:
     virtual void optimize() { assert(false); }
     virtual void _analyse_def_use(int line) { assert(false); }
     virtual void _analyse_cf(int line) { assert(false); }
+    virtual void _analyse_direct_pass(int line) { assert(false); }
 };
 
 /*
@@ -71,6 +72,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 
 };
 class _eDEFARR: public eeyoreAST {
@@ -86,6 +88,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eDIRECT: public eeyoreAST {
 public:
@@ -96,6 +99,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eUNARY: public eeyoreAST {
 public:
@@ -106,6 +110,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eBINARY: public eeyoreAST {
 public:
@@ -116,6 +121,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eSEEK: public eeyoreAST {
 public:
@@ -126,6 +132,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eSAVE: public eeyoreAST {
 public:
@@ -136,6 +143,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eFUNCRET: public eeyoreAST {
 public:
@@ -146,6 +154,7 @@ public:
     virtual void _analyse_cf(int line) ;
     
     virtual void _analyse_def_use(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eIFGOTO: public eeyoreAST {
 public:
@@ -156,6 +165,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eGOTO: public eeyoreAST {
 public:
@@ -166,6 +176,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _ePARAM: public eeyoreAST {
 public:
@@ -176,6 +187,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eLABEL: public eeyoreAST {
 public:
@@ -186,6 +198,7 @@ public:
 
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eRETVOID: public eeyoreAST {
 public:
@@ -195,6 +208,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eRET: public eeyoreAST {
 public:
@@ -205,6 +219,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eFUNC: public eeyoreAST {
 public:
@@ -224,6 +239,7 @@ public:
     
     virtual void _analyse_def_use(int line) ;
     virtual void _analyse_cf(int line) ;
+    virtual void _analyse_direct_pass(int line) ;
 };
 class _eSEQ: public eeyoreAST {
 public:
