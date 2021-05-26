@@ -238,8 +238,7 @@ void _eFUNC::optimize() {
     /*  def-use analysis        */
     /* ======================== */
     /* unnecessary to clear map-table label */
-    for (int i = 0; i < n; i++)
-        if (seq[i]) _refresh(i);
+    for (int i = 0; i < n; i++) _refresh(i);
     _control_graph();
 
 #define _analysis_level 5
