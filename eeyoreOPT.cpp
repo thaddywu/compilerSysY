@@ -84,21 +84,21 @@ void _control_graph() {
 }
 void _analyse_reach(string var_name) {
     /* var ought to be local */
-    bitset<maxlines> &reach = regManager->vars[var_name]->active;
-    reach.reset(); assert(que.empty());
+    assert(!regManager->isglobal(var_name));
+    bitset<maxlines> &active = regManager->vars[var_name]->active;
+    active.reset(); assert(que.empty());
     for (int i = 0; i < n; i++)
         if (use1[i] == var_name || use2[i] == var_name || use3[i] == var_name)
-            que.push(i), reach[i] = true;
+            que.push(i), active[i] = true;
     while (!que.empty()) {
         int i = que.front(); que.pop();
         for (auto j: adj_rev[i]) {
             /* backward analysis */
             if (def[j] != var_name) {
-                if (!reach[j])
-                    {reach[j] = true; que.push(j);}
+                if (!active[j])
+                    que.push(j), active[j] = true;
             }
-            else
-                reserved[j] = true;
+            else reserved[j] = true;
         }
     }
 }
@@ -108,6 +108,10 @@ bool _is_common_expr(int i, int j) {
     if (use1[i] != use1[j]) return false;
     if (use2[i] != use2[j]) return false;
     if (use3[i] != use3[j]) return false;
+    if (def[j] == use1[j]) return false;
+    if (def[j] == use2[j]) return false;
+    if (def[j] == use3[j]) return false;
+        /* guarantee def is different from every use in line j */
     if (type[i] == UNARY) {
         _eUNARY *ei = (_eUNARY *)seq[i], *ej = (_eUNARY *)seq[j];
         return ei->op == ej->op;
@@ -189,7 +193,6 @@ void _analyse_common_expr(int i) {
     if (seq[i] == NULL) return ;
     for (int j = 0; j < n; j++)
     if (seq[j] && _is_common_expr(i, j)) {
-        return ;
         if (!_is_available(i, j)) continue;
         if (!_is_dominated(def[j], i, j)) continue;
         if (!_is_dominated(use1[i], i, j)) continue;
@@ -248,8 +251,8 @@ analysis:
     /* ======================== */
     /*  pass-self analysis      */
     /* ======================== */
-    for (int i = 0; i < n; i++)
-        if (seq[i]) _analyse_pass_self(i);
+    //for (int i = 0; i < n; i++)
+    //    if (seq[i]) _analyse_pass_self(i);
     
     /* ======================== */
     /*  reachability analysis   */
