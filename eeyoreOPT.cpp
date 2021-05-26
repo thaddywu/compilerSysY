@@ -102,36 +102,30 @@ void _analyse_reach(string var_name) {
         }
     }
 }
-bool _is_common_expr(int i, int j) {
-    if (i == j) return false; /* same line */
-    if (type[i] != type[j]) return false;
-    if (use1[i] != use1[j]) return false;
-    if (use2[i] != use2[j]) return false;
-    if (use3[i] != use3[j]) return false;
-    if (def[j] == use1[j]) return false;
-    if (def[j] == use2[j]) return false;
-    if (def[j] == use3[j]) return false;
-        /* guarantee def is different from every use in line j */
-    if (type[i] == UNARY) {
-        _eUNARY *ei = (_eUNARY *)seq[i], *ej = (_eUNARY *)seq[j];
-        return ei->op == ej->op;
-    }
-    if (type[i] == BINARY) {
-        _eBINARY *ei = (_eBINARY *)seq[i], *ej = (_eBINARY *)seq[j];
-        return ei->op == ej->op;
-    } 
+bool cmp(string var1, string var2) {
+    return regManager->vars[var1]->active.count() < regManager->vars[var2]->active.count();
+}
+
+bool _is_const(string var_name) {
+    if (var_name.empty()) return true;
+    if (var_name[0] == '-' || var_name[0] == '+') return true;
+    if (var_name[0] >= '0' && var_name[0] <= '9') return true;
     return false;
 }
+bool _is_global(string var_name) {
+    if (_is_const(var_name)) return false;
+    return regManager->isglobal(var_name);
+}
+bool _is_param(string var_name) {
+    return !_is_const(var_name) && var_name[0] == 'p';
+}
+
 bool reachable[maxlines];
-bool _is_dominated(string var_name, int i, int j) {
-    if (var_name.empty()) return true;
-    if (var_name[0] >= '0' && var_name[0] <= '9') return true;
-    if (var_name[0] == '-' || var_name[0] == '+') return true;
-    if (regManager->isglobal(var_name)) return false;
-        /* integer is constant */
+bool _is_only_source(string var_name, int i, int j) {
+    if (_is_const(var_name)) return true;
         
     memset(reachable, false, n); assert(que.empty());
-    if (var_name[0] == 'p') {
+    if (_is_param(var_name)) {
         /* param */
         if (!reachable[0])
             que.push(0), reachable[0] = true;
@@ -145,11 +139,9 @@ bool _is_dominated(string var_name, int i, int j) {
         int u = que.front(); que.pop();
         if (u == j) continue;
         if (def[u] == var_name) continue;
-        for (auto v: adj[u]) {
-            /* forward analysis */
-            if (!reachable[v])
-                que.push(v), reachable[v] = true;
-        }
+        for (auto v: adj[u])
+        if (!reachable[v]) /* forward analysis */
+            que.push(v), reachable[v] = true;
     }
     return !reachable[i];
 }
@@ -161,16 +153,47 @@ bool _is_available(int i, int j) {
     while (!que.empty()) {
         int u = que.front(); que.pop();
         if (def[u] == def[j]) continue;
-        for (auto v: adj[u]) {
-            /* forward analysis */
-            if (!reachable[v])
-                que.push(v), reachable[v] = true;
-        }
+        for (auto v: adj[u])
+        if (!reachable[v]) /* forward analysis */
+            que.push(v), reachable[v] = true;
     }
     return reachable[i];
 }
+bool _is_common_expr(int i, int j) {
+    if (i == j) return false; /* same line */
+    if (seq[j] == NULL) return false;
+    if (type[i] != type[j]) return false;
+    if (use1[i] != use1[j]) return false;
+    if (use2[i] != use2[j]) return false;
+    if (use3[i] != use3[j]) return false;
+    if (def[j] == use1[j]) return false;
+    if (def[j] == use2[j]) return false;
+    if (def[j] == use3[j]) return false;
+        /* guarantee def is different from every use in line j */
+    if (_is_global(def[j])) return false;
+    if (_is_global(use1[i])) return false;
+    if (_is_global(use2[i])) return false;
+    if (_is_global(use3[i])) return false;
+
+    bool consistent = false;
+    if (type[i] == UNARY) {
+        _eUNARY *ei = (_eUNARY *)seq[i], *ej = (_eUNARY *)seq[j];
+        consistent = (ei->op == ej->op);
+    }
+    if (type[i] == BINARY) {
+        _eBINARY *ei = (_eBINARY *)seq[i], *ej = (_eBINARY *)seq[j];
+        consistent = (ei->op == ej->op);
+    }
+    if (!consistent) return false;
+    cerr << i << " " << j << endl;
+    if (!_is_available(i, j)) return false;
+    if (!_is_only_source(def[j], i, j)) return false;
+    if (!_is_only_source(use1[j], i, j)) return false;
+    if (!_is_only_source(use2[j], i, j)) return false;
+    if (!_is_only_source(use3[j], i, j)) return false;
+    return true;
+}
 void _common_expr_reduction(int i, int j) {
-    /* reduce seq[i] to seq[j] if possible */
     /* line j: a = b + c */
     /* line i: x = b + c */
     /*-> line i: x = a */
@@ -191,14 +214,10 @@ void _common_expr_reduction(int i, int j) {
     } 
 }
 void _analyse_common_expr(int i) {
+    cerr << i << endl;
     if (seq[i] == NULL) return ;
     for (int j = 0; j < n; j++)
-    if (seq[j] && _is_common_expr(i, j)) {
-        if (!_is_available(i, j)) continue;
-        if (!_is_dominated(def[j], i, j)) continue;
-        if (!_is_dominated(use1[j], i, j)) continue;
-        if (!_is_dominated(use2[j], i, j)) continue;
-        if (!_is_dominated(use3[j], i, j)) continue;
+    if (_is_common_expr(i, j)) {
         cerr << "line." << i << " finds common expr in line." << j << endl;
         _common_expr_reduction(i, j); return ;
     }
@@ -211,9 +230,6 @@ void _analyse_pass_self(int i) {
     }
 }
 
-bool cmp(string var1, string var2) {
-    return regManager->vars[var1]->active.count() < regManager->vars[var2]->active.count();
-}
 void _eFUNC::optimize() {
     cerr << "anaylize function " << func << endl;
     seq = ((_eSEQ *) body)->seq;
@@ -247,6 +263,7 @@ analysis:
     /* ======================== */
     /*  common expr analysis    */
     /* ======================== */
+    cerr << func << endl;
     for (int i = 0; i < n; i++)
         if (seq[i]) _analyse_common_expr(i);
     /* ======================== */
