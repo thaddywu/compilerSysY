@@ -68,7 +68,7 @@ vector<int> adj_rev[maxlines];
 queue<int> que;
 
 void _refresh(int line) {
-    nxt[line] = false; jmp[line].clear(); type[line] = DEAD;
+    nxt[line] = true; jmp[line].clear(); type[line] = DEAD;
     use1[line].clear(); use2[line].clear(); use3[line].clear(); def[line].clear();
     if (seq[line]) 
         { seq[line]->_analyse_cf(line); seq[line]->_analyse_def_use(line); }
