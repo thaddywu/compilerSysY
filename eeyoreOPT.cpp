@@ -295,6 +295,7 @@ int _only_def(string var_name, int x) {
 }
 
 void _analyse_direct(eeyoreAST *&x, int line) {
+    return ;
     string var_name = x->getName();
     int def_pos = _only_def(var_name, line);
     if (def_pos == -1) return ;
