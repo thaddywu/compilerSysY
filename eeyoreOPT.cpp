@@ -252,8 +252,8 @@ analysis:
     /* ======================== */
     /*  pass-self analysis      */
     /* ======================== */
-    for (int i = 0; i < n; i++)
-        if (seq[i]) _analyse_pass_self(i);
+    //for (int i = 0; i < n; i++)
+    //    if (seq[i]) _analyse_pass_self(i);
     
     /* ======================== */
     /*  reachability analysis   */
