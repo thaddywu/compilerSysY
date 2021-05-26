@@ -104,7 +104,8 @@ void _analyse_liveness(string var_name) {
     }
 }
 bool cmp(string var1, string var2) {
-    return regManager->vars[var1]->active.count() < regManager->vars[var2]->active.count();
+    return regManager->vars[var1]->active.count()
+        < regManager->vars[var2]->active.count();
 }
 
 bool _is_const(string var_name) {
@@ -191,6 +192,20 @@ bool _is_common_expr(int i, int j) {
     if (!_is_only_source(use1[j], i, j)) return false;
     if (!_is_only_source(use2[j], i, j)) return false;
     if (!_is_only_source(use3[j], i, j)) return false;
+
+    if (i < j) return false;
+    for (int k = j; k <= i; k++) {
+        if (type[k] == FUNCRET) return false;
+        if (type[k] == LABEL) return false;
+        if (type[k] == RET) return false;
+        if (type[k] == RETVOID) return false;
+        if (type[k] == CALL) return false;
+        if (type[k] == PARAM) return false;
+        if (type[k] == IFGOTO) return false;
+        if (type[k] == GOTO) return false;
+    //DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
+    //FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID,
+    }
 
     return true;
 }
