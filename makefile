@@ -12,7 +12,6 @@ sysy.tab.cpp: sysy.y sysyAST.hpp sysyLUT.hpp sysyDATA.hpp
 clean:
 	rm sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler
 fft:
-	./compiler fft0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <fft0.in >fft0.out
 	diff fft0.out fft0.ans

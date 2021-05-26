@@ -127,14 +127,20 @@ public:
     _tBINARY(string _d, string _s, string _op, int _t): d(_d), op(_op), s(_s), t(to_string(_t)), t_int(_t) { assert(isreg(d) && isreg(s)); }
     virtual void Dump() { printTab(d + " = " + s + " " + op + " " + t); }
     virtual void translate() {
-        if (!isreg(t) && t_int == 2) {
-            if (op == "*") 
-                printTab("add " + d + ", " + s + ", " + s);
-            if (op == "/") 
-                printTab("srai " + d + ", " + s + ", 1");
-            if (op == "\%") 
-                printTab("andi " + d + ", " + s + ", 1");
-            if (op == "*" || op == "/" || op == "\%") return ;
+        if (!isreg(t)) {
+            if (op == "*" && t_int == 2) 
+                { printTab("slli " + d + ", " + s + ", 1"); return ; }
+            if (op == "*" && t_int == 4) 
+                { printTab("slli " + d + ", " + s + ", 2"); return ; }
+            if (op == "/" && t_int == 2) 
+                { printTab("srai " + d + ", " + s + ", 1"); return ; }
+            if (op == "\%" && t_int == 2) 
+                { printTab("andi " + d + ", " + s + ", 1"); return ; }
+            if ((op == "+" || op == "-") && t_int == 0) 
+                { if (d != s) printTab("mv " + d + ", " + s); return ; }
+            if (op == "*" && t_int == 0) 
+                { printTab("li " + d + ", 0"); return ; }
+    
         }
         if (!isreg(t) && isint12(t_int) && (op == "+" || op == "<")) {
             /* t:int12, op: + < */
