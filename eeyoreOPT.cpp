@@ -273,11 +273,11 @@ analysis:
         /* global vars def-use condition is much more complicated */
         if (type[i] == FUNCRET) {
             seq[i] = new _eCALL(((_eFUNCRET *) seq[i])->func);
-            continue;
+            _refresh(i); continue;
             /* though the returned value is not used,
                 function call could have side effects */
         }
-        seq[i] = NULL;
+        seq[i] = NULL; _refresh(i);
     }
 
     if (++_analysis_iter < _analysis_level) goto analysis;
