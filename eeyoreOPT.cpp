@@ -149,7 +149,7 @@ bool _is_only_source(string var_name, int x, int o) {
     return !reachable[x];
 }
 bool _is_available(int x, int o) {
-    /* line[j] must occurs before line[i] in aby path */    
+    /* line[j] must occurs before line[i] in abs path */    
     memset(reachable, false, n); assert(que.empty());
     reachable[x] = true; que.push(x);
     while (!que.empty()) {
@@ -167,7 +167,7 @@ bool _is_clean(string arr_name, int x, int o) {
     memset(reachable, false, n); assert(que.empty());
     /* for global vars, any function-call is unsave,
         for local vars, param arr_name is unsave*/
-    reachable[o] = true;
+    reachable[o] = true; que.push(o);
     while (!que.empty()) {
         int u = que.front(); que.pop();
         for (auto v: adj[u])
@@ -217,10 +217,9 @@ bool _is_common_expr(int x, int o) {
         _eBINARY *ex = (_eBINARY *)seq[x], *eo = (_eBINARY *)seq[o];
         consistent = (ex->op == eo->op);
     }
-    /*
     if (type[o] == SEEK) {
         consistent = true;
-    }*/
+    }
     if (!consistent) return false;
     if (!_is_available(x, o)) return false;
     if (!_is_only_source(def[o], x, o)) return false;
