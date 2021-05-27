@@ -116,7 +116,7 @@ bool _is_const(string var_name) {
 }
 bool _is_sensitive(string var_name) {
     if (_is_const(var_name)) return false;
-    return regManager->isglobal(var_name) && regManager->isvar(var_name);
+    return regManager->isglobal(var_name) && regManager->isvar(var_name) && !regManager->isconst(var_name);
 }
 bool _is_param(string var_name) {
     return !_is_const(var_name) && var_name[0] == 'p';
@@ -341,7 +341,7 @@ void _eFUNC::optimize() {
     /* ================ */
     var_list.clear();
     for (int i = 0; i < arity; i++)
-        regManager->newLocal("p" + to_string(i), 4, true);
+        regManager->newLocal("p" + to_string(i), 4, true, false);
     for (auto decl: seq)
         if (decl->isdef()) { decl->localDecl(); var_list.push_back(decl->getName()); }
     tfunc->mem = regManager->stack_size >> 2;

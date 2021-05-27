@@ -9,8 +9,8 @@ using namespace std;
 /* dataDescript                                           */
 /*      - declaration                                     */
 /* ====================================================== */
-dataDescript::dataDescript(string _name, vector<int> _shape, _TREE *_node):
-name(_name), shape(_shape), inits(NULL) {
+dataDescript::dataDescript(string _name, vector<int> _shape, _TREE *_node, bool _isconst):
+name(_name), shape(_shape), isconst(_isconst), inits(NULL) {
     if (_node == NULL) return ;
     if (_node->leaf())
         inits = (dataCell *) new dataLeaf(shape.size(), _node->getExpr());
@@ -66,7 +66,7 @@ void VarManager::insert(dataDescript* dd, bool param) {
     if (param)
         dd->eeyore = newp();
     else
-        dd->eeyore = dd->shape.empty() ? newT() : newT(flatten(dd->shape));
+        dd->eeyore = dd->shape.empty() ? newT(dd->isconst) : newT(flatten(dd->shape), dd->isconst);
     /* decl print in newT */
     if (table.find(dd->name) != table.end()) {
         dataDescript* old = table[dd->name];
@@ -102,9 +102,9 @@ void VarManager::instantialize(string name) {
     if (inits) inits->instantialize();
 }
 /* ====================================================== */
-/* VarManager::initialization                           */
+/* VarManager::initialization                             */
 /*      - initialize the vars                             */
-/*      - called after var inserted into varManager     */
+/*      - called after var inserted into varManager       */
 /*      - zero-pad: for global vars, 0 padded when flag on*/
 /* ====================================================== */
 void VarManager::initialize(string name, bool var, bool zero_pad) {

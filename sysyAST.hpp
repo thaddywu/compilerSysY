@@ -33,6 +33,7 @@ public:
     virtual void initialize(bool glb) { assert(false); }
         // _PARAM_VAR, _PARAM_ARR, _VAR, _ARRAY_ITEM::: isvar, return a boolean 
     virtual int isvar() { assert(false); }
+    virtual bool isconst() { assert(false); }
 
         /* translate: translate into Abstraction Syntax Tree of eeyore form
             - ctn: continue to where
@@ -382,12 +383,14 @@ public:
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize(bool glb) ;
     virtual void instantialize() {} /* do nothing */
+    virtual bool isconst() { return false; }
 };
 class _DEF_CONST_VAR: public _DEF_VAR {
 public:
     _DEF_CONST_VAR(string _name, sysyAST *_inits): _DEF_VAR(_name, _inits) {}
     virtual void initialize(bool glb) ;
     virtual void instantialize() ;
+    virtual bool isconst() { return true; }
 };
 class _PARAM_VAR: public _DEF_VAR {
 public:
@@ -396,6 +399,7 @@ public:
     virtual void initialize(bool glb) { assert(false); } /* redundant assertion */
     virtual void instantialize() {} /* do nothing */
     virtual int isvar() { return 1; }
+    virtual bool isconst() { return false; }
 };
 
 class _DEF_ARR: public _DECL {
@@ -405,12 +409,14 @@ public:
     virtual void translate(string ctn, string brk, bool glb);
     virtual void initialize(bool glb) ;
     virtual void instantialize() {} /* do nothing */
+    virtual bool isconst() { return false; }
 };
 class _DEF_CONST_ARR: public _DEF_ARR {
 public:
     _DEF_CONST_ARR(string _name, sysyAST *_addr, sysyAST *_inits): _DEF_ARR(_name, _addr, _inits) {}
     virtual void initialize(bool glb) ;
     virtual void instantialize() ;
+    virtual bool isconst() { return true; }
 };
 class _PARAM_ARR: public _DEF_ARR {
 public:
@@ -419,6 +425,7 @@ public:
     virtual void initialize(bool glb) { assert(false); } /* redundant assertion */
     virtual void instantialize() {} /* do nothing */
     virtual int isvar() { return 0; }
+    virtual bool isconst() { return false; }
 };
 
 /* ==================================== */

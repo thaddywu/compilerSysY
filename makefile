@@ -17,6 +17,11 @@ fft:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/fft0.in >../test-case/fft0.out
 	diff ../test-case/fft0.out ../test-case/fft0.ans
+tmp:
+	./compiler fft0
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/fft0.in >../test-case/fft0.out
+	diff ../test-case/fft0.out ../test-case/fft0.ans
 mm:
 	cp ../test-case/01_mm1.sy 01_mm1.sy
 	./compiler 01_mm1

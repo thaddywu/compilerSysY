@@ -45,16 +45,17 @@ public:
 };
 class Variable {
 private:
-    bool global, var, param;
+    bool global, var, param, constant;
     string eeyore_name;
     string tigger_name;
     int relative_addr;
 public:
-    Variable(bool _global, bool _var, bool _param, string _eeyore_name, string _tigger_name, int _relative_addr):
-        global(_global), var(_var), param(_param), eeyore_name(_eeyore_name), tigger_name(_tigger_name), relative_addr(_relative_addr) { alloc_reg = NULL; }
+    Variable(bool _global, bool _var, bool _constant, bool _param, string _eeyore_name, string _tigger_name, int _relative_addr):
+        global(_global), var(_var), constant(_constant), param(_param), eeyore_name(_eeyore_name), tigger_name(_tigger_name), relative_addr(_relative_addr) { alloc_reg = NULL; }
     bool isglobal() { return global; }
     bool isvar() { return var; }
     bool isparam() { return param; }
+    bool isconst() { return constant; }
     string getTiggerName() { return tigger_name; }
     int getReaddr() { return relative_addr; }
 
@@ -68,13 +69,13 @@ public:
 
     int param_cnt, stack_size, global_cnt;
 
-    string newGlobal(string s, bool isvar) {
+    string newGlobal(string s, bool isvar, bool isconst) {
         string tigger_name = "v" + to_string(global_cnt++);
-        vars[s] = new Variable(true, isvar, false, s, tigger_name, -1);
+        vars[s] = new Variable(true, isvar, isconst, false, s, tigger_name, -1);
         return tigger_name;
     }
-    void newLocal(string s, int sz, bool isvar) {
-        vars[s] = new Variable(false, isvar, s[0] == 'p', s, "local_var", stack_size);
+    void newLocal(string s, int sz, bool isvar, bool isconst) {
+        vars[s] = new Variable(false, isvar, isconst, s[0] == 'p', s, "local_var", stack_size);
         stack_size += sz;
     }
     bool isglobal(string s) { return vars[s]->isglobal(); }
@@ -82,6 +83,7 @@ public:
     int getReaddr(string s) { return vars[s]->getReaddr(); } /* returned value is the address with * 4 */
     string tigger(string s) { return vars[s]->getTiggerName(); }
     bool isparam(string s) { return vars[s]->isparam(); }
+    bool isconst(string s) { return vars[s]->isconst(); }
     Register *getAlloc(string s) { return vars.find(s) != vars.end() ? vars[s]->alloc_reg : NULL; }
     
     map<string, Register*> reg_ptr; //mapping: register_name -> register

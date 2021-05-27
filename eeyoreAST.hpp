@@ -61,8 +61,8 @@ public:
 
 class _eDEFVAR: public eeyoreAST {
 public:
-    string var;
-    _eDEFVAR(string _var): var(_var) {}
+    string var; bool isconst;
+    _eDEFVAR(string _var, bool _isconst): var(_var), isconst(_isconst) {}
     virtual string getName() { return var; }
     virtual void Dump() { printTab("var " + var); }
     virtual bool isdef() { return true; }
@@ -77,8 +77,8 @@ public:
 };
 class _eDEFARR: public eeyoreAST {
 public:
-    string var; int size; // without * 4
-    _eDEFARR(string _var, int _size): var(_var), size(_size) {}
+    string var; int size; bool isconst; // without * 4
+    _eDEFARR(string _var, int _size, bool _isconst): var(_var), size(_size), isconst(_isconst) {}
     virtual string getName() { return var; }
     virtual void Dump() { printTab("var " + to_string(size * 4) + " " + var); }
     virtual bool isdef() { return true; }

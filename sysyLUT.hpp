@@ -34,9 +34,10 @@ class dataDescript {
 public:
     string name;
     string eeyore; /* converted name in eeyore */
+    bool isconst;
     vector<int> shape;
     dataCell *inits;
-    dataDescript(string _name, vector<int> _shape, _TREE *_node);
+    dataDescript(string _name, vector<int> _shape, _TREE *_node, bool _isconst);
 
     int eval(vector<int> &addr) ;
     int eval() { return inits ? ((dataLeaf *)inits)->expr->eval() : 0; }
@@ -72,9 +73,9 @@ private:
     
 public:
     VarManager(): tempNum(0), varNum(0), paramNum(0), labelNum(0) { assert(record.empty()); }
-    string newt() { string t = "t" + to_string(tempNum); tempNum++; eeyoreDecl(new _eDEFVAR(t)); return t;}
-    string newT() { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFVAR(T)); return T;}
-    string newT(int sz) { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFARR(T, sz)); return T;}
+    string newt() { string t = "t" + to_string(tempNum); tempNum++; eeyoreDecl(new _eDEFVAR(t, false)); return t;}
+    string newT(bool isconst) { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFVAR(T, isconst)); return T;}
+    string newT(int sz, bool isconst) { string T = "T" + to_string(varNum); varNum++; eeyoreDecl(new _eDEFARR(T, sz, isconst)); return T;}
     string newp() { string p = "p" + to_string(paramNum); paramNum++; return p;}
     string newl() { string l = "l" + to_string(labelNum); labelNum++; return l;}
     void newEnviron() { record.push({}); paramNum = 0; /* not-good implementation here */ }

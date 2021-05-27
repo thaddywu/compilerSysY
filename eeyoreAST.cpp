@@ -37,21 +37,21 @@ string load_into_register_nonum(string var, string default_reg) {
 /* ================================================= */
 void _eDEFVAR::globalDecl() {
     /* only global vars could enter this function */
-    string _var = regManager->newGlobal(var, true);
+    string _var = regManager->newGlobal(var, true, isconst);
     tiggerDecl(new _tGLBVAR(_var));
 }
 void _eDEFARR::globalDecl() {
     /* only global vars could enter this function */
-    string _var = regManager->newGlobal(var, false);
+    string _var = regManager->newGlobal(var, false, isconst);
     tiggerDecl(new _tGLBARR(_var, size));
 }
 void _eDEFVAR::localDecl() {
     /* only local vars could enter this function */
-    regManager->newLocal(var, 4, true);
+    regManager->newLocal(var, 4, true, isconst);
 }
 void _eDEFARR::localDecl() {
     /* only local vars could enter this function */
-    regManager->newLocal(var, size << 2, false);
+    regManager->newLocal(var, size << 2, false, isconst);
 }
 
 /* ================================================= */

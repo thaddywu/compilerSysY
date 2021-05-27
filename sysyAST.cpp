@@ -319,7 +319,7 @@ void _FUNC_CALL::translate(string ctn, string brk, bool glb) {
 }
 void _DEF_VAR::translate(string ctn, string brk, bool glb) {
     vector<int> shape {};
-    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits, isconst());
     varManager->insert(dd);
     instantialize();
     if (!glb)
@@ -329,13 +329,13 @@ void _DEF_VAR::translate(string ctn, string brk, bool glb) {
 }
 void _PARAM_VAR::translate(string ctn, string brk, bool glb) {
     vector<int> shape {};
-    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits, isconst());
     varManager->insert(dd, true);
 }
 void _DEF_ARR::translate(string ctn, string brk, bool glb) {
     vector<int> shape {};
     addr->vectorize(shape);
-    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits, isconst());
     varManager->insert(dd);
     instantialize();
     if (!glb)
@@ -347,7 +347,7 @@ void _PARAM_ARR::translate(string ctn, string brk, bool glb) {
     vector<int> shape {0};
     if (addr) addr->vectorize(shape);
         /* addr = NULL in case name[] */
-    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits);
+    dataDescript *dd = new dataDescript(name, shape, (_TREE *)inits, isconst());
     varManager->insert(dd, true);
 }
 
