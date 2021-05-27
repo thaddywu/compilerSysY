@@ -658,7 +658,7 @@ def1_1:
     alter.push_back(new _eRET(new _eVAR(ret)));
 
     cerr << this_func << " is re-written as a bit-prob function" << endl;
-    for (auto stmt: alter) stmt->Dump(); fflush(stdout);
+    // for (auto stmt: alter) stmt->Dump(); fflush(stdout);
     seq = alter; n = seq.size(); return true;
 }
 void _eFUNC::optimize() {
