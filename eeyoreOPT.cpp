@@ -180,9 +180,9 @@ bool _is_clean(string arr_name, int x, int o) {
     if (reachable[i]) {
         bool dirty = false;
         switch (type[i]) {
-            case SAVE: dirty = true;
-            case CALL: dirty = true;
-            case FUNCRET: dirty = true;
+            case SAVE: dirty = true; break;
+            case CALL: dirty = true; break;
+            case FUNCRET: dirty = true; break;
             default: dirty = false;
         }
         if (dirty) que.push(i);
@@ -227,7 +227,8 @@ bool _is_common_expr(int x, int o) {
     if (!_is_only_source(use2[o], x, o)) return false;
     if (!_is_only_source(use3[o], x, o)) return false;
     if (type[o] == SEEK && !_is_clean(use3[o], x, o)) return false;
-
+    
+    if (type[o] == SEEK) cerr << "SEEK!";
     return true;
 }
 void _common_expr_reduction(int x, int o) {
