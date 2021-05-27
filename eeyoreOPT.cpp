@@ -328,12 +328,18 @@ void _eRET::_analyse_direct_pass(int line)
     { _analyse_direct(t, line); }
 void _eCALL::_analyse_direct_pass(int line) {}
 
-bool _has_no_side_effect(string this_func) {
+map<string, bool> _no_side_effect;
+bool _is_call_self(string this_func, int line) {
+    return type[line] == FUNCRET && this_func == ((_eFUNCRET *)seq[line]) -> func;
+}
+bool _has_no_side_effect_wrapin(string this_func) {
     for (int i = 0; i < n; i++) {
         if (type[i] == SAVE) return false;
         if (type[i] == SEEK) return false;
         if (type[i] == CALL) return false;
-        if (type[i] == FUNCRET && this_func != ((_eFUNCRET *)seq[i]) -> func) return false;
+        if (type[i] == FUNCRET && !_is_call_self(this_func, i)) {
+            if (!_no_side_effect[((_eFUNCRET *)seq[i]) -> func]) return false;
+        }
         /* potential optimization here: called function might be no side-effect too */
         if (_is_sensitive(def[i])) return false;
         if (_is_sensitive(use1[i])) return false;
@@ -342,6 +348,9 @@ bool _has_no_side_effect(string this_func) {
     }
     return true;
 }
+bool _has_no_side_effect(string this_func) {
+    return _no_side_effect[this_func] = _has_no_side_effect_wrapin(this_func);
+}
 bool _is_param_stable() {
     for (int i = 0; i < n; i++)
         if (_is_param(def[i])) return false;
@@ -349,8 +358,11 @@ bool _is_param_stable() {
 }
 bool _is_call_once(string this_func) {
     int call_cnt = 0;
-    for (int i = 0; i < n; i++)
-        if (type[i] == FUNCRET && this_func == ((_eFUNCRET *)seq[i]) -> func) call_cnt += 1;
+    for (int i = 0; i < n; i++) {
+        if (_is_call_self(this_func, i)) call_cnt += 1;
+        if (type[i] == FUNCRET && call_cnt == 0) return false;
+    }
+        /* for convenience, call-self is assumed as the first function call. */
     return call_cnt == 1;
 }
 
@@ -362,10 +374,10 @@ bool _not_use_var(string var_name, int line) {
     if (use3[line] == var_name) return false;
     return true;
 }
-void _pattern_matching_bit_prob(string this_func, int arity) {
-    if (!_has_no_side_effect(this_func)) return ;
-    if (!_is_param_stable()) return ;
-    if (!_is_call_once(this_func)) return ;
+bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
+    if (!_has_no_side_effect(this_func)) return false;
+    if (!_is_param_stable()) return false;
+    if (!_is_call_once(this_func)) return false;
     
     /* assertion: every seq[line] ptr is not null */
     for (int i = 0; i < n; i++)
@@ -382,7 +394,8 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     string lEnd = varManager->newl();
     string ret = varManager->newT(false);
     string bit = varManager->newT(false); /* problematic here */
-    string R1, R2, R3, tj, tk, Tx;
+    string tj, tk, Tx;
+    eeyoreAST *R0, *R1, *R2, *R3;
     alter.push_back(new _eDEFVAR(ret, false));
     alter.push_back(new _eDEFVAR(bit, false));
 
@@ -395,14 +408,14 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     }
     
     /* if pi != 0 goto lx */
-    if (line >= n) return ;
-    if (type[line] != IFGOTO) return ;
+    if (line >= n) return false;
+    if (type[line] != IFGOTO) return false;
     else {
         _eIFGOTO *stmt = (_eIFGOTO *) seq[line];
         pi = stmt->t1->getName();
-        if (!_is_param(pi)) return ;
-        if (stmt->op != "!=") return ;
-        if (stmt->t2->getName() != "0") return ;
+        if (!_is_param(pi)) return false;
+        if (stmt->op != "!=") return false;
+        if (stmt->t2->getName() != "0") return false;
         lx = stmt->l; ++line;
     }
     
@@ -411,24 +424,26 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
 
     /* stmts1, don't use pi */
     for (; line < n && type[line] != RET; line++) {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         alter.push_back(seq[line]);
     }
 
     /* return R0 */
-    if (line >= n) return ;
-    if (type[line] != RET) return ;
+    if (line >= n) return false;
+    if (type[line] != RET) return false;
     else {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
+        _eRET *stmt = (_eRET *) seq[line];
+        R0 = stmt->t;
         alter.push_back(seq[line]); ++line;
     }
 
     /* lx: */
-    if (line >= n) return ;
-    if (type[line] != LABEL) return ;
+    if (line >= n) return false;
+    if (type[line] != LABEL) return false;
     else {
         _eLABEL *stmt = (_eLABEL *) seq[line];
-        if (stmt->l != lx) return ;
+        if (stmt->l != lx) return false;
         ++line;
     }
 
@@ -447,63 +462,77 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     /* -> lC: */
     alter.push_back(new _eLABEL(lC));
 
+if (!def1) goto no_def1_1;
+
     /* if pi != 1 goto ly */
-    if (line >= n) return ;
-    if (type[line] != IFGOTO) return ;
+    if (line >= n) return false;
+    if (type[line] != IFGOTO) return false;
     else {
         _eIFGOTO *stmt = (_eIFGOTO *) seq[line];
-        if (stmt->t1->getName() != pi) return ;
-        if (stmt->op != "!=") return ;
-        if (stmt->t2->getName() != "1") return ;
+        if (stmt->t1->getName() != pi) return false;
+        if (stmt->op != "!=") return false;
+        if (stmt->t2->getName() != "1") return false;
         ly = stmt->l; ++line;
     }
 
     /* stmts2, don't use pi */
     for (; line < n && type[line] != RET; line++) {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         alter.push_back(seq[line]);
     }
 
     /* return R1 */
-    if (line >= n) return ;
-    if (type[line] != RET) return ;
+    if (line >= n) return false;
+    if (type[line] != RET) return false;
     else {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         _eRET *stmt = (_eRET *) seq[line];
-        R1 = stmt->t->getName(); ++line;
+        R1 = stmt->t; ++line;
+    }
+
+    /* ly: */
+    if (line >= n) return false;
+    if (type[line] != LABEL) return false;
+    else {
+        _eLABEL *stmt = (_eLABEL *) seq[line];
+        if (stmt->l != ly) return false;
+        ++line;
     }
 
     /* -> ret = R1 */
-    alter.push_back(new _eDIRECT(new _eVAR(ret), new _eVAR(R1)));
+    alter.push_back(new _eDIRECT(new _eVAR(ret), R1));
+
+
+goto def1_1;
+no_def1_1:
+
+    /* -> bit = bit * 2 */
+    alter.push_back(new _eBINARY(new _eVAR(bit), new _eVAR(bit), "*", new _eNUM(2)));
+    /* -> ret = R0 */
+    alter.push_back(new _eDIRECT(new _eVAR(ret), R0));
+
+def1_1:
+
     /* -> lD: */
     alter.push_back(new _eLABEL(lD));
     /* -> if bit == 1 goto lEnd */
     alter.push_back(new _eIFGOTO(new _eVAR(bit), "==", new _eNUM(1), lEnd));
     /* -> bit = bit / 2 */
     alter.push_back(new _eBINARY(new _eVAR(bit), new _eVAR(bit), "/", new _eNUM(2)));
-
-    /* ly: */
-    if (line >= n) return ;
-    if (type[line] != LABEL) return ;
-    else {
-        _eLABEL *stmt = (_eLABEL *) seq[line];
-        if (stmt->l != ly) return ;
-        ++line;
-    }
     
-    if (arity == 0) return ;
+    if (arity == 0) return false;
 
     /* stmts3, don't use pi */
     for (; line < n && type[line] != PARAM; line++) {
         if (_not_use_var(pi, line))
             alter.push_back(seq[line]);
         else {
-            if (type[line] != BINARY) return ;
+            if (type[line] != BINARY) return false;
             _eBINARY *stmt = (_eBINARY *) seq[line];
             tj = stmt->a->getName();
-            if (stmt->t1->getName() != pi) return ;
-            if (stmt->op != "/") return ;
-            if (stmt->t2->getName() != "2") return ;
+            if (stmt->t1->getName() != pi) return false;
+            if (stmt->op != "/") return false;
+            if (stmt->t2->getName() != "2") return false;
         }
     }
 
@@ -511,23 +540,23 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     for (int i = 0; i < arity; i++, ++line) {
         if (line >= n) continue;
         string param = "p" + to_string(i);
-        if (type[line] != PARAM) return ;
+        if (type[line] != PARAM) return false;
         _ePARAM *stmt = (_ePARAM *)seq[line];
         if (param != pi) {
-            if (stmt->t->getName() != param) return ;
+            if (stmt->t->getName() != param) return false;
         }
         else {
-            if (stmt->t->getName() != tj) return ;
+            if (stmt->t->getName() != tj) return false;
         }
     }
     
     /* Tx = call f_this_func */
-    if (line >= n) return ;
-    if (type[line] != FUNCRET) return ;
+    if (line >= n) return false;
+    if (type[line] != FUNCRET) return false;
     else {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         _eFUNCRET *stmt = (_eFUNCRET *) seq[line];
-        if (this_func != stmt->func) return ;
+        if (this_func != stmt->func) return false;
         Tx = stmt->a->getName(); ++line;
     }
 
@@ -539,22 +568,22 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
         if (_not_use_var(pi, line))
             alter.push_back(seq[line]);
         else {
-            if (type[line] != BINARY) return ;
+            if (type[line] != BINARY) return false;
             _eBINARY *stmt = (_eBINARY *) seq[line];
             tk = stmt->a->getName();
-            if (stmt->t1->getName() != pi) return ;
-            if (stmt->op != "%") return ;
-            if (stmt->t2->getName() != "2") return ;
+            if (stmt->t1->getName() != pi) return false;
+            if (stmt->op != "%") return false;
+            if (stmt->t2->getName() != "2") return false;
         }
     }
     /* if tk != 1 goto lz */
-    if (line >= n) return ;
-    if (type[line] != IFGOTO) return ;
+    if (line >= n) return false;
+    if (type[line] != IFGOTO) return false;
     else {
         _eIFGOTO *stmt = (_eIFGOTO *) seq[line];
-        if (stmt->t1->getName() != tk) return ;
-        if (stmt->op != "!=") return ;
-        if (stmt->t2->getName() != "1") return ;
+        if (stmt->t1->getName() != tk) return false;
+        if (stmt->op != "!=") return false;
+        if (stmt->t2->getName() != "1") return false;
         lz = stmt->l; ++line;
     }
 
@@ -566,20 +595,20 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
 
     /* stmts5, don't use pi */
     for (; line < n && type[line] != RET; line++) {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         alter.push_back(seq[line]);
     }
     /* return R2 */
-    if (line >= n) return ;
-    if (type[line] != RET) return ;
+    if (line >= n) return false;
+    if (type[line] != RET) return false;
     else {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         _eRET *stmt = (_eRET *) seq[line];
-        R2 = stmt->t->getName(); ++line;
+        R2 = stmt->t; ++line;
     }
 
     /* -> ret = R2 */
-    alter.push_back(new _eDIRECT(new _eVAR(ret), new _eVAR(R2)));
+    alter.push_back(new _eDIRECT(new _eVAR(ret), R2));
     /* -> goto lD */
     alter.push_back(new _eGOTO(lD));
     /* -> lE: */
@@ -589,30 +618,29 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     /* there might be some useless statements after return */
 
     /* lz: */
-    if (line >= n) return ;
-    if (type[line] != LABEL) return ;
+    if (line >= n) return false;
+    if (type[line] != LABEL) return false;
     else {
         _eLABEL *stmt = (_eLABEL *) seq[line];
-        if (stmt->l != lz) return ;
+        if (stmt->l != lz) return false;
         ++line;
     }
 
     /* stmts6, don't use pi */
     for (; line < n && type[line] != RET; line++) {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         alter.push_back(seq[line]);
     }
     /* return R3 */
-    if (line >= n) return ;
-    if (type[line] != RET) return ;
+    if (line >= n) return false;
+    if (type[line] != RET) return false;
     else {
-        if (!_not_use_var(pi, line)) return ;
+        if (!_not_use_var(pi, line)) return false;
         _eRET *stmt = (_eRET *) seq[line];
-        R3 = stmt->t->getName(); ++line;
+        R3 = stmt->t; ++line;
     }
-
     /* -> ret = R3 */
-    alter.push_back(new _eDIRECT(new _eVAR(ret), new _eVAR(R3)));
+    alter.push_back(new _eDIRECT(new _eVAR(ret), R3));
     /* -> goto lD */
     alter.push_back(new _eGOTO(lD));
     /* -> lEnd: */
@@ -621,8 +649,8 @@ void _pattern_matching_bit_prob(string this_func, int arity) {
     alter.push_back(new _eRET(new _eVAR(ret)));
 
     cerr << this_func << " is re-written as a bit-prob function" << endl;
-    // for (auto stmt: alter) stmt->Dump(); exit(0);
-    seq = alter; n = seq.size();
+    // for (auto stmt: alter) stmt->Dump(); fflush(stdout);
+    seq = alter; n = seq.size(); return true;
 }
 void _eFUNC::optimize() {
     cerr << "anaylizing function " << func << endl;
@@ -637,7 +665,8 @@ void _eFUNC::optimize() {
     /* ======================== */
     for (int i = 0; i < n; i++) _refresh(i);
     _control_graph();
-    _pattern_matching_bit_prob(func, arity);
+    if (!_pattern_matching_bit_prob(func, arity, false))
+        _pattern_matching_bit_prob(func, arity, true);
 
     /* ================ */
     /*  param decl      */
@@ -730,7 +759,7 @@ analysis:
     /* unused definitions must be eliminated. */
     for (currentLine = 0; currentLine < n; currentLine++)
         if (seq[currentLine] && !seq[currentLine]->isdef())
-            seq[currentLine]->translate();
+            {cout << currentLine << endl; seq[currentLine]->Dump(); fflush(stdout); seq[currentLine]->translate();}
 
     /* function structure:
         func [arity] [mem] body */
