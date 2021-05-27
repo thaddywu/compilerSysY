@@ -125,6 +125,7 @@ bool _is_param(string var_name) {
 bool reachable[maxlines];
 bool _is_only_source(string var_name, int x, int o) {
     if (_is_const(var_name)) return true;
+    if (_is_sensitive(var_name)) return false;
         
     memset(reachable, false, n); assert(que.empty());
     if (_is_param(var_name)) {
@@ -206,10 +207,6 @@ bool _is_common_expr(int x, int o) {
     if (def[o] == use2[o]) return false;
     if (def[o] == use3[o]) return false;
         /* guarantee def is different from every use in line j */
-    if (_is_sensitive(def[o])) return false;
-    if (_is_sensitive(use1[o])) return false;
-    if (_is_sensitive(use2[o])) return false;
-    if (_is_sensitive(use3[o])) return false;
 
     bool consistent = false;
     if (type[o] == UNARY) {
@@ -271,12 +268,13 @@ void _analyse_pass_self(int i) {
     if (type[i] == DIRECT) {
         _eDIRECT *ex = (_eDIRECT *)seq[i];
         if (ex->a->getName() == ex->t->getName())
-            {seq[i] = NULL; _refresh(i); return ;}
+            { cerr << "eliminate self-pass in line." << i << ": " << ex->a->getName() << endl; seq[i] = NULL; _refresh(i); return ;}
     }
 }
 int _only_def(string var_name, int x) {
     int def_pos = -1, def_cnt = 0;
     if (_is_const(var_name)) return -1;
+    if (_is_sensitive(var_name)) return -1;
     memset(reachable, false, n); assert(que.empty());
     for (auto v: adj_rev[x])
         if (!reachable[v]) que.push(v), reachable[v] = true;
@@ -295,7 +293,6 @@ int _only_def(string var_name, int x) {
 }
 
 void _analyse_direct(eeyoreAST *&x, int line) {
-    return ;
     string var_name = x->getName();
     int def_pos = _only_def(var_name, line);
     if (def_pos == -1) return ;
@@ -303,6 +300,7 @@ void _analyse_direct(eeyoreAST *&x, int line) {
     assert(def_pos != line);
     _eDIRECT *ed = (_eDIRECT *)seq[def_pos];
     assert(ed->a->getName() == var_name);
+    if (!_is_only_source(ed->t->getName(), line, def_pos)) return ;
     x = ed->t; _refresh(line);
     cerr << "line." << line << " alter " << var_name << " to " << ed->t->getName() << endl;
 }
