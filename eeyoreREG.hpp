@@ -164,7 +164,8 @@ public:
         /* previously occpied by param */
         if (reg == skip) return ;
 
-        if (caller && !reg->active[currentLine] && !occupied) return;
+        if (caller && !reg->active[currentLine]) return;
+            /* !occupied, even this register is used by param, if it is no longer used, no need to restore*/
         if (!caller && !reg->used) return;
         tiggerStmt(new _tLOAD(reg->reg_id, reg_name));
         
