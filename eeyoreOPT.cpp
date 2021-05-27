@@ -301,6 +301,7 @@ void _analyse_direct(eeyoreAST *&x, int line) {
     _eDIRECT *ed = (_eDIRECT *)seq[def_pos];
     assert(ed->a->getName() == var_name);
     if (!_is_only_source(ed->t->getName(), line, def_pos)) return ;
+    if (_is_const(ed->t->getName()) && !isint12(ed->t->getInt())) return ;
     x = ed->t; _refresh(line);
     cerr << "line." << line << " alter " << var_name << " to " << ed->t->getName() << endl;
 }
@@ -455,10 +456,10 @@ bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
     alter.push_back(new _eDIRECT(new _eVAR(bit), new _eNUM(1 << 20)));
     /* -> if bit > pi goto lF */
     alter.push_back(new _eIFGOTO(new _eVAR(bit), ">", new _eVAR(pi), lF));
-    /* -> lF: */
-    alter.push_back(new _eLABEL(lF));
     /* -> bit = 1 << 30 */
     alter.push_back(new _eDIRECT(new _eVAR(bit), new _eNUM(1 << 30)));
+    /* -> lF: */
+    alter.push_back(new _eLABEL(lF));
     /* -> lB: */
     alter.push_back(new _eLABEL(lB));
     /* -> if bit <= pi goto lC */
@@ -657,7 +658,7 @@ def1_1:
     alter.push_back(new _eRET(new _eVAR(ret)));
 
     cerr << this_func << " is re-written as a bit-prob function" << endl;
-    // for (auto stmt: alter) stmt->Dump(); fflush(stdout);
+    for (auto stmt: alter) stmt->Dump(); fflush(stdout);
     seq = alter; n = seq.size(); return true;
 }
 void _eFUNC::optimize() {
