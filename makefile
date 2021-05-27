@@ -55,8 +55,8 @@ git:
 	sysy.tab.hpp sysy.tab.cpp sysy.yy.cpp compiler \
 	*.out *.in *.ans
 gitlab:
-	echo https://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@github.com/thaddywu/compilerSysY.git
-github:
 	echo https://test:TsZ_quoj3iNzX5S2asrq@gitlab.com/thaddywu/compilerSysY.git
+github:
+	echo https://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@github.com/thaddywu/compilerSysY.git
 connect:
 	sudo docker attach $(sudo docker run -dit -P -v /compiler:/compiler riscv-dev-env)
