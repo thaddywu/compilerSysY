@@ -759,7 +759,7 @@ analysis:
     /* unused definitions must be eliminated. */
     for (currentLine = 0; currentLine < n; currentLine++)
         if (seq[currentLine] && !seq[currentLine]->isdef())
-            {cout << currentLine << endl; seq[currentLine]->Dump(); fflush(stdout); seq[currentLine]->translate();}
+            seq[currentLine]->translate();
 
     /* function structure:
         func [arity] [mem] body */
