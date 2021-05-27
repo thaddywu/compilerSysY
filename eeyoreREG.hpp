@@ -78,13 +78,14 @@ public:
         vars[s] = new Variable(false, isvar, isconst, s[0] == 'p', s, "local_var", stack_size);
         stack_size += sz;
     }
-    bool isglobal(string s) { return vars[s]->isglobal(); }
+    bool exists(string s) { return vars.find(s) != vars.end(); }
+    bool isglobal(string s) { return exists(s) ? vars[s]->isglobal() : false; }
     bool isvar(string s) { return vars[s]->isvar(); }
     int getReaddr(string s) { return vars[s]->getReaddr(); } /* returned value is the address with * 4 */
     string tigger(string s) { return vars[s]->getTiggerName(); }
-    bool isparam(string s) { return vars[s]->isparam(); }
-    bool isconst(string s) { return vars[s]->isconst(); }
-    Register *getAlloc(string s) { return vars.find(s) != vars.end() ? vars[s]->alloc_reg : NULL; }
+    bool isparam(string s) { return exists(s) ? vars[s]->isparam() : false; }
+    bool isconst(string s) { return exists(s) ? vars[s]->isconst() : false; }
+    Register *getAlloc(string s) { return exists(s) ? vars[s]->alloc_reg : NULL; }
     
     map<string, Register*> reg_ptr; //mapping: register_name -> register
     Register *registers[Reg_N];

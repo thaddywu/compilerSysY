@@ -193,6 +193,8 @@ public:
                 printTab("xor " + d + ", " + s + ", " + t);
                 printTab("seqz " + d + ", " + d);
             }
+            if (op == "&")
+                printTab("and " + d + ", " + s + ", " + t);
         }
     }
 };
