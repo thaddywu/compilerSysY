@@ -1,0 +1,340 @@
+	var T0
+	var T1
+f_multiply [2]
+	var t0
+	var T2
+	var t1
+	var t2
+	var t3
+	var t4
+	var t5
+	if p1 != 0 goto l0
+	return 0
+l0:
+	if p1 != 1 goto l1
+	t0 = p0 % T0
+	return t0
+l1:
+	t1 = p1 / 2
+	param p0
+	param t1
+	T2 = call f_multiply
+	t2 = T2 + T2
+	T2 = t2 % T0
+	t3 = p1 % 2
+	if t3 != 1 goto l2
+	t4 = T2 + p0
+	t5 = t4 % T0
+	return t5
+	goto l3
+l2:
+	return T2
+l3:
+end f_multiply
+f_power [2]
+	var T3
+	var t6
+	var t7
+	var t8
+	if p1 != 0 goto l4
+	return 1
+l4:
+	t6 = p1 / 2
+	param p0
+	param t6
+	T3 = call f_power
+	param T3
+	param T3
+	T3 = call f_multiply
+	t7 = p1 % 2
+	if t7 != 1 goto l5
+	param T3
+	param p0
+	t8 = call f_multiply
+	return t8
+	goto l6
+l5:
+	return T3
+l6:
+end f_power
+	var T4
+	var 8388608 T5
+	var 8388608 T6
+	var 8388608 T7
+	var 8388608 T8
+f_memmove [4]
+	var T9
+	var t9
+	var t10
+	var t11
+	var t12
+	T9 = 0
+l7:
+	if T9 >= p3 goto l8
+	t10 = T9 * 4
+	t9 = p2[t10]
+	t11 = p1 + T9
+	t12 = t11 * 4
+	p0[t12] = t9
+	T9 = T9 + 1
+	goto l7
+l8:
+	return T9
+end f_memmove
+f_fft [4]
+	var T10
+	var t13
+	var t14
+	var t15
+	var t16
+	var t17
+	var t18
+	var t19
+	var t20
+	var t21
+	var t22
+	var t23
+	var t24
+	var t25
+	var t26
+	var t27
+	var t28
+	var t29
+	var t30
+	var t31
+	var T11
+	var t32
+	var T12
+	var t33
+	var t34
+	var T13
+	var t35
+	var t36
+	var t37
+	var t38
+	var t39
+	var t40
+	var t41
+	var t42
+	var t43
+	var t44
+	var t45
+	var t46
+	var t47
+	var t48
+	var t49
+	var t50
+	var t51
+	if p2 != 1 goto l9
+	return 1
+l9:
+	T10 = 0
+l10:
+	if T10 >= p2 goto l11
+	t13 = T10 % 2
+	if t13 != 0 goto l12
+	t15 = T10 + p1
+	t16 = t15 * 4
+	t14 = p0[t16]
+	t17 = T10 / 2
+	t18 = t17 * 4
+	T5[t18] = t14
+	goto l13
+l12:
+	t20 = T10 + p1
+	t21 = t20 * 4
+	t19 = p0[t21]
+	t22 = p2 / 2
+	t23 = T10 / 2
+	t24 = t22 + t23
+	t25 = t24 * 4
+	T5[t25] = t19
+l13:
+	T10 = T10 + 1
+	goto l10
+l11:
+	param p0
+	param p1
+	param T5
+	param p2
+	call f_memmove
+	t26 = p2 / 2
+	param p3
+	param p3
+	t27 = call f_multiply
+	param p0
+	param p1
+	param t26
+	param t27
+	call f_fft
+	t28 = p2 / 2
+	t29 = p1 + t28
+	t30 = p2 / 2
+	param p3
+	param p3
+	t31 = call f_multiply
+	param p0
+	param t29
+	param t30
+	param t31
+	call f_fft
+	T10 = 0
+	T11 = 1
+l14:
+	t32 = p2 / 2
+	if T10 >= t32 goto l15
+	t33 = p1 + T10
+	t34 = t33 * 4
+	T12 = p0[t34]
+	t35 = p1 + T10
+	t36 = p2 / 2
+	t37 = t35 + t36
+	t38 = t37 * 4
+	T13 = p0[t38]
+	param T11
+	param T13
+	t39 = call f_multiply
+	t40 = T12 + t39
+	t41 = t40 % T0
+	t42 = p1 + T10
+	t43 = t42 * 4
+	p0[t43] = t41
+	param T11
+	param T13
+	t44 = call f_multiply
+	t45 = T12 - t44
+	t46 = t45 + T0
+	t47 = t46 % T0
+	t48 = p1 + T10
+	t49 = p2 / 2
+	t50 = t48 + t49
+	t51 = t50 * 4
+	p0[t51] = t47
+	param T11
+	param p3
+	T11 = call f_multiply
+	T10 = T10 + 1
+	goto l14
+l15:
+	return 0
+end f_fft
+f_main [0]
+	var T14
+	var T15
+	var t52
+	var t53
+	var t54
+	var t55
+	var t56
+	var t57
+	var t58
+	var t59
+	var T16
+	var t60
+	var t61
+	var t62
+	var t63
+	var t64
+	var t65
+	var t66
+	var t67
+	var t68
+	var t69
+	var t70
+	var t71
+	var t72
+	var t73
+	var t74
+	var t75
+	var t76
+	var t77
+	var t78
+	T0 = 998244353
+	T4 = 2097152
+	param T6
+	T14 = call f_getarray
+	param T7
+	T15 = call f_getarray
+	param 60
+	call f__sysy_starttime
+	T1 = 1
+l16:
+	t52 = T14 + T15
+	t53 = t52 - 1
+	if T1 >= t53 goto l17
+	T1 = T1 * 2
+	goto l16
+l17:
+	t55 = T0 - 1
+	t56 = t55 / T1
+	param 3
+	param t56
+	t54 = call f_power
+	param T6
+	param 0
+	param T1
+	param t54
+	call f_fft
+	t58 = T0 - 1
+	t59 = t58 / T1
+	param 3
+	param t59
+	t57 = call f_power
+	param T7
+	param 0
+	param T1
+	param t57
+	call f_fft
+	T16 = 0
+l18:
+	if T16 >= T1 goto l19
+	t62 = T16 * 4
+	t61 = T6[t62]
+	t64 = T16 * 4
+	t63 = T7[t64]
+	param t61
+	param t63
+	t60 = call f_multiply
+	t65 = T16 * 4
+	T6[t65] = t60
+	T16 = T16 + 1
+	goto l18
+l19:
+	t67 = T0 - 1
+	t68 = T0 - 1
+	t69 = t68 / T1
+	t70 = t67 - t69
+	param 3
+	param t70
+	t66 = call f_power
+	param T6
+	param 0
+	param T1
+	param t66
+	call f_fft
+	T16 = 0
+l20:
+	if T16 >= T1 goto l21
+	t73 = T16 * 4
+	t72 = T6[t73]
+	t75 = T0 - 2
+	param T1
+	param t75
+	t74 = call f_power
+	param t72
+	param t74
+	t71 = call f_multiply
+	t76 = T16 * 4
+	T6[t76] = t71
+	T16 = T16 + 1
+	goto l20
+l21:
+	param 79
+	call f__sysy_stoptime
+	t77 = T14 + T15
+	t78 = t77 - 1
+	param t78
+	param T6
+	call f_putarray
+	return 0
+end f_main

@@ -105,7 +105,7 @@ void _analyse_liveness(string var_name) {
 }
 bool cmp(string var1, string var2) {
     return regManager->vars[var1]->active.count()
-        < regManager->vars[var2]->active.count();
+        > regManager->vars[var2]->active.count();
 }
 
 bool _is_const(string var_name) {
