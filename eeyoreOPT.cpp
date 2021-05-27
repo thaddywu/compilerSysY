@@ -7,7 +7,7 @@ using namespace std;
 
 int currentLine;
 
-string def[maxlines], use1[maxlines], use2 [maxlines], use3[maxlines];
+string def[maxlines], use1[maxlines], use2[maxlines], use3[maxlines];
 void _eDEFVAR::_analyse_def_use(int line) {}
 void _eDEFARR::_analyse_def_use(int line) {}
 void _eDIRECT::_analyse_def_use(int line)
@@ -391,6 +391,7 @@ bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
     string lC = varManager->newl();
     string lD = varManager->newl();
     string lE = varManager->newl();
+    string lF = varManager->newl();
     string lEnd = varManager->newl();
     string ret = varManager->newT(false);
     string bit = varManager->newT(false); /* problematic here */
@@ -449,6 +450,13 @@ bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
 
     /* -> lA: */
     alter.push_back(new _eLABEL(lA));
+    
+    /* -> bit = 1 << 20 */
+    alter.push_back(new _eDIRECT(new _eVAR(bit), new _eNUM(1 << 20)));
+    /* -> if bit > pi goto lF */
+    alter.push_back(new _eIFGOTO(new _eVAR(bit), ">", new _eVAR(pi), lF));
+    /* -> lF: */
+    alter.push_back(new _eLABEL(lF));
     /* -> bit = 1 << 30 */
     alter.push_back(new _eDIRECT(new _eVAR(bit), new _eNUM(1 << 30)));
     /* -> lB: */
@@ -772,7 +780,7 @@ void _eSEQ::optimize() {
     for (auto decl: seq)
         if (decl->isdef()) decl->globalDecl();
     for (auto decl: seq)
-        if (decl->isdef() && regManager->isvar(decl->getName())) {
+        if (decl->isdef()) {
             regManager->try_allocate(decl->getName());
             global_var_list.push_back(decl->getName());
         }
