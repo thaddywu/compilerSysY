@@ -386,7 +386,7 @@ void _eFUNC::optimize() {
     for (int i = 0; i < n; i++) _refresh(i);
     _control_graph();
     // if (!_pattern_matching_bit_prob(func, arity, false))
-    //_pattern_matching_bit_prob(func, arity, true);
+    _pattern_matching_bit_prob(func, arity, true);
 
     /* ================ */
     /*  param decl      */
