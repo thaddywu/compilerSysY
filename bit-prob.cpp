@@ -30,24 +30,32 @@ string cpower[32];
 void _best_multiply() {
     alter.clear();
     string ret = varManager->newT(false);
-    string tmp = varManager->newT(false);
+    string b0 = varManager->newT(false);
+    string b1 = varManager->newT(false);
     alter.push_back(new _eDEFVAR(ret, false));
-    alter.push_back(new _eDEFVAR(tmp, false));
+    alter.push_back(new _eDEFVAR(b0, false));
+    alter.push_back(new _eDEFVAR(b1, false));
     string loop = varManager->newl();
     string exit = varManager->newl();
-    string even = varManager->newl();
+    string even1 = varManager->newl();
+    string even0 = varManager->newl();
     
     alter.push_back(new _eDIRECT(new _eVAR(ret), new _eNUM(0)));
     alter.push_back(new _eLABEL(loop));
     alter.push_back(new _eIFGOTO(new _eVAR("p1"), "==", new _eNUM(0), exit));
-    alter.push_back(new _eBINARY(new _eVAR(tmp), new _eVAR("p1"), "%", new _eNUM(2)));
-    alter.push_back(new _eBINARY(new _eVAR("p1"), new _eVAR("p1"), "/", new _eNUM(2)));
-    alter.push_back(new _eIFGOTO(new _eVAR(tmp), "==", new _eNUM(0), even));
+    alter.push_back(new _eBINARY(new _eVAR(b0), new _eVAR("p1"), "&", new _eNUM(1)));
+    alter.push_back(new _eBINARY(new _eVAR(b1), new _eVAR("p1"), "&", new _eNUM(2)));
+    alter.push_back(new _eBINARY(new _eVAR("p1"), new _eVAR("p1"), "/", new _eNUM(4)));
+    alter.push_back(new _eIFGOTO(new _eVAR(b0), "==", new _eNUM(0), even0));
     alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "+", new _eVAR("p0")));
-    alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "%", new _eVAR("T0")));
-    alter.push_back(new _eLABEL(even));
+    alter.push_back(new _eLABEL(even0));
     alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "*", new _eNUM(2)));
-    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "%", new _eVAR("T0")));
+    alter.push_back(new _eIFGOTO(new _eVAR(b1), "==", new _eNUM(0), even1));
+    alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "+", new _eVAR("p0")));
+    alter.push_back(new _eLABEL(even1));
+    alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "%u", new _eVAR("T0")));
+    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "*", new _eNUM(2)));
+    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "%u", new _eVAR("T0")));
     alter.push_back(new _eGOTO(loop));
 
     alter.push_back(new _eLABEL(exit));
@@ -317,6 +325,6 @@ bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
 
     cerr << this_func << " is re-written as a bit-prob function" << endl;
     // for (auto stmt: alter) stmt->Dump(); fflush(stdout);
-    // _best_multiply();
+    _best_multiply();
     seq = alter; n = seq.size(); return true;
 }
