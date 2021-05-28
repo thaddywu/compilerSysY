@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 extern int n;
 extern vector<eeyoreAST *> alter;
 extern vector<eeyoreAST *> seq;
