@@ -267,6 +267,32 @@ void _analyse_pass_self(int i) {
             { cerr << "eliminate self-pass in line." << i << ": " << ex->a->getName() << endl; seq[i] = NULL; _refresh(i); return ;}
     }
 }
+void _analyse_const_pass(int i) {
+    if (type[i] == UNARY) {
+        _eUNARY *ex = (_eUNARY *)seq[i];
+        if (ex->t->isnum()) {
+            cerr << "const-pass in line." << i << ": " << ex->a->getName() << endl;
+            seq[i] = new _eDIRECT(ex->a, new _eNUM(unary_result(ex->op, ex->t->getInt())));
+            _refresh(i); return ;
+        }
+    }
+    if (type[i] == BINARY) {
+        _eBINARY *ex = (_eBINARY *)seq[i];
+        if (ex->t1->isnum() && ex->t2->isnum()) {
+            cerr << "const-pass in line." << i << ": " << ex->a->getName() << endl;
+            seq[i] = new _eDIRECT(ex->a, new _eNUM(binary_result(ex->t1->getInt(), ex->op, ex->t2->getInt())));
+            _refresh(i); return ;
+        }
+    }
+    if (type[i] == IFGOTO) {
+        _eIFGOTO *ex = (_eIFGOTO *)seq[i];
+        if (ex->t1->isnum() && ex->t2->isnum()) {
+            cerr << "const-pass in line." << i << ": goto" << ex->l << endl;
+            seq[i] = new _eGOTO(ex->l);
+            _refresh(i); return ;
+        }
+    }
+}
 int _only_def(string var_name, int x) {
     int def_pos = -1, def_cnt = 0;
     if (_is_const(var_name)) return -1;
@@ -426,6 +452,11 @@ analysis:
     /* ======================== */
     for (int i = 0; i < n; i++)
         if (seq[i]) seq[i]->_analyse_direct_pass(i);
+    /* ======================== */
+    /*  const analysis          */
+    /* ======================== */
+    for (int i = 0; i < n; i++)
+        if (seq[i]) _analyse_const_pass(i);
     
     /* ======================== */
     /*  liveness analysis       */
