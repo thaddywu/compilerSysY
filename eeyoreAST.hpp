@@ -250,3 +250,9 @@ public:
     
     virtual void optimize() ;
 };
+
+typedef enum {
+    DEFVAR, DEFARR, DIRECT, UNARY, BINARY, SEEK, SAVE,
+    FUNCRET, CALL, PARAM, IFGOTO, GOTO, LABEL, RET, RETVOID,
+    DEAD
+}typeAST;

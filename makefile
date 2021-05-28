@@ -1,10 +1,10 @@
 all: compiler
 compiler: sysy.yy.cpp sysy.tab.cpp defs.hpp defs.cpp main.cpp \
-	sysyLUT.cpp sysyAST.cpp sysyDATA.cpp \
+	sysyLUT.cpp sysyAST.cpp sysyDATA.cpp bit-prob.cpp \
 	eeyoreAST.hpp eeyoreAST.cpp eeyoreREG.hpp eeyoreOPT.cpp tiggerAST.hpp 
 	g++ -w -std=c++11 -DLOCALTEST -o compiler \
 		sysy.yy.cpp sysy.tab.cpp sysyAST.cpp sysyLUT.cpp sysyDATA.cpp \
-		eeyoreAST.cpp eeyoreOPT.cpp defs.cpp main.cpp
+		eeyoreAST.cpp eeyoreOPT.cpp defs.cpp bit-prob.cpp main.cpp
 
 sysy.yy.cpp: sysy.l sysy.tab.cpp
 	flex -o sysy.yy.cpp sysy.l
@@ -18,6 +18,12 @@ fft:
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
 	qemu-riscv32-static output <../test-case/fft0.in >../test-case/fft0.out
 	diff ../test-case/fft0.out ../test-case/fft0.ans
+fft2:
+	cp ../test-case/fft2.sy fft2.sy
+	./compiler fft2
+	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
+	qemu-riscv32-static output <../test-case/fft2.in >../test-case/fft2.out
+	diff ../test-case/fft2.out ../test-case/fft2.ans
 tmp:
 	./compiler fft0
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
