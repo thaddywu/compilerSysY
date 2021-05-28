@@ -13,6 +13,7 @@ string load_into_register(eeyoreAST *var, string default_reg) {
 
     if (var->isnum()) {
         if (var->getInt() == 0) return "x0";
+        if (var->getInt() == 1) return reserved_x1;
         tiggerStmt(new _tDIRECT(default_reg, var->getInt()));
     }
     else

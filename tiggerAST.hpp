@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define Reg_s 8
+#define Reg_s 7
 #define Reg_t 7
 #define Reg_a 8
 #define Reg_s_all (Reg_s + 4)
@@ -10,6 +10,7 @@ using namespace std;
 #define reserved_reg1 "s9"
 #define reserved_reg2 "s10"
 #define reserved_reg3 "s11"
+#define reserved_x1 "s7"
 
 extern string t0 ;
 

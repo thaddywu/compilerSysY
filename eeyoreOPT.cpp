@@ -506,6 +506,7 @@ analysis:
     for (auto var_name: var_list)
         regManager->preload(var_name);
     if (func == "main") {
+        tiggerStmt(new _tDIRECT(reserved_x1, 1)); /* x1 always stores 1*/
         for (auto var_name: global_var_list)
             regManager->preload(var_name);
     }
