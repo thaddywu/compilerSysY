@@ -163,7 +163,7 @@ public:
             if (op == "/")
                 printTab("div " + d + ", " + s + ", " + t);
             if (op == "\%")
-                printTab("rem " + d + ", " + s + ", " + t);
+                printTab("remu " + d + ", " + s + ", " + t);
             if (op == "<")
                 printTab("slt " + d + ", " + s + ", " + t);
             if (op == ">")
