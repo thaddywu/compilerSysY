@@ -59,7 +59,7 @@ void _best_multiply() {
     alter.push_back(new _eGOTO(loop));
 
     alter.push_back(new _eLABEL(exit));
-    alter.push_back(new _eRET(new _eVAR(ret)));
+    alter.push_back(new _eRET(new _eVAR("p0")));
 }
 void _divide_conquer(int l, int r) {
     if (l == r) {
