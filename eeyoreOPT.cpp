@@ -288,7 +288,10 @@ void _analyse_const_pass(int i) {
         _eIFGOTO *ex = (_eIFGOTO *)seq[i];
         if (ex->t1->isnum() && ex->t2->isnum()) {
             cerr << "const-pass in line." << i << ": goto" << ex->l << endl;
-            seq[i] = new _eGOTO(ex->l);
+            if (binary_result(ex->t1->getInt(), ex->op, ex->t2->getInt()))
+                seq[i] = new _eGOTO(ex->l);
+            else
+                seq[i] = NULL;
             _refresh(i); return ;
         }
     }
