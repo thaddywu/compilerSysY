@@ -123,8 +123,8 @@ void _eBINARY::translate() {
     }
     else {
         string t1_reg_name = load_into_register(t1, reserved_reg2);
-        if (t2->isnum() && isint12(t2->getInt())) {
-            /* potential optimization here: t2 may be an integer(int12) */
+        if (t2->isnum() && (isint12(t2->getInt()) || is2power(t2->getInt()))) {
+            /* optimization here: t2 may be an integer but not int12 */
             if (a_reg)
                 tiggerStmt(new _tBINARY(a_reg->reg_name, t1_reg_name, op, t2->getInt()));
             else {

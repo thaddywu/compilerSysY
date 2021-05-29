@@ -336,6 +336,6 @@ bool _pattern_matching_bit_prob(string this_func, int arity, bool def1) {
 
     cerr << this_func << " is re-written as a bit-prob function" << endl;
     // for (auto stmt: alter) stmt->Dump(); fflush(stdout);
-    _best_multiply();
+    if (def1) _best_multiply();
     seq = alter; n = seq.size(); return true;
 }

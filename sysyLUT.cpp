@@ -11,6 +11,14 @@ using namespace std;
 /* ====================================================== */
 dataDescript::dataDescript(string _name, vector<int> _shape, _TREE *_node, bool _isconst):
 name(_name), shape(_shape), isconst(_isconst), inits(NULL) {
+    int length = shape.size();
+    if (length > 0) {
+        shape_all.resize(length);
+        shape_all[length - 1] = 1;
+        for (int i = length - 2; i >= 0; i--)
+            shape_all[i] = shape_all[i + 1] * shape[i + 1];
+    }
+    /* the total length of dim i */
     if (_node == NULL) return ;
     if (_node->leaf())
         inits = (dataCell *) new dataLeaf(shape.size(), _node->getExpr());

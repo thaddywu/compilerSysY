@@ -36,6 +36,7 @@ public:
     string eeyore; /* converted name in eeyore */
     bool isconst;
     vector<int> shape;
+    vector<int> shape_all;
     dataCell *inits;
     dataDescript(string _name, vector<int> _shape, _TREE *_node, bool _isconst);
 
@@ -87,6 +88,7 @@ public:
     
     string getEeyore(string name) { return table[name]->eeyore; } /* return correspoding name in eeyore */
     vector<int>& getshape(string name) { return table[name]->shape; } /* return shape vector of given name */
+    vector<int>& getshapeall(string name) { return table[name]->shape_all; } /* return shape vector of given name */
     int getSize(string name) { return table[name]->getSize(); }
 
     void instantialize(string name) ;
