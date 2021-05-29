@@ -401,6 +401,60 @@ bool _not_use_var(string var_name, int line) {
     if (use3[line] == var_name) return false;
     return true;
 }
+
+bool _is_static_in_interval(string var_name, int label, int loop) {
+    if (_is_const(var_name)) return true;
+    if (_is_sensitive(var_name)) return false;
+    for (int i = label; i <= loop; i++)
+        if (def[i] == var_name) return false;
+    return true;
+}
+bool _is_modified_once_in_interval(string var_name, int label, int loop, int modified_line) {
+    if (_is_const(var_name)) return true;
+    if (_is_sensitive(var_name)) return false;
+    for (int i = label; i <= loop; i++)
+        if (i != modified_line && def[i] == var_name) return false;
+    return true;
+}
+bool _is_pure_assign(int line) {
+    return seq[line] != NULL && (type[line] == BINARY || type[line] == UNARY || type[line] == DIRECT);
+}
+vector<eeyoreAST*> liftup;
+void _analyse_lift(int label) {
+    string l = ((_eLABEL *)seq[label]) -> l;
+    for (int i = 0; i < label; i++) {
+        if (type[i] == GOTO && ((_eGOTO *)seq[i])->l == l) return ;
+        if (type[i] == IFGOTO && ((_eIFGOTO *)seq[i])->l == l) return ;
+    }
+    int loop = -1, loop_cnt = 0;
+    for (int i = label + 1; i < n; i++) {
+        if (type[i] == GOTO && ((_eGOTO *)seq[i])->l == l)
+            { loop = i; loop_cnt += 1; }
+        if (type[i] == IFGOTO && ((_eIFGOTO *)seq[i])->l == l) return ;
+    }
+    if (loop_cnt != 1) return ;
+
+    liftup.clear();
+    for (int i = label; i <= loop; i++)
+    if (_is_pure_assign(i)) {
+        if (!_is_static_in_interval(use1[i], label, loop)) continue;
+        if (!_is_static_in_interval(use2[i], label, loop)) continue;
+        if (!_is_static_in_interval(use3[i], label, loop)) continue;
+        if (!_is_modified_once_in_interval(def[i], label, loop, i)) continue;
+        cerr << "lift line." << i << endl;
+        liftup.push_back(seq[i]); seq[i] = NULL; _refresh(i);
+    }
+    for (int i = label; i <= loop; i++)
+        if (seq[i] != NULL) {liftup.push_back(seq[i]); seq[i] = NULL;}
+    for (int i = label, j = 0; j < liftup.size() ; i++, j++)
+        seq[i] = liftup[j];
+
+    cerr << "loop detected between line." << label << " and line." << loop << endl;
+    
+
+    for (int i = 0; i < n; i++) _refresh(i);
+    _control_graph();
+}
 void _eFUNC::optimize() {
     cerr << "anaylizing function " << func << endl;
     seq = ((_eSEQ *) body)->seq;
@@ -460,6 +514,11 @@ analysis:
     /* ======================== */
     for (int i = 0; i < n; i++)
         if (seq[i]) _analyse_const_pass(i);
+    /* ======================== */
+    /*  stmt lift               */
+    /* ======================== */
+    for (int i = 0; i < n; i++)
+        if (type[i] == LABEL) _analyse_lift(i);
     
     /* ======================== */
     /*  liveness analysis       */
