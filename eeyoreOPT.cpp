@@ -79,6 +79,13 @@ void _control_graph() {
     for (int i = 0; i < n; i++)
     for (auto j: adj[i]) adj_rev[j].push_back(i);
 }
+void _refresh() {
+    label.clear(); /* because of lifting, structure may be changed */
+    for (int i = 0; i < n; i++)
+        _refresh(i);
+    _control_graph();
+}
+
 void _analyse_liveness(string var_name) {
     /* var ought to be local */
     assert(!regManager->isglobal(var_name));
@@ -420,14 +427,14 @@ bool _is_pure_assign(int line) {
     return seq[line] != NULL && (type[line] == BINARY || type[line] == UNARY || type[line] == DIRECT);
 }
 vector<eeyoreAST*> liftup;
-void _analyse_lift(int label) {
-    string l = ((_eLABEL *)seq[label]) -> l;
-    for (int i = 0; i < label; i++) {
+void _analyse_lift(int start) {
+    string l = ((_eLABEL *)seq[start]) -> l;
+    for (int i = 0; i < start; i++) {
         if (type[i] == GOTO && ((_eGOTO *)seq[i])->l == l) return ;
         if (type[i] == IFGOTO && ((_eIFGOTO *)seq[i])->l == l) return ;
     }
     int loop = -1, loop_cnt = 0;
-    for (int i = label + 1; i < n; i++) {
+    for (int i = start + 1; i < n; i++) {
         if (type[i] == GOTO && ((_eGOTO *)seq[i])->l == l)
             { loop = i; loop_cnt += 1; }
         if (type[i] == IFGOTO && ((_eIFGOTO *)seq[i])->l == l) return ;
@@ -435,25 +442,31 @@ void _analyse_lift(int label) {
     if (loop_cnt != 1) return ;
 
     liftup.clear();
-    for (int i = label; i <= loop; i++)
-    if (_is_pure_assign(i)) {
-        if (!_is_static_in_interval(use1[i], label, loop)) continue;
-        if (!_is_static_in_interval(use2[i], label, loop)) continue;
-        if (!_is_static_in_interval(use3[i], label, loop)) continue;
-        if (!_is_modified_once_in_interval(def[i], label, loop, i)) continue;
+    /* some statements are in condition, need to filter them. */
+    int minpos = start;
+
+    for (int i = start + 1; i < loop; i++)
+    if (seq[i] != NULL) {
+        if (type[i] == GOTO || type[i] == IFGOTO)
+            minpos = max(minpos, label[jmp[i]]);
+        if (_is_pure_assign(i)) continue;
+        if (!_is_static_in_interval(use1[i], start, loop)) continue;
+        if (!_is_static_in_interval(use2[i], start, loop)) continue;
+        if (!_is_static_in_interval(use3[i], start, loop)) continue;
+        if (!_is_modified_once_in_interval(def[i], start, loop, i)) continue;
+        if (i < minpos) continue;
+
         cerr << "lift line." << i << endl;
         liftup.push_back(seq[i]); seq[i] = NULL; _refresh(i);
     }
-    for (int i = label; i <= loop; i++)
+    for (int i = start; i <= loop; i++)
         if (seq[i] != NULL) {liftup.push_back(seq[i]); seq[i] = NULL;}
-    for (int i = label, j = 0; j < liftup.size() ; i++, j++)
+    for (int i = start, j = 0; j < liftup.size() ; i++, j++)
         seq[i] = liftup[j];
 
-    cerr << "loop detected between line." << label << " and line." << loop << endl;
+    cerr << "loop detected between line." << start << " and line." << loop << endl;
     
-
-    for (int i = 0; i < n; i++) _refresh(i);
-    _control_graph();
+    _refresh();
 }
 void _eFUNC::optimize() {
     cerr << "anaylizing function " << func << endl;
@@ -466,8 +479,7 @@ void _eFUNC::optimize() {
     /* ======================== */
     /* pattern matching         */
     /* ======================== */
-    for (int i = 0; i < n; i++) _refresh(i);
-    _control_graph();
+    _refresh();
     // if (!_pattern_matching_bit_prob(func, arity, false))
     _pattern_matching_bit_prob(func, arity, true);
 
@@ -487,9 +499,8 @@ void _eFUNC::optimize() {
     /* ======================== */
     /*  def-use analysis        */
     /* ======================== */
-    /* unnecessary to clear map-table label */
-    for (int i = 0; i < n; i++) _refresh(i);
-    _control_graph();
+    
+    _refresh();
 
 #define _analysis_level 10
     int _analysis_iter = 0;
