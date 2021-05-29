@@ -47,6 +47,7 @@ void _best_multiply() {
     alter.push_back(new _eIFGOTO(new _eVAR("p1"), "==", new _eNUM(0), exit));
     alter.push_back(new _eBINARY(new _eVAR(b0), new _eVAR("p1"), "&", new _eNUM(1)));
     alter.push_back(new _eBINARY(new _eVAR(b1), new _eVAR("p1"), "&", new _eNUM(2)));
+    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "%u", new _eVAR("T0")));
     alter.push_back(new _eBINARY(new _eVAR("p1"), new _eVAR("p1"), "/", new _eNUM(4)));
     alter.push_back(new _eIFGOTO(new _eVAR(b0), "==", new _eNUM(0), even0));
     alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "+", new _eVAR("p0")));
@@ -54,9 +55,8 @@ void _best_multiply() {
     alter.push_back(new _eIFGOTO(new _eVAR(b1), "==", new _eNUM(0), evenx1));
     alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "+", new _eVAR("p0")));
     alter.push_back(new _eLABEL(evenx1));
-    alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "%u", new _eVAR("T0")));
     alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "*", new _eNUM(2)));
-    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "%u", new _eVAR("T0")));
+    alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "%u", new _eVAR("T0")));
     alter.push_back(new _eGOTO(loop));
 
     alter.push_back(new _eLABEL(even0));
@@ -66,7 +66,6 @@ void _best_multiply() {
     alter.push_back(new _eBINARY(new _eVAR(ret), new _eVAR(ret), "%u", new _eVAR("T0")));
     alter.push_back(new _eLABEL(eveny1));
     alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "*", new _eNUM(2)));
-    alter.push_back(new _eBINARY(new _eVAR("p0"), new _eVAR("p0"), "%u", new _eVAR("T0")));
     alter.push_back(new _eGOTO(loop));
 
     alter.push_back(new _eLABEL(exit));
