@@ -61,32 +61,26 @@ eeyoreAST* _OR::atomize(eeyoreAST* target) {
     eeyoreStmt(new _eLABEL(cp));
     return t;
 }
+
 eeyoreAST* _ADDR_LIST::atomize(string name, eeyoreAST* target) {
-    vector<int> &shape = varManager->getshape(name);
+    vector<int> &shape_all = varManager->getshapeall(name);
     assert(head != NULL);
-    eeyoreAST* ret = head->atomize(NULL);
+    eeyoreAST* t0 = head->atomize(NULL);
+    eeyoreAST* ret = new _eVAR(varManager->newt());
+    eeyoreStmt(new _eBINARY(ret, t0, "*", new _eNUM(shape_all[0] * 4)));
     _ADDR_LIST *cur = (_ADDR_LIST *)tail;
-    for (int k = 1; k < shape.size(); k++)
+    for (int k = 1; k < shape_all.size(); k++)
     if (cur) {
         assert(cur->head);
         eeyoreAST* nxt = cur->head->atomize(NULL);
         eeyoreAST* t1 = new _eVAR(varManager->newt());
-        eeyoreAST* t2 = new _eVAR(varManager->newt());
 
-        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(shape[k])));
-        eeyoreStmt(new _eBINARY(t2, t1, "+", nxt));
-        ret = t2;
+        eeyoreStmt(new _eBINARY(t1, nxt, "*", new _eNUM(shape_all[k] * 4)));
+        eeyoreStmt(new _eBINARY(ret, ret, "+", t1));
         cur = (_ADDR_LIST *) (cur->tail);
     }
-    else {
-        eeyoreAST* t1 = new _eVAR(varManager->newt());
-        eeyoreStmt(new _eBINARY(t1, ret, "*", new _eNUM(shape[k])));
-        ret = t1;
-    }
     assert(cur == NULL);
-    eeyoreAST* t = target ? target : new _eVAR(varManager->newt());
-    eeyoreStmt(new _eBINARY(t, ret, "*", new _eNUM(4)));
-    return t;
+    return ret;
 }
 eeyoreAST* _ARRAY_ITEM::atomize(eeyoreAST* target) {
     /* potential optimization for constant array */
