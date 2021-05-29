@@ -141,6 +141,8 @@ public:
                 { if (d != s) printTab("mv " + d + ", " + s); return ; }
             if (op == "*" && t_int == 0) 
                 { printTab("li " + d + ", 0"); return ; }
+            if (op == "&" && isint12(t_int)) 
+                { printTab("andi " + d + ", " + s + ", " + t); return ; }
     
         }
         if (!isreg(t) && isint12(t_int) && (op == "+" || op == "<")) {
