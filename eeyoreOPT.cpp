@@ -447,14 +447,17 @@ void _analyse_lift(int start) {
 
     for (int i = start + 1; i < loop; i++)
     if (seq[i] != NULL) {
-        if (type[i] == GOTO || type[i] == IFGOTO)
-            minpos = max(minpos, label[jmp[i]]);
-        if (_is_pure_assign(i)) continue;
+        if (type[i] == GOTO || type[i] == IFGOTO) {
+            int jsite = label[jmp[i]];
+            if (jsite < loop)
+                minpos = max(minpos, jsite);
+        }
+        if (!_is_pure_assign(i)) continue;
         if (!_is_static_in_interval(use1[i], start, loop)) continue;
         if (!_is_static_in_interval(use2[i], start, loop)) continue;
         if (!_is_static_in_interval(use3[i], start, loop)) continue;
         if (!_is_modified_once_in_interval(def[i], start, loop, i)) continue;
-        if (i < minpos) continue;
+        if (i < minpos) { cerr << i << " type" << type[i] << " " << start << " " << loop << " " << minpos << endl; continue;}
 
         cerr << "lift line." << i << endl;
         liftup.push_back(seq[i]); seq[i] = NULL; _refresh(i);
