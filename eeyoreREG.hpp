@@ -23,8 +23,6 @@ public:
     /* used: ever allocated        */
     /* occupied: func-call used    */
     /* monopolized: used by global */
-    /* backup: backup register %sx */
-    /* _backup: used as backup     */
     bool occupied, monopolized, used;
     bitset<maxlines> active;
 
@@ -162,7 +160,6 @@ public:
         assert(!reg->monopolized || !caller);
         if (reg->monopolized) return ;
 
-        bool occupied = reg->occupied;
         reg->occupied = false;
         /* previously occpied by param */
         if (reg == skip) return ;

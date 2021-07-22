@@ -457,7 +457,7 @@ void _analyse_lift(int start) {
         if (!_is_static_in_interval(use2[i], start, loop)) continue;
         if (!_is_static_in_interval(use3[i], start, loop)) continue;
         if (!_is_modified_once_in_interval(def[i], start, loop, i)) continue;
-        if (i < minpos) { cerr << i << " type" << type[i] << " " << start << " " << loop << " " << minpos << endl; continue;}
+        if (i < minpos) continue;
 
         cerr << "lift line." << i << endl;
         liftup.push_back(seq[i]); seq[i] = NULL; _refresh(i);

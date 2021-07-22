@@ -17,8 +17,8 @@ public:
     virtual eeyoreAST* atomize(eeyoreAST* target) { assert(false); }
         // For _ADDR_LIST, corresponding function name is passed
     virtual eeyoreAST* atomize(string name, eeyoreAST* target) { assert(false); }
-        // symbol: For expr, return its operator
     virtual void cjump(string l, bool neg) { assert(false); }
+        // symbol: For expr, return its operator
     virtual string symbol() { assert(false); }
         // _ADDR_LIST::vectorize embed a _ADDR_LIST into a list
     virtual void vectorize(vector<int> &v) { assert(false); }

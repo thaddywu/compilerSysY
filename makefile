@@ -36,11 +36,11 @@ mm:
 	qemu-riscv32-static output <../test-case/01_mm1.in >../test-case/01_mm1.out
 	diff ../test-case/01_mm1.out ../test-case/01_mm1.ans
 bitset:
-	cp ../test-case/00_bitset1.sy 00_bitset1.sy
-	./compiler 00_bitset1
+	cp ../test-case/00_bitset3.sy 00_bitset3.sy
+	./compiler 00_bitset3
 	riscv32-unknown-linux-gnu-gcc output.S -o output -L/root -lsysy -static
-	qemu-riscv32-static output <../test-case/00_bitset1.in >../test-case/00_bitset1.out
-	diff ../test-case/00_bitset1.out ../test-case/00_bitset1.ans
+	qemu-riscv32-static output <../test-case/00_bitset3.in >../test-case/00_bitset3.out
+	diff ../test-case/00_bitset3.out ../test-case/00_bitset3.ans
 conv:
 	cp ../test-case/conv1.sy conv1.sy
 	./compiler conv1

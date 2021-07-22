@@ -48,8 +48,8 @@ private:
 };
 
 /* ============================================================ */
-/* VarManager                                                 */
-/*      - table: map for name->dataDescript                    */
+/* VarManager                                                   */
+/*      - table: map for name->dataDescript                     */
 /*      - record: declaration records in this domain            */
 /*      - newp(), newt(), newT(), newl(): new var or annotation */
 /*      - newEnviron(): create new environ                      */
@@ -57,12 +57,12 @@ private:
 /*      - insert(dd, param): insert a var/array                 */
 /*          - dd: dataDescript                                  */
 /*          - param: boolean, to determine p0 or T0             */
-/*      - getEeyore(name): atomize name                        */
-/*      - getshape(name): return its shape                       */
-/*      - getSize(name): return its flattened size             */
+/*      - getEeyore(name): atomize name                         */
+/*      - getshape(name): return its shape                      */
+/*      - getSize(name): return its flattened size              */
 /*          - no definition for var                             */
-/*      - initialize(name): initialize                         */
-/*      - instantialize(name): optimization                    */
+/*      - initialize(name): initialize                          */
+/*      - instantialize(name): optimization                     */
 /* ============================================================ */
 class VarManager {
 private:
@@ -88,7 +88,7 @@ public:
     
     string getEeyore(string name) { return table[name]->eeyore; } /* return correspoding name in eeyore */
     vector<int>& getshape(string name) { return table[name]->shape; } /* return shape vector of given name */
-    vector<int>& getshapeall(string name) { return table[name]->shape_all; } /* return shape vector of given name */
+    vector<int>& getshapeall(string name) { return table[name]->shape_all; } /* return flattened size of vector of given name */
     int getSize(string name) { return table[name]->getSize(); }
 
     void instantialize(string name) ;
